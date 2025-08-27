@@ -35,7 +35,8 @@ To exercise the fake detector instead of the built-in rectangle, use:
 vision webcam --use-fake-detector
 ```
 
-This overlays stub tracker IDs over the detected box.
+This overlays stub tracker IDs over the detected box and runs the stub
+embedder for each detection.
 
 The fake detector can also run in a dry run without requiring OpenCV:
 
@@ -43,7 +44,7 @@ The fake detector can also run in a dry run without requiring OpenCV:
 vision webcam --use-fake-detector --dry-run
 ```
 
-which prints ``Dry run: fake detector produced 1 boxes, tracker assigned IDs``.
+which prints ``Dry run: fake detector produced 1 boxes, tracker assigned IDs, embedder produced 1 embeddings``.
 
 For more options, run:
 
@@ -74,4 +75,16 @@ from vision.tracker import Tracker
 
 tracker = Tracker()
 tracker.update([(50, 50, 200, 200)])  # -> [(1, (50, 50, 200, 200))]
+```
+
+## Embedder stub
+
+The package also contains an :class:`Embedder` placeholder that always
+returns the same 128-dimensional feature vector.
+
+```python
+from vision.embedder import Embedder
+
+embedder = Embedder()
+embedder.embed(None)  # -> [0.0] * 128
 ```
