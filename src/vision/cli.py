@@ -25,6 +25,11 @@ def build_parser() -> argparse.ArgumentParser:
         action="store_true",
         help="Skip the webcam loop and print a message instead.",
     )
+    webcam_parser.add_argument(
+        "--use-fake-detector",
+        action="store_true",
+        help="Run the webcam loop with the FakeDetector stub.",
+    )
     return parser
 
 
@@ -36,7 +41,7 @@ def main(argv: Sequence[str] | None = None) -> int:
     if args.version:
         print(f"Vision {__version__}")
     elif args.command == "webcam":
-        webcam.loop(dry_run=args.dry_run)
+        webcam.loop(dry_run=args.dry_run, use_fake=args.use_fake_detector)
     else:
         parser.print_help()
     return 0

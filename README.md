@@ -29,8 +29,35 @@ For headless environments or continuous integration, use the dry run:
 vision webcam --dry-run
 ```
 
+To exercise the fake detector instead of the built-in rectangle, use:
+
+```bash
+vision webcam --use-fake-detector
+```
+
+The fake detector can also run in a dry run without requiring OpenCV:
+
+```bash
+vision webcam --use-fake-detector --dry-run
+```
+
+which prints ``Dry run: fake detector produced 1 boxes``.
+
 For more options, run:
 
 ```bash
 python -m vision --help
+```
+
+## Fake detector stub
+
+The package includes a very small :class:`FakeDetector` that always
+returns the same bounding box.  It is a placeholder for future detection
+work and can be imported with:
+
+```python
+from vision.fake_detector import FakeDetector
+
+detector = FakeDetector()
+detector.detect(None)  # -> [(50, 50, 200, 200)]
 ```
