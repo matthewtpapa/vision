@@ -14,3 +14,4 @@ jobs:
       - run: pip install -e .
       - run: python -m vision --version
       - run: vision --version
+      - run: vision webcam --dry-run

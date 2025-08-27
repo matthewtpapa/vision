@@ -10,6 +10,7 @@ authors = [{name = "Vision Authors", email = "dev@example.com"}]
 readme = "README.md"
 requires-python = ">=3.8"
 license = {text = "MIT"}
+dependencies = ["opencv-python"]
 
 [project.scripts]
 vision = "vision.cli:main"
