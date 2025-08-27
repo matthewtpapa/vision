@@ -61,3 +61,15 @@ from vision.fake_detector import FakeDetector
 detector = FakeDetector()
 detector.detect(None)  # -> [(50, 50, 200, 200)]
 ```
+
+## Tracker stub
+
+The package also ships with a tiny :class:`Tracker` placeholder that assigns
+incremental IDs to bounding boxes.
+
+```python
+from vision.tracker import Tracker
+
+tracker = Tracker()
+tracker.update([(50, 50, 200, 200)])  # -> [(1, (50, 50, 200, 200))]
+```
