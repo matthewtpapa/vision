@@ -15,3 +15,4 @@ jobs:
       - run: python -m vision --version
       - run: vision --version
       - run: vision webcam --dry-run
+      - run: vision webcam --use-fake-detector --dry-run
