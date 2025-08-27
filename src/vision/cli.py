@@ -6,18 +6,24 @@ import argparse
 from typing import Sequence
 
 from . import __version__
+from . import webcam
 
 
 def build_parser() -> argparse.ArgumentParser:
     """Build the argument parser for the CLI."""
-    parser = argparse.ArgumentParser(
-        prog="vision",
-        description="Vision CLI"
-    )
+    parser = argparse.ArgumentParser(prog="vision", description="Vision CLI")
     parser.add_argument(
         "--version",
         action="store_true",
         help="Print the version and exit.",
+    )
+
+    subparsers = parser.add_subparsers(dest="command")
+    webcam_parser = subparsers.add_parser("webcam", help="Run the webcam capture loop.")
+    webcam_parser.add_argument(
+        "--dry-run",
+        action="store_true",
+        help="Skip the webcam loop and print a message instead.",
     )
     return parser
 
@@ -29,6 +35,8 @@ def main(argv: Sequence[str] | None = None) -> int:
 
     if args.version:
         print(f"Vision {__version__}")
+    elif args.command == "webcam":
+        webcam.loop(dry_run=args.dry_run)
     else:
         parser.print_help()
     return 0
