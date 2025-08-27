@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from .fake_detector import FakeDetector
+from .tracker import Tracker
 
 
 def loop(*, dry_run: bool = False, use_fake: bool = False) -> int:
@@ -25,8 +26,12 @@ def loop(*, dry_run: bool = False, use_fake: bool = False) -> int:
     if dry_run:
         if use_fake:
             detector = FakeDetector()
+            tracker = Tracker()
             boxes = detector.detect(None)
-            print(f"Dry run: fake detector produced {len(boxes)} boxes")
+            tracker.update(boxes)
+            print(
+                f"Dry run: fake detector produced {len(boxes)} boxes, tracker assigned IDs"
+            )
             return 0
         print("Dry run: webcam loop skipped")
         return 0
@@ -34,8 +39,10 @@ def loop(*, dry_run: bool = False, use_fake: bool = False) -> int:
     import cv2  # Import lazily so dry runs do not require OpenCV
 
     detector: FakeDetector | None = None
+    tracker: Tracker | None = None
     if use_fake:
         detector = FakeDetector()
+        tracker = Tracker()
 
     cap = cv2.VideoCapture(0)
     if not cap.isOpened():
@@ -49,9 +56,21 @@ def loop(*, dry_run: bool = False, use_fake: bool = False) -> int:
                 print("Error: failed to read frame")
                 break
 
-            if use_fake and detector is not None:
-                for x1, y1, x2, y2 in detector.detect(frame):
+            if use_fake and detector is not None and tracker is not None:
+                boxes = detector.detect(frame)
+                tracked = tracker.update(boxes)
+                for tid, (x1, y1, x2, y2) in tracked:
                     cv2.rectangle(frame, (x1, y1), (x2, y2), (0, 255, 0), 2)
+                    cv2.putText(
+                        frame,
+                        f"ID {tid}",
+                        (x1, max(0, y1 - 8)),
+                        cv2.FONT_HERSHEY_SIMPLEX,
+                        0.5,
+                        (0, 255, 0),
+                        1,
+                        cv2.LINE_AA,
+                    )
             else:
                 cv2.rectangle(frame, (50, 50), (200, 200), (0, 255, 0), 2)
 

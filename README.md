@@ -35,13 +35,15 @@ To exercise the fake detector instead of the built-in rectangle, use:
 vision webcam --use-fake-detector
 ```
 
+This overlays stub tracker IDs over the detected box.
+
 The fake detector can also run in a dry run without requiring OpenCV:
 
 ```bash
 vision webcam --use-fake-detector --dry-run
 ```
 
-which prints ``Dry run: fake detector produced 1 boxes``.
+which prints ``Dry run: fake detector produced 1 boxes, tracker assigned IDs``.
 
 For more options, run:
 
@@ -60,4 +62,16 @@ from vision.fake_detector import FakeDetector
 
 detector = FakeDetector()
 detector.detect(None)  # -> [(50, 50, 200, 200)]
+```
+
+## Tracker stub
+
+The package also ships with a tiny :class:`Tracker` placeholder that assigns
+incremental IDs to bounding boxes.
+
+```python
+from vision.tracker import Tracker
+
+tracker = Tracker()
+tracker.update([(50, 50, 200, 200)])  # -> [(1, (50, 50, 200, 200))]
 ```
