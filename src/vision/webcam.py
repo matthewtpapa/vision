@@ -2,9 +2,12 @@
 
 from __future__ import annotations
 
+from datetime import datetime, timezone
+
 from .fake_detector import FakeDetector
 from .tracker import Tracker
 from .embedder import Embedder
+from .cluster_store import ClusterStore
 
 
 def loop(*, dry_run: bool = False, use_fake: bool = False) -> int:
@@ -33,8 +36,10 @@ def loop(*, dry_run: bool = False, use_fake: bool = False) -> int:
             tracked = tracker.update(boxes)
             embeddings = [embedder.embed(box) for _, box in tracked]
             print(
-                f"Dry run: fake detector produced {len(boxes)} boxes, tracker assigned IDs, "
-                f"embedder produced {len(embeddings)} embeddings"
+                "Dry run: fake detector produced "
+                f"{len(boxes)} boxes, tracker assigned IDs, "
+                f"embedder produced {len(embeddings)} embeddings, "
+                f"cluster store prepared {len(embeddings)} exemplar"
             )
             return 0
         print("Dry run: webcam loop skipped")
@@ -45,10 +50,12 @@ def loop(*, dry_run: bool = False, use_fake: bool = False) -> int:
     detector: FakeDetector | None = None
     tracker: Tracker | None = None
     embedder: Embedder | None = None
+    store: ClusterStore | None = None
     if use_fake:
         detector = FakeDetector()
         tracker = Tracker()
         embedder = Embedder()
+        store = ClusterStore()
 
     cap = cv2.VideoCapture(0)
     if not cap.isOpened():
@@ -62,11 +69,23 @@ def loop(*, dry_run: bool = False, use_fake: bool = False) -> int:
                 print("Error: failed to read frame")
                 break
 
-            if use_fake and detector is not None and tracker is not None and embedder is not None:
+            if (
+                use_fake
+                and detector is not None
+                and tracker is not None
+                and embedder is not None
+                and store is not None
+            ):
                 boxes = detector.detect(frame)
                 tracked = tracker.update(boxes)
                 for tid, (x1, y1, x2, y2) in tracked:
-                    embedder.embed((x1, y1, x2, y2))
+                    embedding = embedder.embed((x1, y1, x2, y2))
+                    provenance = {
+                        "source": "fake",
+                        "ts": datetime.now(timezone.utc).isoformat(),
+                        "note": "stub",
+                    }
+                    store.add_exemplar("unknown", (x1, y1, x2, y2), embedding, provenance)
                     cv2.rectangle(frame, (x1, y1), (x2, y2), (0, 255, 0), 2)
                     cv2.putText(
                         frame,
@@ -78,6 +97,7 @@ def loop(*, dry_run: bool = False, use_fake: bool = False) -> int:
                         1,
                         cv2.LINE_AA,
                     )
+                store.flush()
             else:
                 cv2.rectangle(frame, (50, 50), (200, 200), (0, 255, 0), 2)
 
