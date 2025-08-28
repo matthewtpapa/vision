@@ -16,11 +16,11 @@ def test_webcam_command_supports_dry_run(capsys):
     assert captured.out.strip() == "Dry run: webcam loop skipped"
 
 
-def test_webcam_fake_detector_dry_run_includes_matcher(capsys):
+def test_webcam_fake_detector_dry_run_includes_labeler(capsys):
     assert main(["webcam", "--use-fake-detector", "--dry-run"]) == 0
     out = capsys.readouterr().out.strip()
     assert out == (
         "Dry run: fake detector produced 1 boxes, tracker assigned IDs, "
         "embedder produced 1 embeddings, cluster store prepared 1 exemplar, "
-        "matcher compared embeddings (stub)"
+        "matcher compared embeddings (stub), labeler assigned 'unknown'"
     )

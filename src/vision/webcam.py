@@ -9,6 +9,7 @@ from .tracker import Tracker
 from .embedder import Embedder
 from .cluster_store import ClusterStore
 from .matcher import Matcher
+from .labeler import Labeler
 
 
 def loop(*, dry_run: bool = False, use_fake: bool = False) -> int:
@@ -34,15 +35,18 @@ def loop(*, dry_run: bool = False, use_fake: bool = False) -> int:
             tracker = Tracker()
             embedder = Embedder()
             matcher = Matcher()
+            labeler = Labeler()
             boxes = detector.detect(None)
             tracked = tracker.update(boxes)
             embeddings = [embedder.embed(box) for _, box in tracked]
             _ = matcher.match(embeddings[0], embeddings) if embeddings else -1
+            _ = labeler.label(embeddings[0]) if embeddings else "unknown"
             print(
                 "Dry run: fake detector produced "
                 f"{len(boxes)} boxes, tracker assigned IDs, "
                 f"embedder produced {len(embeddings)} embeddings, "
-                "cluster store prepared 1 exemplar, matcher compared embeddings (stub)"
+                "cluster store prepared 1 exemplar, matcher compared embeddings (stub), "
+                "labeler assigned 'unknown'"
             )
             return 0
         print("Dry run: webcam loop skipped")
@@ -55,12 +59,14 @@ def loop(*, dry_run: bool = False, use_fake: bool = False) -> int:
     embedder: Embedder | None = None
     store: ClusterStore | None = None
     matcher: Matcher | None = None
+    labeler: Labeler | None = None
     if use_fake:
         detector = FakeDetector()
         tracker = Tracker()
         embedder = Embedder()
         store = ClusterStore()
         matcher = Matcher()
+        labeler = Labeler()
 
     cap = cv2.VideoCapture(0)
     if not cap.isOpened():
@@ -81,25 +87,35 @@ def loop(*, dry_run: bool = False, use_fake: bool = False) -> int:
                 and embedder is not None
                 and store is not None
                 and matcher is not None
+                and labeler is not None
             ):
                 boxes = detector.detect(frame)
                 tracked = tracker.update(boxes)
                 for tid, (x1, y1, x2, y2) in tracked:
                     embedding = embedder.embed((x1, y1, x2, y2))
                     _ = matcher.match(embedding, [])
+                    label = labeler.label(embedding)
                     provenance = {
                         "source": "fake",
                         "ts": datetime.now(timezone.utc).isoformat(),
                         "note": "stub",
                     }
-                    store.add_exemplar(
-                        "unknown", (x1, y1, x2, y2), embedding, provenance
-                    )
+                    store.add_exemplar(label, (x1, y1, x2, y2), embedding, provenance)
                     cv2.rectangle(frame, (x1, y1), (x2, y2), (0, 255, 0), 2)
                     cv2.putText(
                         frame,
                         f"ID {tid}",
                         (x1, max(0, y1 - 8)),
+                        cv2.FONT_HERSHEY_SIMPLEX,
+                        0.5,
+                        (0, 255, 0),
+                        1,
+                        cv2.LINE_AA,
+                    )
+                    cv2.putText(
+                        frame,
+                        f"Label {label}",
+                        (x1, min(y2 + 16, frame.shape[0] - 5)),
                         cv2.FONT_HERSHEY_SIMPLEX,
                         0.5,
                         (0, 255, 0),
