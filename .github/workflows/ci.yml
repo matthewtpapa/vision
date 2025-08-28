@@ -12,6 +12,10 @@ jobs:
           python-version: "3.11"
       - run: python -m pip install --upgrade pip setuptools wheel
       - run: pip install -e .
+      - name: Lint Markdown
+        uses: avto-dev/markdown-lint@v1
+        with:
+          args: '**/*.md'
       - run: python -m vision --version
       - run: vision --version
       - run: vision webcam --dry-run

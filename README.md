@@ -2,6 +2,11 @@
 
 A minimal Python package with a command-line interface stub.
 
+## MVP Definition & Success Metrics
+- Latency P95 ≤ 800ms @720p
+- Pipeline initializes in ≤2s
+- Dry run completes without errors
+
 ## Installation
 
 ```bash
@@ -11,11 +16,10 @@ pip install -e .
 ## Usage
 
 ```bash
-python -m vision --version
 vision --version
 ```
 
-Both commands output `Vision 0.0.1`.
+This prints `Vision 0.0.1`.
 
 To test the webcam integration, run the live loop:
 
@@ -29,30 +33,23 @@ For headless environments or continuous integration, use the dry run:
 vision webcam --dry-run
 ```
 
+which prints `Dry run: webcam loop skipped`.
+
 To exercise the fake detector instead of the built-in rectangle, use:
-
-```bash
-vision webcam --use-fake-detector
-```
-
-This overlays stub tracker IDs over the detected box and runs the stub
-embedder for each detection.
-
-The fake detector can also run in a dry run without requiring OpenCV:
 
 ```bash
 vision webcam --use-fake-detector --dry-run
 ```
 
-which prints ``Dry run: fake detector produced 1 boxes, tracker assigned IDs, embedder produced 1 embeddings, cluster store prepared 1 exemplar, matcher compared embeddings (stub), labeler assigned 'unknown'``.
+which prints `Dry run: fake detector produced 1 boxes, tracker assigned IDs, embedder produced 1 embeddings, cluster store prepared 1 exemplar, matcher compared embeddings (stub), labeler assigned 'unknown'`.
 
 For more options, run:
 
 ```bash
-python -m vision --help
+vision --help
 ```
 
-## Fake detector stub
+## Fake Detector
 
 The package includes a very small :class:`FakeDetector` that always
 returns the same bounding box.  It is a placeholder for future detection
@@ -65,7 +62,7 @@ detector = FakeDetector()
 detector.detect(None)  # -> [(50, 50, 200, 200)]
 ```
 
-## Tracker stub
+## Tracker
 
 The package also ships with a tiny :class:`Tracker` placeholder that assigns
 incremental IDs to bounding boxes.
@@ -77,7 +74,7 @@ tracker = Tracker()
 tracker.update([(50, 50, 200, 200)])  # -> [(1, (50, 50, 200, 200))]
 ```
 
-## Embedder stub
+## Embedder
 
 The package also contains an :class:`Embedder` placeholder that always
 returns the same 128-dimensional feature vector.
@@ -89,7 +86,7 @@ embedder = Embedder()
 embedder.embed(None)  # -> [0.0] * 128
 ```
 
-## Matcher stub
+## Matcher
 
 The package provides a simple :class:`Matcher` placeholder that searches for
 an embedding within a list of candidates and reports the index of the first
@@ -106,19 +103,19 @@ matcher.match([5.0], [])  # -> -1
 Dry runs of the webcam now report ``matcher compared embeddings (stub), labeler assigned 'unknown'`` to
 indicate the matcher and labeler were invoked.
 
-## Labeler stub
+## Labeler
 
 The package includes a small :class:`Labeler` placeholder that always
 returns the label ``"unknown"``.
 
 ```python
-from vision import Labeler
+from vision.labeler import Labeler
 
 labeler = Labeler()
 labeler.label(None)  # -> "unknown"
 ```
 
-## Cluster store stub
+## Cluster Store
 
 The package provides a :class:`ClusterStore` placeholder that persists
 *exemplar* records to ``data/kb.json`` by default. An exemplar has the
@@ -151,3 +148,7 @@ store.flush()
 # Later
 reloaded = ClusterStore.load("data/kb.json")
 ```
+
+## Documentation
+- [Project Charter](docs/charter.md)
+- [Architecture](docs/architecture.md)
