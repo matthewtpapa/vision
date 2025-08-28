@@ -21,6 +21,7 @@ pip install -e .
 ```
 
 For live webcam features, install with the OpenCV extra:
+
 ```bash
 pip install -e .[opencv]
 # or after publishing:

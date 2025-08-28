@@ -22,3 +22,4 @@ repos:
           - markdownlint@^0.33.0
         files: \.(md|markdown)$
         pass_filenames: true
+        stages: [commit, push]
