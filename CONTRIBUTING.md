@@ -8,6 +8,7 @@ cd vision
 python -m venv .venv
 source .venv/bin/activate
 make setup
+
 ```
 
 ## Local checks

@@ -54,6 +54,9 @@ mdlint:
 >echo "⚠️  Markdownlint skipped (no pre-commit or npx available). CI will enforce."; \
 >fi
 
+mdpush:
+>@if command -v pre-commit >/dev/null 2>&1; then pre-commit run --all-files --hook-stage push || true; fi
+
 mdfix:
 >if command -v npx >/dev/null 2>&1; then \
 >npx -y markdownlint-cli2-fix "**/*.md" --config .markdownlint-cli2.yaml; \
@@ -72,3 +75,17 @@ verify:
 >@if command -v pytest >/dev/null 2>&1; then pytest; else echo "⚠️ pytest not installed; skipping tests"; fi
 >@echo "==> Markdownlint"
 >$(MAKE) mdlint
+>$(MAKE) mdpush
+
+build:
+>python -m pip install --upgrade build twine
+>python -m build
+
+check:
+>python -m twine check dist/*
+
+clean:
+>rm -rf dist build *.egg-info
+
+release: clean build check
+>@echo "✅ Artifacts ready in ./dist"
