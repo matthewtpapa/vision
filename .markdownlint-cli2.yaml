@@ -1,4 +1,6 @@
 config:
-  MD013: false   # allow long lines (badges, diffs, code blocks)
-  MD033: false   # allow inline HTML
-  MD041: true    # require a heading on the first line
+  MD013: false   # long lines
+  MD033: false   # inline HTML
+  MD041: false   # first line must be a heading (disabled for badges)
+  MD024:
+    siblings_only: true  # duplicate headings allowed in different sections
