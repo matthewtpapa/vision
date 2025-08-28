@@ -8,6 +8,7 @@
   - Coverage artifacts always uploaded.
   - Markdownlint runs in CI only; no local Node/npm required.
   - Docs updated: CI status note and coverage workflow.
+  - Local coverage target fails fast when `pytest-cov` is missing; CI remains the source of truth.
 
 ## v0.0.1 - 2025-08-28
 

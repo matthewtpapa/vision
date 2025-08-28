@@ -221,16 +221,17 @@ make setup
 ```
 
 This installs development tools like `pytest`, `pytest-cov`, `mypy`, and `ruff`.
-Coverage runs in CI and uploads `.coverage` and `coverage.xml` artifacts.
-Run `make test-cov` if you need a local report.
+Coverage runs in CI by default and uploads `.coverage` and `coverage.xml` artifacts.
+To run coverage locally, ensure these dev dependencies are installed and run `make test-cov`.
+If installs are blocked, rely on CI coverage artifacts instead.
 
 ### Run all checks
 
 ```bash
-ruff check . && ruff format --check . && mypy src/vision && make test
+ruff check . && ruff format --check . && mypy src/vision && make test && make test-cov
 ```
 
-Run `make test-cov` to generate coverage locally.
+If `make test-cov` reports missing `pytest-cov`, install dev deps (`make setup`) or review coverage in CI.
 
 #### Optional: pre-commit
 
