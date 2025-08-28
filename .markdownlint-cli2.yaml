@@ -1,0 +1,4 @@
+config:
+  MD013: false   # allow long lines (badges, diffs, code blocks)
+  MD033: false   # allow inline HTML
+  MD041: true    # require a heading on the first line
