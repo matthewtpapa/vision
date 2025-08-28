@@ -44,7 +44,7 @@ The fake detector can also run in a dry run without requiring OpenCV:
 vision webcam --use-fake-detector --dry-run
 ```
 
-which prints ``Dry run: fake detector produced 1 boxes, tracker assigned IDs, embedder produced 1 embeddings``.
+which prints ``Dry run: fake detector produced 1 boxes, tracker assigned IDs, embedder produced 1 embeddings, cluster store prepared 1 exemplar``.
 
 For more options, run:
 
@@ -87,4 +87,38 @@ from vision.embedder import Embedder
 
 embedder = Embedder()
 embedder.embed(None)  # -> [0.0] * 128
+```
+
+## Cluster store stub
+
+The package provides a :class:`ClusterStore` placeholder that persists
+*exemplar* records to ``data/kb.json`` by default. An exemplar has the
+following fields:
+
+```json
+{
+  "label": "unknown",
+  "bbox": [x1, y1, x2, y2],
+  "embedding": [0.0, ... 128 floats ...],
+  "provenance": {"source": "fake", "ts": "<ISO8601>", "note": "stub"}
+}
+```
+
+Dry runs of the webcam (``vision webcam --use-fake-detector --dry-run``)
+do not write to disk, while live runs with ``--use-fake-detector`` append an
+exemplar per frame and flush the store.
+
+```python
+from vision.cluster_store import ClusterStore
+
+store = ClusterStore()  # persists to data/kb.json
+store.add_exemplar(
+    "unknown",
+    (1, 2, 3, 4),
+    [0.0] * 128,
+    {"source": "fake", "ts": "2025-01-01T00:00:00Z", "note": "stub"},
+)
+store.flush()
+# Later
+reloaded = ClusterStore.load("data/kb.json")
 ```
