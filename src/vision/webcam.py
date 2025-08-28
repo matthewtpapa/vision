@@ -2,14 +2,14 @@
 
 from __future__ import annotations
 
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
-from .fake_detector import FakeDetector
-from .tracker import Tracker
-from .embedder import Embedder
 from .cluster_store import ClusterStore
-from .matcher import Matcher
+from .embedder import Embedder
+from .fake_detector import FakeDetector
 from .labeler import Labeler
+from .matcher import Matcher
+from .tracker import Tracker
 
 
 def loop(*, dry_run: bool = False, use_fake: bool = False) -> int:
@@ -31,16 +31,16 @@ def loop(*, dry_run: bool = False, use_fake: bool = False) -> int:
 
     if dry_run:
         if use_fake:
-            detector = FakeDetector()
-            tracker = Tracker()
-            embedder = Embedder()
-            matcher = Matcher()
-            labeler = Labeler()
-            boxes = detector.detect(None)
-            tracked = tracker.update(boxes)
-            embeddings = [embedder.embed(box) for _, box in tracked]
-            _ = matcher.match(embeddings[0], embeddings) if embeddings else -1
-            _ = labeler.label(embeddings[0]) if embeddings else "unknown"
+            fake_detector = FakeDetector()
+            fake_tracker = Tracker()
+            fake_embedder = Embedder()
+            fake_matcher = Matcher()
+            fake_labeler = Labeler()
+            boxes = fake_detector.detect(None)
+            tracked = fake_tracker.update(boxes)
+            embeddings = [fake_embedder.embed(box) for _, box in tracked]
+            _ = fake_matcher.match(embeddings[0], embeddings) if embeddings else -1
+            _ = fake_labeler.label(embeddings[0]) if embeddings else "unknown"
             print(
                 "Dry run: fake detector produced "
                 f"{len(boxes)} boxes, tracker assigned IDs, "
@@ -97,7 +97,7 @@ def loop(*, dry_run: bool = False, use_fake: bool = False) -> int:
                     label = labeler.label(embedding)
                     provenance = {
                         "source": "fake",
-                        "ts": datetime.now(timezone.utc).isoformat(),
+                        "ts": datetime.now(UTC).isoformat(),
                         "note": "stub",
                     }
                     store.add_exemplar(label, (x1, y1, x2, y2), embedding, provenance)

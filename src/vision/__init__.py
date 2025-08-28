@@ -1,9 +1,9 @@
 """Top-level package for vision."""
 
-from .fake_detector import FakeDetector
 from .embedder import Embedder
-from .matcher import Matcher
+from .fake_detector import FakeDetector
 from .labeler import Labeler
+from .matcher import Matcher
 from .ris import ReverseImageSearchStub
 from .telemetry import Telemetry
 

@@ -23,6 +23,6 @@ def test_cluster_store_persists_exemplars(tmp_path):
     assert "ts" in ex["provenance"]
 
     # Load again
-    reloaded = ClusterStore.load(path)
+    _ = ClusterStore.load(path)
     # Reloaded store should reflect the same exemplar count
     assert len(json.loads(Path(path).read_text())["exemplars"]) == 1

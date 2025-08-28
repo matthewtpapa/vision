@@ -199,3 +199,26 @@ We use a lightweight, self-enforced workflow:
 - Use the PR template; link an issue; keep changes small.
 - Squash merge and delete the branch after merge.
 
+### Development setup
+
+```bash
+python -m venv .venv && source .venv/bin/activate
+pip install -e .
+pip install -r requirements-dev.txt
+```
+
+This installs development tools like `pytest`, `pytest-cov`, `mypy`, `ruff`, and
+`pre-commit` so coverage reports work.
+
+### Run all checks
+
+```bash
+ruff check . && ruff format --check . && mypy src/vision && pytest -q --maxfail=1 --disable-warnings --cov=vision --cov-report=term-missing
+```
+
+Optionally enable pre-commit:
+
+```bash
+pre-commit install
+```
+

@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import Any, List, Tuple
+from typing import Any
 
 
 class FakeDetector:
@@ -12,7 +12,7 @@ class FakeDetector:
     bounding box regardless of the input frame.
     """
 
-    def detect(self, frame: Any) -> List[Tuple[int, int, int, int]]:
+    def detect(self, frame: Any) -> list[tuple[int, int, int, int]]:
         """Return a list containing a single dummy bounding box.
 
         Parameters

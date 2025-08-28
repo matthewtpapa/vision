@@ -5,7 +5,6 @@ from __future__ import annotations
 import json
 from pathlib import Path
 from tempfile import NamedTemporaryFile
-from typing import Dict, List
 
 
 class ClusterStore:
@@ -18,19 +17,19 @@ class ClusterStore:
     """
 
     def __init__(self, path: str | Path = "data/kb.json") -> None:
-        self._store: Dict[int, List[List[float]]] = {}
+        self._store: dict[int, list[list[float]]] = {}
 
         self._path = Path(path)
         self._path.parent.mkdir(parents=True, exist_ok=True)
-        self._data = {"exemplars": []}
+        self._data: dict[str, list[dict[str, object]]] = {"exemplars": []}
 
     # ------------------------------------------------------------------
     # Backwards compatible in-memory API
-    def add(self, cluster_id: int, embedding: List[float]) -> None:
+    def add(self, cluster_id: int, embedding: list[float]) -> None:
         """Add an embedding to the cluster identified by ``cluster_id``."""
         self._store.setdefault(cluster_id, []).append(embedding)
 
-    def get(self, cluster_id: int) -> List[List[float]]:
+    def get(self, cluster_id: int) -> list[list[float]]:
         """Return a list of embeddings for ``cluster_id``.
 
         If the cluster ID has not been seen before, an empty list is returned.
@@ -43,7 +42,7 @@ class ClusterStore:
         self,
         label: str,
         bbox: tuple[int, int, int, int],
-        embedding: List[float],
+        embedding: list[float],
         provenance: dict,
     ) -> None:
         """Append an exemplar description to the in-memory buffer."""
@@ -65,7 +64,7 @@ class ClusterStore:
         Path(tmp.name).replace(self._path)
 
     @classmethod
-    def load(cls, path: str | Path) -> "ClusterStore":
+    def load(cls, path: str | Path) -> ClusterStore:
         """Load existing exemplars from ``path`` if it exists."""
 
         p = Path(path)
