@@ -7,6 +7,10 @@
 - Strict `make mdlint` with pre-commit/npx fallback and optional `make mdfix` for auto-fixes.
 - Setup and coverage targets now degrade gracefully when tooling is missing.
 - Docs updated for constrained environments; CI uploads coverage artifacts and uses Makefile targets.
+- New CONTRIBUTING.md describing local setup, verification, and markdown workflow.
+- README badge fix to point to matthewtpapa/vision.
+- Minor CI polish: added success echo after verify checks.
+- Version alignment enforced: pyproject.toml, __init__.py, and CLI tests now lockstep at 0.0.2 to prevent drift.
 
 ## v0.0.1 - 2025-08-28
 
