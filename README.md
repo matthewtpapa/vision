@@ -209,6 +209,10 @@ We use a lightweight, self-enforced workflow:
 - Use the PR template; link an issue; keep changes small.
 - Squash merge and delete the branch after merge.
 
+> Note on docs linting: markdownlint runs in CI via
+> `DavidAnson/markdownlint-cli2-action`. You don’t need Node/npm locally.
+> Keep Markdown readable; CI will flag formatting issues on PRs.
+
 ### Development setup
 
 ```bash
