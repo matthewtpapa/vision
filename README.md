@@ -238,6 +238,8 @@ If `pip install` is blocked, CI will still upload coverage artifacts you can dow
 ruff check . && ruff format --check . && mypy src/vision && make test
 # optionally, add coverage locally if available:
 # make test-cov && make cov-html
+# quick CLI smoke test without installing
+PYTHONPATH=src python -m vision --version
 ```
 
 If `make test-cov` reports missing `pytest-cov`, install dev deps (`make setup`) or review coverage in CI.
@@ -249,7 +251,7 @@ pip install pre-commit
 pre-commit install
 ```
 
-If `make verify` or `make mdlint` reports "pre-commit: command not found", install it with `pip install pre-commit && pre-commit install`, or rely on the automatic `npx` fallback in `make mdlint`.
+If `make verify` or `make mdlint` reports "pre-commit: command not found", install it with `pip install pre-commit && pre-commit install`, or rely on the `npx`-based `make mdlint`/`make mdfix` targets.
 
 If `make mdlint` prints "⚠️  Markdownlint skipped", that's fine—CI will still enforce the rules.
 
@@ -273,6 +275,9 @@ pre-commit install
 
 # lint all Markdown files (same as CI)
 make mdlint
+
+# auto-fix Markdown issues (requires npx)
+make mdfix
 ```
 
 Whitespace and line endings are normalized via `.editorconfig` and `.gitattributes`

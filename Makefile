@@ -1,5 +1,5 @@
 .RECIPEPREFIX := >
-.PHONY: setup test test-cov cov-html lint fmt format type mdlint verify help
+.PHONY: setup test test-cov cov-html lint fmt format type mdlint mdfix verify help
 
 # Safer bash in make recipes
 SHELL := bash
@@ -15,6 +15,7 @@ help:
 >echo "make test-cov  - run tests with coverage (requires pytest-cov)"
 >echo "make cov-html  - build local HTML coverage report (if coverage data exists)"
 >echo "make mdlint    - run markdownlint (same rules as CI)"
+>echo "make mdfix     - auto-fix markdownlint issues (requires npx)"
 >echo "make verify    - run all local checks (lint, fmt-check, type, test, markdownlint)"
 
 setup:
@@ -46,11 +47,18 @@ type:
 
 mdlint:
 >if command -v pre-commit >/dev/null 2>&1; then \
->pre-commit run markdownlint-cli2 --all-files || true; \
+>pre-commit run markdownlint-cli2 --all-files; \
 >elif command -v npx >/dev/null 2>&1; then \
->npx -y markdownlint-cli2-fix "**/*.md" --config .markdownlint-cli2.yaml || true; \
+>npx -y markdownlint-cli2 "**/*.md" --config .markdownlint-cli2.yaml; \
 >else \
 >echo "⚠️  Markdownlint skipped (no pre-commit or npx available). CI will enforce."; \
+>fi
+
+mdfix:
+>if command -v npx >/dev/null 2>&1; then \
+>npx -y markdownlint-cli2-fix "**/*.md" --config .markdownlint-cli2.yaml; \
+>else \
+>echo "⚠️  Markdownlint fix skipped (npx not available)."; \
 >fi
 
 verify:
