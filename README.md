@@ -249,10 +249,9 @@ pip install pre-commit
 pre-commit install
 ```
 
-If `make verify` or `make mdlint` reports "pre-commit: command not found", install it with `pip install pre-commit`.
+If `make verify` or `make mdlint` reports "pre-commit: command not found", install it with `pip install pre-commit && pre-commit install`, or rely on the automatic `npx` fallback in `make mdlint`.
 
 Run `make help` to see available targets.
-
 
 #### One-command local checks
 

@@ -45,7 +45,11 @@ type:
 >mypy src/vision
 
 mdlint:
->pre-commit run markdownlint-cli2 --all-files
+>if command -v pre-commit >/dev/null 2>&1; then \
+>pre-commit run markdownlint-cli2 --all-files; \
+>else \
+>npx -y markdownlint-cli2-fix "**/*.md" --config .markdownlint-cli2.yaml; \
+>fi
 
 verify:
 >@echo "==> Lint"
