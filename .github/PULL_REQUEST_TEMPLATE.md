@@ -8,11 +8,10 @@
 
 ## DoD
 
- - [ ] tests added/updated  
- - [ ] docs updated (README/CHANGELOG)  
- - [ ] CI green
+- [ ] tests added/updated
+- [ ] docs updated (README/CHANGELOG)
+- [ ] CI green
 
 ## notes
 
 <!-- optional -->
-
