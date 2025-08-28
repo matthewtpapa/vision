@@ -8,7 +8,6 @@ test:
 	pytest
 
 test-cov:
-	pip install pytest-cov
 	pytest --cov=vision --cov-report=term-missing --cov-report=xml
 
 lint:

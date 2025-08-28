@@ -1,6 +1,6 @@
 # vision
 
-![CI](https://github.com/matthewtpapa/vision/actions/workflows/ci.yml/badge.svg)
+![CI](https://github.com/<OWNER>/<REPO>/actions/workflows/ci.yml/badge.svg)
 
 A minimal Python package with a command-line interface stub.
 
@@ -25,7 +25,7 @@ python -m vision --version
 vision --version
 ```
 
-Both commands output `Vision 0.0.1`.
+Both commands output `Vision 0.0.2`.
 
 To test the webcam integration, run the live loop:
 
@@ -221,7 +221,8 @@ make setup
 ```
 
 This installs development tools like `pytest`, `pytest-cov`, `mypy`, and `ruff`.
-Coverage runs in CI; run `make test-cov` if you need a local report.
+Coverage runs in CI and uploads `.coverage` and `coverage.xml` artifacts.
+Run `make test-cov` if you need a local report.
 
 ### Run all checks
 

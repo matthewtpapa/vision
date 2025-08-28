@@ -1,5 +1,14 @@
 # Changelog
 
+## v0.0.2 - 2025-08-28
+
+- Finalize M0 harden & polish:
+  - CI calls Makefile targets (single source of truth).
+  - Dev tools pinned to stable ranges to reduce churn.
+  - Coverage artifacts always uploaded.
+  - Markdownlint runs in CI only; no local Node/npm required.
+  - Docs updated: CI status note and coverage workflow.
+
 ## v0.0.1 - 2025-08-28
 
 - Initial M0 release.

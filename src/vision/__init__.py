@@ -7,7 +7,7 @@ from .matcher import Matcher
 from .ris import ReverseImageSearchStub
 from .telemetry import Telemetry
 
-__version__ = "0.0.1"
+__version__ = "0.0.2"
 __all__ = [
     "__version__",
     "FakeDetector",
