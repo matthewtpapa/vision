@@ -3,6 +3,10 @@
 ## v0.0.2 - 2025-08-28
 
 - Finalize M0 harden & polish:
+  - Fixed markdownlint CI failure and added local markdownlint (pre-commit) with the same rules as CI.
+  - Added `.editorconfig` and `.gitattributes` to standardize whitespace/line endings across OSes.
+  - New `make verify` (one command to run lint, format check, types, tests, markdownlint).
+  - Documented local/CI parity and workflow in README.
   - CI calls Makefile targets (single source of truth).
   - Dev tools pinned to stable ranges to reduce churn.
   - Coverage artifacts always uploaded.

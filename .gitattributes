@@ -1,2 +1,14 @@
-# Auto detect text files and perform LF normalization
 * text=auto
+
+*.py   text eol=lf
+*.md   text eol=lf
+*.yml  text eol=lf
+*.yaml text eol=lf
+*.toml text eol=lf
+*.ini  text eol=lf
+*.txt  text eol=lf
+
+# Keep JSON/coverage artifacts as text but LF normalized
+*.json text eol=lf
+coverage.xml text eol=lf
+.coveragerc text eol=lf

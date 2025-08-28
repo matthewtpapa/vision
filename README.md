@@ -3,7 +3,6 @@
 <!-- Replace <OWNER>/<REPO> with your repo slug after merge -->
 ![CI](https://github.com/<OWNER>/<REPO>/actions/workflows/ci.yml/badge.svg)
 
-
 A minimal Python package with a command-line interface stub.
 
 ## Quickstart
@@ -251,3 +250,26 @@ pre-commit install
 ```
 
 Run `make help` to see available targets.
+
+#### One-command local checks
+
+Before pushing, run:
+
+```bash
+make verify
+```
+
+This runs ruff (lint + format check), mypy, pytest, and markdownlint with the same rules as CI.
+
+#### Markdown lint parity with CI
+
+```bash
+# one-time
+pre-commit install
+
+# lint all Markdown files (same as CI)
+make mdlint
+```
+
+Whitespace and line endings are normalized via `.editorconfig` and `.gitattributes`
+to avoid OS-specific churn.

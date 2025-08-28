@@ -1,5 +1,9 @@
 .RECIPEPREFIX := >
-.PHONY: setup test test-cov cov-html lint fmt format type help
+.PHONY: setup test test-cov cov-html lint fmt format type mdlint verify help
+
+# Safer bash in make recipes
+SHELL := bash
+.SHELLFLAGS := -eu -o pipefail -c
 
 help:
 >echo "make setup     - install package + dev tools"
@@ -10,6 +14,8 @@ help:
 >echo "make test      - run tests"
 >echo "make test-cov  - run tests with coverage (requires pytest-cov)"
 >echo "make cov-html  - build local HTML coverage report (if coverage data exists)"
+>echo "make mdlint    - run markdownlint (same rules as CI)"
+>echo "make verify    - run all local checks (lint, fmt-check, type, test, markdownlint)"
 
 setup:
 >pip install -e .
@@ -37,3 +43,18 @@ format:
 
 type:
 >mypy src/vision
+
+mdlint:
+>pre-commit run markdownlint-cli2 --all-files
+
+verify:
+>@echo "==> Lint"
+>ruff check .
+>@echo "==> Format check"
+>ruff format --check .
+>@echo "==> Types"
+>mypy src/vision
+>@echo "==> Tests"
+>pytest
+>@echo "==> Markdownlint"
+>pre-commit run markdownlint-cli2 --all-files
