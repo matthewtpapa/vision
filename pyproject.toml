@@ -5,12 +5,26 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "vision"
 version = "0.0.2"
-description = "vision package"
-authors = [{name = "Vision Authors", email = "dev@example.com"}]
+description = "Minimal vision pipeline stubs with CLI (M0)"
 readme = "README.md"
-requires-python = ">=3.8"
+requires-python = ">=3.11"
 license = {text = "MIT"}
-dependencies = ["opencv-python"]
+authors = [{ name = "Vision Authors", email = "dev@example.com" }]
+classifiers = [
+  "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: 3.11",
+  "License :: OSI Approved :: MIT License",
+  "Operating System :: OS Independent",
+]
+dependencies = []
+
+[project.optional-dependencies]
+opencv = ["opencv-python"]
+
+[project.urls]
+Homepage = "https://github.com/matthewtpapa/vision"
+Repository = "https://github.com/matthewtpapa/vision"
+Issues = "https://github.com/matthewtpapa/vision/issues"
 
 [project.scripts]
 vision = "vision.cli:main"

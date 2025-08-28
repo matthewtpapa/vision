@@ -10,12 +10,21 @@ A minimal Python package with a command-line interface stub.
 pip install -e .
 vision --version
 vision webcam --dry-run
+# For live webcam features (requires OpenCV):
+pip install -e .[opencv]
 ```
 
 ## Installation
 
 ```bash
 pip install -e .
+```
+
+For live webcam features, install with the OpenCV extra:
+```bash
+pip install -e .[opencv]
+# or after publishing:
+# pip install "vision[opencv]"
 ```
 
 ## Usage

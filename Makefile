@@ -72,3 +72,16 @@ verify:
 >@if command -v pytest >/dev/null 2>&1; then pytest; else echo "⚠️ pytest not installed; skipping tests"; fi
 >@echo "==> Markdownlint"
 >$(MAKE) mdlint
+
+build:
+>python -m pip install --upgrade build twine
+>python -m build
+
+check:
+>python -m twine check dist/*
+
+clean:
+>rm -rf dist build *.egg-info
+
+release: clean build check
+>@echo "✅ Artifacts ready in ./dist"
