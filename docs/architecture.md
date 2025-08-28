@@ -33,6 +33,7 @@ Webcam (or Dry Run)
   "embedding": [0.0, "... 128 floats ..."],
   "provenance": { "source": "fake", "ts": "<ISO8601>", "note": "stub" }
 }
+
 ```
 
 Default path: data/kb.json

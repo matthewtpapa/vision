@@ -12,12 +12,14 @@ vision --version
 vision webcam --dry-run
 # For live webcam features (requires OpenCV):
 pip install -e .[opencv]
+
 ```
 
 ## Installation
 
 ```bash
 pip install -e .
+
 ```
 
 For live webcam features, install with the OpenCV extra:
@@ -26,6 +28,7 @@ For live webcam features, install with the OpenCV extra:
 pip install -e .[opencv]
 # or after publishing:
 # pip install "vision[opencv]"
+
 ```
 
 ## Usage
@@ -33,6 +36,7 @@ pip install -e .[opencv]
 ```bash
 python -m vision --version
 vision --version
+
 ```
 
 Both commands output `Vision 0.0.2`.
@@ -41,18 +45,21 @@ To test the webcam integration, run the live loop:
 
 ```bash
 vision webcam
+
 ```
 
 For headless environments or continuous integration, use the dry run:
 
 ```bash
 vision webcam --dry-run
+
 ```
 
 To exercise the fake detector instead of the built-in rectangle, use:
 
 ```bash
 vision webcam --use-fake-detector
+
 ```
 
 This overlays stub tracker IDs over the detected box and runs the stub
@@ -62,18 +69,21 @@ The fake detector can also run in a dry run without requiring OpenCV:
 
 ```bash
 vision webcam --use-fake-detector --dry-run
+
 ```
 
 which prints:
 
 ```text
 Dry run: fake detector produced 1 boxes, tracker assigned IDs, embedder produced 1 embeddings, cluster store prepared 1 exemplar, matcher compared embeddings (stub), labeler assigned 'unknown'
+
 ```
 
 For more options, run:
 
 ```bash
 python -m vision --help
+
 ```
 
 ## Fake detector stub
@@ -87,6 +97,7 @@ from vision.fake_detector import FakeDetector
 
 detector = FakeDetector()
 detector.detect(None)  # -> [(50, 50, 200, 200)]
+
 ```
 
 ## Tracker stub
@@ -99,6 +110,7 @@ from vision.tracker import Tracker
 
 tracker = Tracker()
 tracker.update([(50, 50, 200, 200)])  # -> [(1, (50, 50, 200, 200))]
+
 ```
 
 ## Embedder stub
@@ -111,6 +123,7 @@ from vision.embedder import Embedder
 
 embedder = Embedder()
 embedder.embed(None)  # -> [0.0] * 128
+
 ```
 
 ## Matcher stub
@@ -125,12 +138,14 @@ from vision.matcher import Matcher
 matcher = Matcher()
 matcher.match([1.0, 2.0], [[1.0, 2.0], [3.0, 4.0]])  # -> 0
 matcher.match([5.0], [])  # -> -1
+
 ```
 
 Dry runs of the webcam now report:
 
 ```text
 matcher compared embeddings (stub), labeler assigned 'unknown'
+
 ```
 
 to indicate the matcher and labeler were invoked.
@@ -145,6 +160,7 @@ from vision import Labeler
 
 labeler = Labeler()
 labeler.label(None)  # -> "unknown"
+
 ```
 
 ## Cluster store stub
@@ -160,6 +176,7 @@ following fields:
   "embedding": [0.0, ... 128 floats ...],
   "provenance": {"source": "fake", "ts": "<ISO8601>", "note": "stub"}
 }
+
 ```
 
 Dry runs of the webcam (``vision webcam --use-fake-detector --dry-run``)
@@ -179,6 +196,7 @@ store.add_exemplar(
 store.flush()
 # Later
 reloaded = ClusterStore.load("data/kb.json")
+
 ```
 
 ## RIS (Reverse Image Search) Stub
@@ -190,6 +208,7 @@ from vision import ReverseImageSearchStub
 
 ris = ReverseImageSearchStub()
 ris.search(object())  # -> []
+
 ```
 
 ## Telemetry Stub
@@ -202,6 +221,7 @@ from vision import Telemetry
 t = Telemetry()
 t.inc("frames")
 t.set_gauge("latency_ms", 12.3)
+
 ```
 
 ## Documentation
@@ -229,6 +249,7 @@ We use a lightweight, self-enforced workflow:
 ```bash
 python -m venv .venv && source .venv/bin/activate
 make setup
+
 ```
 
 This installs development tools like `pytest`, `pytest-cov`, `mypy`, and `ruff`.
@@ -238,6 +259,7 @@ To run coverage locally (optional):
 ```bash
 make test-cov         # requires pytest-cov
 make cov-html         # builds htmlcov/ if .coverage exists
+
 ```
 
 If `pip install` is blocked, CI will still upload coverage artifacts you can download from the PR run.
@@ -250,6 +272,7 @@ ruff check . && ruff format --check . && mypy src/vision && make test
 # make test-cov && make cov-html
 # CLI smoke test (no install)
 PYTHONPATH=src python -m vision --version
+
 ```
 
 If `make test-cov` reports missing `pytest-cov`, install dev deps (`make setup`) or review coverage in CI.
@@ -259,6 +282,7 @@ If `make test-cov` reports missing `pytest-cov`, install dev deps (`make setup`)
 ```bash
 pip install pre-commit
 pre-commit install
+
 ```
 
 If `make verify` or `make mdlint` reports "pre-commit: command not found", install it with `pip install pre-commit && pre-commit install`, or rely on the `npx`-based `make mdlint`/`make mdfix` targets.
@@ -273,6 +297,7 @@ Before pushing, run:
 
 ```bash
 make verify
+
 ```
 
 This runs ruff (lint + format check), mypy, pytest, and markdownlint with the same rules as CI.
@@ -285,6 +310,7 @@ make mdlint
 
 # auto-fix Markdown issues (npx only, optional)
 make mdfix
+
 ```
 
 If neither `pre-commit` nor `npx` is installed, `make mdlint` prints
