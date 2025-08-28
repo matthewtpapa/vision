@@ -1,0 +1,21 @@
+[detector]
+model_path = "models/yolov8n.onnx"
+input_size = 640
+
+[tracker]
+type = "bytetrack"
+
+[embedder]
+model = "ViT-B-32-openai"
+batch_size = 8
+device = "cpu"
+
+[matcher]
+index_type = "faiss-flat"
+threshold = 0.32
+
+[pipeline]
+frame_stride = 1
+
+[latency]
+budget_ms = 66

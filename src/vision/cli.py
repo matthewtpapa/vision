@@ -6,6 +6,9 @@ import argparse
 from collections.abc import Sequence
 
 from . import __version__, webcam
+from .config import get_config
+
+_ = get_config()
 
 
 def build_parser() -> argparse.ArgumentParser:
