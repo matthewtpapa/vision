@@ -19,9 +19,7 @@ class SimpleIdTracker(Tracker):
     def update(self, detections: list[Detection]) -> list[Track]:
         tracks: list[Track] = []
         for i, det in enumerate(detections, start=1):
-            tracks.append(
-                Track(track_id=i, bbox=det.bbox, score=det.score, cls=det.cls)
-            )
+            tracks.append(Track(track_id=i, bbox=det.bbox, score=det.score, cls=det.cls))
         return tracks
 
 
