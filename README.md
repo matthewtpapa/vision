@@ -230,7 +230,7 @@ make test-cov         # requires pytest-cov
 make cov-html         # builds htmlcov/ if .coverage exists
 ```
 
-If installs are blocked, rely on CI coverage artifacts instead (download from the PR run).
+If `pip install` is blocked, CI will still upload coverage artifacts you can download from the PR run.
 
 ### Run all checks
 
@@ -250,6 +250,8 @@ pre-commit install
 ```
 
 If `make verify` or `make mdlint` reports "pre-commit: command not found", install it with `pip install pre-commit && pre-commit install`, or rely on the automatic `npx` fallback in `make mdlint`.
+
+If `make mdlint` prints "⚠️  Markdownlint skipped", that's fine—CI will still enforce the rules.
 
 Run `make help` to see available targets.
 
