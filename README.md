@@ -210,9 +210,10 @@ We use a lightweight, self-enforced workflow:
 - Use the PR template; link an issue; keep changes small.
 - Squash merge and delete the branch after merge.
 
-> Note on docs linting: markdownlint runs in CI via
-> `DavidAnson/markdownlint-cli2-action`. You don’t need Node/npm locally.
-> Keep Markdown readable; CI will flag formatting issues on PRs.
+> Markdown linting: `make mdlint` runs the same rules as CI and fails on
+> issues when tools are available. `make mdfix` uses `npx` for auto-fixes.
+> If both `pre-commit` and `npx` are missing, `make mdlint` prints a skip
+> warning — CI will still enforce the rules.
 
 ### Development setup
 
@@ -238,7 +239,7 @@ If `pip install` is blocked, CI will still upload coverage artifacts you can dow
 ruff check . && ruff format --check . && mypy src/vision && make test
 # optionally, add coverage locally if available:
 # make test-cov && make cov-html
-# quick CLI smoke test without installing
+# CLI smoke test (no install)
 PYTHONPATH=src python -m vision --version
 ```
 
@@ -270,15 +271,14 @@ This runs ruff (lint + format check), mypy, pytest, and markdownlint with the sa
 #### Markdown lint parity with CI
 
 ```bash
-# one-time
-pre-commit install
-
-# lint all Markdown files (same as CI)
+# strict lint (pre-commit if installed, else npx)
 make mdlint
 
-# auto-fix Markdown issues (requires npx)
+# auto-fix Markdown issues (npx only, optional)
 make mdfix
 ```
 
-Whitespace and line endings are normalized via `.editorconfig` and `.gitattributes`
-to avoid OS-specific churn.
+If neither `pre-commit` nor `npx` is installed, `make mdlint` prints
+"Markdownlint skipped" but exits 0; CI still runs the checks. Whitespace and
+line endings are normalized via `.editorconfig` and `.gitattributes` to avoid
+OS-specific churn.

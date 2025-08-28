@@ -4,7 +4,7 @@
 
 - Fixed markdownlint CI failures and blank-line issues.
 - Added `.editorconfig` and `.gitattributes` for whitespace normalization.
-- `make mdlint` falls back to pre-commit, npx, or skips with a warning.
+- Strict `make mdlint` with pre-commit/npx fallback and optional `make mdfix` for auto-fixes.
 - Setup and coverage targets now degrade gracefully when tooling is missing.
 - Docs updated for constrained environments; CI uploads coverage artifacts and uses Makefile targets.
 
