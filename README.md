@@ -1,7 +1,6 @@
 # vision
 
-<!-- Replace <OWNER>/<REPO> with your repo slug after merge -->
-![CI](https://github.com/<OWNER>/<REPO>/actions/workflows/ci.yml/badge.svg)
+![CI](https://github.com/matthewtpapa/vision/actions/workflows/ci.yml/badge.svg)
 
 A minimal Python package with a command-line interface stub.
 
