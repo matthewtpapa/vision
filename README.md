@@ -4,6 +4,14 @@
 
 A minimal Python package with a command-line interface stub.
 
+## Quickstart
+
+```bash
+pip install -e .
+vision --version
+vision webcam --dry-run
+```
+
 ## Installation
 
 ```bash
@@ -180,6 +188,7 @@ t.set_gauge("latency_ms", 12.3)
 ## Documentation
 - [Project Charter](docs/charter.md)
 - [Architecture](docs/architecture.md)
+- [Changelog](CHANGELOG.md)
 
 ## Contributing
 
