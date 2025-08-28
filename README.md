@@ -1,5 +1,7 @@
 # vision
 
+![CI](https://github.com/matthewtpapa/vision/actions/workflows/ci.yml/badge.svg)
+
 A minimal Python package with a command-line interface stub.
 
 ## Installation
@@ -178,3 +180,13 @@ t.set_gauge("latency_ms", 12.3)
 ## Documentation
 - [Project Charter](docs/charter.md)
 - [Architecture](docs/architecture.md)
+
+## Contributing
+
+We use a lightweight, self-enforced workflow:
+
+- Open PRs from topic branches; do not push directly to `main`.
+- Ensure CI is green (`pytest -q` + markdownlint job).
+- Use the PR template; link an issue; keep changes small.
+- Squash merge and delete the branch after merge.
+
