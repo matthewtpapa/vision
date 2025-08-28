@@ -31,4 +31,3 @@ Optional: `make test-cov && make cov-html`. Continuous integration always upload
 - Squash merge and delete the branch after merge.
 
 `pre-commit` is optional but recommended: install with `pip install pre-commit && pre-commit install`.
-
