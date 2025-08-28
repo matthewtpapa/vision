@@ -151,3 +151,30 @@ store.flush()
 # Later
 reloaded = ClusterStore.load("data/kb.json")
 ```
+
+## RIS (Reverse Image Search) Stub
+
+A no-network placeholder that always returns an empty result.
+
+```python
+from vision import ReverseImageSearchStub
+
+ris = ReverseImageSearchStub()
+ris.search(object())  # -> []
+```
+
+## Telemetry Stub
+
+An in-memory metrics sink intended to be replaced later.
+
+```python
+from vision import Telemetry
+
+t = Telemetry()
+t.inc("frames")
+t.set_gauge("latency_ms", 12.3)
+```
+
+## Documentation
+- [Project Charter](docs/charter.md)
+- [Architecture](docs/architecture.md)
