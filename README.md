@@ -217,11 +217,10 @@ We use a lightweight, self-enforced workflow:
 
 ```bash
 python -m venv .venv && source .venv/bin/activate
-pip install -e .
-pip install -r requirements-dev.txt
+make setup
 ```
 
-This installs development tools like `pytest`, `mypy`, `ruff`, and `pre-commit`.
+This installs development tools like `pytest`, `pytest-cov`, `mypy`, and `ruff`.
 Coverage runs in CI; run `make test-cov` if you need a local report.
 
 ### Run all checks
@@ -232,8 +231,9 @@ ruff check . && ruff format --check . && mypy src/vision && make test
 
 Run `make test-cov` to generate coverage locally.
 
-Optionally enable pre-commit:
+#### Optional: pre-commit
 
 ```bash
+pip install pre-commit
 pre-commit install
 ```

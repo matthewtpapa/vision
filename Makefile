@@ -1,4 +1,8 @@
-.PHONY: test test-cov lint fmt type
+.PHONY: setup test test-cov lint fmt type
+
+setup:
+	pip install -e .
+	pip install -r requirements-dev.txt
 
 test:
 	pytest
