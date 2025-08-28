@@ -3,10 +3,9 @@
 from __future__ import annotations
 
 import argparse
-from typing import Sequence
+from collections.abc import Sequence
 
-from . import __version__
-from . import webcam
+from . import __version__, webcam
 
 
 def build_parser() -> argparse.ArgumentParser:

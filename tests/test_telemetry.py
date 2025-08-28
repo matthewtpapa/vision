@@ -1,5 +1,6 @@
 from vision import Telemetry
 
+
 def test_telemetry_counters_and_gauges():
     t = Telemetry()
     t.inc("frames")

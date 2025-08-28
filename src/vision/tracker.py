@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import Iterable, List, Tuple
+from collections.abc import Iterable
 
 
 class Tracker:
@@ -12,8 +12,8 @@ class Tracker:
         self._next_id = 1
 
     def update(
-        self, boxes: Iterable[Tuple[int, int, int, int]]
-    ) -> List[Tuple[int, Tuple[int, int, int, int]]]:
+        self, boxes: Iterable[tuple[int, int, int, int]]
+    ) -> list[tuple[int, tuple[int, int, int, int]]]:
         """Return each input box paired with a unique ID.
 
         Parameters
@@ -27,7 +27,7 @@ class Tracker:
             Each tuple contains the assigned track ID and the corresponding
             bounding box.
         """
-        results: List[Tuple[int, Tuple[int, int, int, int]]] = []
+        results: list[tuple[int, tuple[int, int, int, int]]] = []
         for box in boxes:
             results.append((self._next_id, box))
             self._next_id += 1

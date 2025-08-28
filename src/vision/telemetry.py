@@ -6,12 +6,12 @@ for drop-in replacement by a real metrics backend in later milestones.
 """
 
 from __future__ import annotations
-from typing import Dict
+
 
 class Telemetry:
     def __init__(self) -> None:
-        self.counters: Dict[str, int] = {}
-        self.gauges: Dict[str, float] = {}
+        self.counters: dict[str, int] = {}
+        self.gauges: dict[str, float] = {}
 
     def inc(self, name: str, value: int = 1) -> None:
         self.counters[name] = self.counters.get(name, 0) + value

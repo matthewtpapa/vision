@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import Any, List
+from typing import Any
 
 
 class Embedder:
@@ -12,7 +12,7 @@ class Embedder:
     same 128-dimensional feature vector regardless of the input.
     """
 
-    def embed(self, crop: Any) -> List[float]:
+    def embed(self, crop: Any) -> list[float]:
         """Return a dummy 128-dimensional embedding.
 
         Parameters

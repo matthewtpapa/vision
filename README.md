@@ -1,6 +1,7 @@
 # vision
 
-![CI](https://github.com/matthewtpapa/vision/actions/workflows/ci.yml/badge.svg)
+<!-- Replace <OWNER>/<REPO> with your repo slug after merge -->
+![CI](https://github.com/<OWNER>/<REPO>/actions/workflows/ci.yml/badge.svg)
 
 A minimal Python package with a command-line interface stub.
 
@@ -25,7 +26,7 @@ python -m vision --version
 vision --version
 ```
 
-Both commands output `Vision 0.0.1`.
+Both commands output `Vision 0.0.2`.
 
 To test the webcam integration, run the live loop:
 
@@ -54,7 +55,11 @@ The fake detector can also run in a dry run without requiring OpenCV:
 vision webcam --use-fake-detector --dry-run
 ```
 
-which prints ``Dry run: fake detector produced 1 boxes, tracker assigned IDs, embedder produced 1 embeddings, cluster store prepared 1 exemplar, matcher compared embeddings (stub), labeler assigned 'unknown'``.
+which prints:
+
+```text
+Dry run: fake detector produced 1 boxes, tracker assigned IDs, embedder produced 1 embeddings, cluster store prepared 1 exemplar, matcher compared embeddings (stub), labeler assigned 'unknown'
+```
 
 For more options, run:
 
@@ -113,8 +118,13 @@ matcher.match([1.0, 2.0], [[1.0, 2.0], [3.0, 4.0]])  # -> 0
 matcher.match([5.0], [])  # -> -1
 ```
 
-Dry runs of the webcam now report ``matcher compared embeddings (stub), labeler assigned 'unknown'`` to
-indicate the matcher and labeler were invoked.
+Dry runs of the webcam now report:
+
+```text
+matcher compared embeddings (stub), labeler assigned 'unknown'
+```
+
+to indicate the matcher and labeler were invoked.
 
 ## Labeler stub
 
@@ -186,6 +196,7 @@ t.set_gauge("latency_ms", 12.3)
 ```
 
 ## Documentation
+
 - [Project Charter](docs/charter.md)
 - [Architecture](docs/architecture.md)
 - [Changelog](CHANGELOG.md)
@@ -199,3 +210,75 @@ We use a lightweight, self-enforced workflow:
 - Use the PR template; link an issue; keep changes small.
 - Squash merge and delete the branch after merge.
 
+> Markdown linting: `make mdlint` runs the same rules as CI and fails on
+> issues when tools are available. `make mdfix` uses `npx` for auto-fixes.
+> If both `pre-commit` and `npx` are missing, `make mdlint` prints a skip
+> warning — CI will still enforce the rules.
+
+### Development setup
+
+```bash
+python -m venv .venv && source .venv/bin/activate
+make setup
+```
+
+This installs development tools like `pytest`, `pytest-cov`, `mypy`, and `ruff`.
+Coverage runs in CI by default and uploads `.coverage` and `coverage.xml` artifacts.
+To run coverage locally (optional):
+
+```bash
+make test-cov         # requires pytest-cov
+make cov-html         # builds htmlcov/ if .coverage exists
+```
+
+If `pip install` is blocked, CI will still upload coverage artifacts you can download from the PR run.
+
+### Run all checks
+
+```bash
+ruff check . && ruff format --check . && mypy src/vision && make test
+# optionally, add coverage locally if available:
+# make test-cov && make cov-html
+# CLI smoke test (no install)
+PYTHONPATH=src python -m vision --version
+```
+
+If `make test-cov` reports missing `pytest-cov`, install dev deps (`make setup`) or review coverage in CI.
+
+#### Optional: pre-commit
+
+```bash
+pip install pre-commit
+pre-commit install
+```
+
+If `make verify` or `make mdlint` reports "pre-commit: command not found", install it with `pip install pre-commit && pre-commit install`, or rely on the `npx`-based `make mdlint`/`make mdfix` targets.
+
+If `make mdlint` prints "⚠️  Markdownlint skipped", that's fine—CI will still enforce the rules.
+
+Run `make help` to see available targets.
+
+#### One-command local checks
+
+Before pushing, run:
+
+```bash
+make verify
+```
+
+This runs ruff (lint + format check), mypy, pytest, and markdownlint with the same rules as CI.
+
+#### Markdown lint parity with CI
+
+```bash
+# strict lint (pre-commit if installed, else npx)
+make mdlint
+
+# auto-fix Markdown issues (npx only, optional)
+make mdfix
+```
+
+If neither `pre-commit` nor `npx` is installed, `make mdlint` prints
+"Markdownlint skipped" but exits 0; CI still runs the checks. Whitespace and
+line endings are normalized via `.editorconfig` and `.gitattributes` to avoid
+OS-specific churn.

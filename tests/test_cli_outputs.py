@@ -5,6 +5,8 @@ import subprocess
 import sys
 from pathlib import Path
 
+from vision import __version__
+
 ROOT = Path(__file__).resolve().parent.parent
 PYTHONPATH = os.pathsep.join([str(ROOT / "src"), os.environ.get("PYTHONPATH", "")])
 ENV = {**os.environ, "PYTHONPATH": PYTHONPATH}
@@ -22,7 +24,7 @@ def run_cli(*args: str) -> subprocess.CompletedProcess[str]:
 
 def test_version_command_reports_version() -> None:
     result = run_cli("--version")
-    assert result.stdout.strip() == "Vision 0.0.1"
+    assert result.stdout.strip() == f"Vision {__version__}"
 
 
 def test_webcam_dry_run_reports_message() -> None:

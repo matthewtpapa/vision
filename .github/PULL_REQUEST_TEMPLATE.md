@@ -1,14 +1,19 @@
-## What
-- [ ] Linked issue: Closes #<id>
-- [ ] Scope: (feat|fix|docs|chore)
-- [ ] Summary of changes
+## what
 
-## Why
-- How this aligns with docs/charter.md
+- [ ] closes #...
+
+## why
+
+<!-- brief rationale -->
 
 ## DoD
-- [ ] Tests added/updated (`PYTHONPATH=src pytest -q` passes locally)
-- [ ] CI green
-- [ ] README/docs updated if behavior or outputs changed
-- [ ] Squash merge; delete branch after merge
 
+- [ ] tests added/updated
+- [ ] docs updated (README/CHANGELOG)
+- [ ] CI green
+- [ ] ran `make verify` locally
+- [ ] ran `pre-commit run --all-files` (or `make mdlint` for Markdown)
+
+## notes
+
+<!-- optional -->

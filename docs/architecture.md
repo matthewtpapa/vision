@@ -1,6 +1,7 @@
 # Architecture
 
 ## Module Map
+
 - **video:** `src/vision/webcam.py`
 - **detect:** `src/vision/fake_detector.py`
 - **track:** `src/vision/tracker.py`
@@ -24,6 +25,7 @@ Webcam (or Dry Run)
 → UI Overlay (rectangles, ID, label)
 
 ## Exemplar Schema (JSON)
+
 ```json
 {
   "label": "unknown",
