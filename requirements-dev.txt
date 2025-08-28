@@ -1,5 +1,4 @@
 pytest
-pytest-cov==4.1.0
 mypy
 ruff
 pre-commit

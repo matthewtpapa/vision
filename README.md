@@ -221,14 +221,16 @@ pip install -e .
 pip install -r requirements-dev.txt
 ```
 
-This installs development tools like `pytest`, `pytest-cov`, `mypy`, `ruff`, and
-`pre-commit` so coverage reports work.
+This installs development tools like `pytest`, `mypy`, `ruff`, and `pre-commit`.
+Coverage runs in CI; run `make test-cov` if you need a local report.
 
 ### Run all checks
 
 ```bash
-ruff check . && ruff format --check . && mypy src/vision && pytest -q --maxfail=1 --disable-warnings --cov=vision --cov-report=term-missing
+ruff check . && ruff format --check . && mypy src/vision && make test
 ```
+
+Run `make test-cov` to generate coverage locally.
 
 Optionally enable pre-commit:
 
