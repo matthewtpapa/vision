@@ -1,6 +1,8 @@
 # vision
 
+<!-- Replace <OWNER>/<REPO> with your repo slug after merge -->
 ![CI](https://github.com/<OWNER>/<REPO>/actions/workflows/ci.yml/badge.svg)
+
 
 A minimal Python package with a command-line interface stub.
 
@@ -222,13 +224,21 @@ make setup
 
 This installs development tools like `pytest`, `pytest-cov`, `mypy`, and `ruff`.
 Coverage runs in CI by default and uploads `.coverage` and `coverage.xml` artifacts.
-To run coverage locally, ensure these dev dependencies are installed and run `make test-cov`.
-If installs are blocked, rely on CI coverage artifacts instead.
+To run coverage locally (optional):
+
+```bash
+make test-cov         # requires pytest-cov
+make cov-html         # builds htmlcov/ if .coverage exists
+```
+
+If installs are blocked, rely on CI coverage artifacts instead (download from the PR run).
 
 ### Run all checks
 
 ```bash
-ruff check . && ruff format --check . && mypy src/vision && make test && make test-cov
+ruff check . && ruff format --check . && mypy src/vision && make test
+# optionally, add coverage locally if available:
+# make test-cov && make cov-html
 ```
 
 If `make test-cov` reports missing `pytest-cov`, install dev deps (`make setup`) or review coverage in CI.
@@ -239,3 +249,5 @@ If `make test-cov` reports missing `pytest-cov`, install dev deps (`make setup`)
 pip install pre-commit
 pre-commit install
 ```
+
+Run `make help` to see available targets.
