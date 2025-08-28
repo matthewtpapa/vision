@@ -56,7 +56,7 @@ vision webcam --use-fake-detector --dry-run
 
 which prints:
 
-```
+```text
 Dry run: fake detector produced 1 boxes, tracker assigned IDs, embedder produced 1 embeddings, cluster store prepared 1 exemplar, matcher compared embeddings (stub), labeler assigned 'unknown'
 ```
 
@@ -119,7 +119,7 @@ matcher.match([5.0], [])  # -> -1
 
 Dry runs of the webcam now report:
 
-```
+```text
 matcher compared embeddings (stub), labeler assigned 'unknown'
 ```
 
@@ -231,4 +231,3 @@ Optionally enable pre-commit:
 ```bash
 pre-commit install
 ```
-
