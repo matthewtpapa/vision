@@ -3,6 +3,7 @@
 from .fake_detector import FakeDetector
 from .embedder import Embedder
 from .matcher import Matcher
+from .labeler import Labeler
 
 __version__ = "0.0.1"
-__all__ = ["__version__", "FakeDetector", "Embedder", "Matcher"]
+__all__ = ["__version__", "FakeDetector", "Embedder", "Matcher", "Labeler"]
