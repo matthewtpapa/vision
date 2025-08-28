@@ -44,7 +44,7 @@ The fake detector can also run in a dry run without requiring OpenCV:
 vision webcam --use-fake-detector --dry-run
 ```
 
-which prints ``Dry run: fake detector produced 1 boxes, tracker assigned IDs, embedder produced 1 embeddings, cluster store prepared 1 exemplar``.
+which prints ``Dry run: fake detector produced 1 boxes, tracker assigned IDs, embedder produced 1 embeddings, cluster store prepared 1 exemplar, matcher compared embeddings (stub)``.
 
 For more options, run:
 
@@ -88,6 +88,23 @@ from vision.embedder import Embedder
 embedder = Embedder()
 embedder.embed(None)  # -> [0.0] * 128
 ```
+
+## Matcher stub
+
+The package provides a simple :class:`Matcher` placeholder that searches for
+an embedding within a list of candidates and reports the index of the first
+exact match. When no match is found, ``-1`` is returned.
+
+```python
+from vision.matcher import Matcher
+
+matcher = Matcher()
+matcher.match([1.0, 2.0], [[1.0, 2.0], [3.0, 4.0]])  # -> 0
+matcher.match([5.0], [])  # -> -1
+```
+
+Dry runs of the webcam now report ``matcher compared embeddings (stub)`` to
+indicate the matcher was invoked.
 
 ## Cluster store stub
 
