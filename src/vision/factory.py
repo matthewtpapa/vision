@@ -7,9 +7,12 @@ from typing import Any
 
 from .detect_adapter import FakeDetector
 from .detect_yolo_adapter import YoloLikeDetector
+from .embedder_adapter import ClipLikeEmbedder
+from .embedding_types import Embedding as _Embedding  # noqa: F401
 from .track_bytetrack_adapter import ByteTrackLikeTracker
 
 Runner = Callable[[Any, int], list[tuple[float, float, float, float, float, int]]]
+EmbedRunner = Callable[[list[object]], list[list[float]]]
 
 
 def build_detector(
@@ -39,4 +42,24 @@ def build_tracker(cfg: Any, *, kind: str | None = None):
     raise ValueError(f"unknown tracker type: {tracker_kind}")
 
 
-__all__ = ["build_detector", "build_tracker"]
+def build_embedder(
+    cfg: Any,
+    *,
+    clip_runner,
+    dim: int = 512,
+    normalize: bool = True,
+):
+    """Construct a :class:`ClipLikeEmbedder` using *cfg* and injected runner."""
+    if clip_runner is None:
+        raise NotImplementedError(
+            "clip_runner required for ClipLikeEmbedder in M1-03"
+        )
+    return ClipLikeEmbedder(
+        clip_runner,
+        dim=dim,
+        normalize=normalize,
+        batch_size=cfg.embedder.batch_size,
+    )
+
+
+__all__ = ["build_detector", "build_tracker", "build_embedder"]
