@@ -51,9 +51,7 @@ def build_embedder(
 ):
     """Construct a :class:`ClipLikeEmbedder` using *cfg* and injected runner."""
     if clip_runner is None:
-        raise NotImplementedError(
-            "clip_runner required for ClipLikeEmbedder in M1-03"
-        )
+        raise NotImplementedError("clip_runner required for ClipLikeEmbedder in M1-03")
     return ClipLikeEmbedder(
         clip_runner,
         dim=dim,

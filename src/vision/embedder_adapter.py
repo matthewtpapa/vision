@@ -16,10 +16,7 @@ class Embedder:
 
 
 class Runner(Protocol):
-    def __call__(
-        self, crops: list[object], *, dim: int, batch_size: int
-    ) -> list[list[float]]:
-        ...
+    def __call__(self, crops: list[object], *, dim: int, batch_size: int) -> list[list[float]]: ...
 
 
 class ClipLikeEmbedder(Embedder):
