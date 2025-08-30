@@ -28,6 +28,7 @@ Deliver a real-time, open-set recognition SDK: detect, track, embed, and match o
 - Minimal Python API surface: `add_exemplar(...)`, `query_frame(...)`
 
 ## Acceptance Highlights
+
 - p95 latency ≤ 33 ms on reference CPU (CLIP-B32 baseline)
 - KB bootstrap ≤ 50 ms (N=1k)
 - Deterministic eval fixture (≥2k frames, seeded)
