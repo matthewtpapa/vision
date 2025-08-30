@@ -1,5 +1,22 @@
 # Changelog
 
+## [Unreleased]
+
+### Added
+
+- docs/charter.md: slim Charter (vision, roadmap, acceptance highlights)
+- docs/specs/m1.md: M1 developer spec (API, similarity semantics, telemetry schema, gates, determinism)
+- docs/eval.md: --eval guide with frozen JSON/CSV schemas
+
+### Changed
+
+- README.md: SDK-first intro, Quickstart, links to Charter/Spec, config snippet
+- CONTRIBUTING.md: clarified Charter vs Spec split and CI gates
+
+### Notes
+
+- No runtime code changes; docs-only reorg
+
 ## v0.0.2 - 2025-08-28
 
 - Fixed markdownlint CI failures and blank-line issues.

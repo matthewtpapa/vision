@@ -1,34 +1,41 @@
 # Contributing
 
-## Setup
+Thanks for contributing! This project keeps Charter and Specs separate:
+
+## Docs model
+
+- Charter (docs/charter.md): north star + roadmap; reviewed at milestones; external-friendly.
+- Specs (docs/specs/m1.md, m2.md, ...): exact API/telemetry schemas, thresholds, CI gates; must stay in lockstep with code.
+
+When changing runtime behavior or schemas, update the relevant Spec in the same PR. Charter updates should be rare and reviewed broadly.
+
+## Dev workflow
+
+- `make fmt` / `make lint` / `make type` / `make test` / `make verify`
+- Open small, testable PRs; add unit tests for new code & schemas
+- markdownlint runs on docs; keep lines readable and headings consistent
+- CI enforces markdownlint via a pinned GitHub Action.
+- Optional local run: `npm ci && npx markdownlint-cli2 "**/*.md"` (or install it globally).
+
+### Local Markdown lint (pinned toolchain)
 
 ```bash
-git clone https://github.com/matthewtpapa/vision.git
-cd vision
-python -m venv .venv
-source .venv/bin/activate
-make setup
-
+npm ci               # one-time per clone / after updates (requires npm registry access)
+npm run mdlint       # or: make mdlint
+# optional auto-fix:
+npm run mdfix        # or: make mdfix
 ```
 
-## Local checks
+> If npm ci fails (e.g., corporate proxy or 403 from the npm registry), skip local markdownlint.
+> CI will still enforce the exact same rules via a pinned GitHub Action.
 
-Run `make verify` before opening a pull request.
+## CI gates (M1)
 
-## Markdown lint
+- `vision --eval` must pass latency/bootstrap thresholds
+- JSON schema snapshot + CSV header checks
 
-- `make mdlint` for strict lint.
-- `make mdfix` to auto-fix issues.
+## Issue labels
 
-## Coverage
-
-Optional: `make test-cov && make cov-html`. Continuous integration always uploads coverage reports.
-
-## PR rules
-
-- Keep changes small and atomic.
-- Link an issue in every pull request.
-- CI must be green.
-- Squash merge and delete the branch after merge.
-
-`pre-commit` is optional but recommended: install with `pip install pre-commit && pre-commit install`.
+- `spec` — changes to `docs/specs/*`, schema/gates
+- `charter` — roadmap/north star updates
+- `m1`/`m2`/... — milestone targeting
