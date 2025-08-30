@@ -66,6 +66,30 @@ frame_stride = 1
 
 Webcam → Detect (YOLO) → Track (ByteTrack) → Embed (CLIP-B32) → Match (FAISS/NumPy) → Label/Unknown → Persist Exemplar → Telemetry
 
+## Matcher backends & introspection
+
+At runtime the pipeline picks a matcher backend: `faiss` if installed, otherwise NumPy.
+If FAISS isn't installed, the pipeline falls back to a NumPy matcher automatically—no config changes required.
+
+After processing a frame, you can inspect the chosen backend and knowledge-base size:
+
+```python
+from vision.pipeline_detect_track_embed import DetectTrackEmbedPipeline
+
+pipe = DetectTrackEmbedPipeline(det, trk, cropper, embedder)
+pipe.backend_selected()  # "faiss" or "numpy"
+pipe.kb_size()           # number of exemplars
+```
+
+Config knobs in `vision.toml` (see [Config](#config) for the full example):
+
+```toml
+[matcher]
+topk = 5
+threshold = 0.35
+min_neighbors = 1
+```
+
 ## Roadmap & Spec
 
 - Charter (north star, roadmap): [docs/charter.md](docs/charter.md)

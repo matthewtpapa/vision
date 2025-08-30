@@ -5,8 +5,6 @@
 SHELL := bash
 .SHELLFLAGS := -eu -o pipefail -c
 
-MDLINT_BIN := node_modules/.bin/markdownlint-cli2
-
 help:
 >echo "make setup     - install package + dev tools"
 >echo "make lint      - ruff lint checks"
@@ -17,7 +15,7 @@ help:
 >echo "make test-cov  - run tests with coverage (requires pytest-cov)"
 >echo "make cov-html  - build local HTML coverage report (if coverage data exists)"
 >echo "make mdlint    - run markdownlint (same rules as CI)"
->echo "make mdfix     - auto-fix markdownlint issues (requires npx)"
+>echo "make mdfix     - auto-fix markdownlint issues"
 >echo "make verify    - run all local checks (lint, fmt-check, type, test, markdownlint)"
 >echo ""
 >echo "Tip: run 'npm ci' once to enable local markdownlint (make mdlint/mdfix)."
@@ -50,20 +48,23 @@ type:
 >mypy src/vision
 
 mdlint:
->if [ -x "$(MDLINT_BIN)" ]; then \
->  "$(MDLINT_BIN)" "**/*.md" "!**/site/**"; \
+>@if [ -x node_modules/.bin/markdownlint ]; then \
+>  npm run --silent lint:md; \
 >else \
->  echo "⚠️  markdownlint not installed locally; run 'npm ci' or rely on CI."; \
+>  echo "markdownlint not installed. Run: npm ci"; exit 2; \
 >fi
 
 mdpush:
 >@if command -v pre-commit >/dev/null 2>&1; then pre-commit run --all-files --hook-stage push || true; fi
 
 mdfix:
->if [ -x "$(MDLINT_BIN)" ]; then \
->  "$(MDLINT_BIN)" --fix "**/*.md" "!**/site/**"; \
+>@if [ -x node_modules/.bin/markdownlint ]; then \
+>  node_modules/.bin/markdownlint $$(git ls-files "*.md") \
+>    --fix \
+>    --ignore-path .markdownlintignore \
+>    --config .markdownlint.jsonc; \
 >else \
->  echo "⚠️  markdownlint not installed locally; run 'npm ci'."; \
+>  echo "markdownlint not installed. Run: npm ci"; exit 2; \
 >fi
 
 verify:

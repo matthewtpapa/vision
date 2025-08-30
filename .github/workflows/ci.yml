@@ -10,13 +10,16 @@ on:
 jobs:
   markdownlint:
     runs-on: ubuntu-latest
+    env:
+      NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
     steps:
       - uses: actions/checkout@v4
-      - uses: DavidAnson/markdownlint-cli2-action@v15
+      - uses: actions/setup-node@v4
         with:
-          globs: |
-            **/*.md
-          config: .markdownlint-cli2.yaml
+          node-version: '18'
+          cache: 'npm'
+      - run: npm ci
+      - run: make mdlint
 
   build:
     runs-on: ubuntu-latest
