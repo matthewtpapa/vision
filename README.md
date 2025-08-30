@@ -225,8 +225,8 @@ t.set_gauge("latency_ms", 12.3)
 ```
 
 ## Matcher backends & introspection
-At runtime the pipeline picks a matcher backend: `faiss` if installed, else
-NumPy. After processing a frame you can inspect the choice and knowledge-base
+At runtime the pipeline picks a matcher backend: `faiss` if installed, otherwise
+NumPy. After processing a frame, inspect the chosen backend and knowledge-base
 size:
 ```python
 from vision.pipeline_detect_track_embed import DetectTrackEmbedPipeline
