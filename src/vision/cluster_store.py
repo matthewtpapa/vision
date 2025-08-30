@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+from collections.abc import Callable
 from pathlib import Path
 from tempfile import NamedTemporaryFile
 
@@ -22,6 +23,7 @@ class ClusterStore:
         self._path = Path(path)
         self._path.parent.mkdir(parents=True, exist_ok=True)
         self._data: dict[str, list[dict[str, object]]] = {"exemplars": []}
+        self._listeners: list[Callable[[dict[str, object]], None]] = []
 
     # ------------------------------------------------------------------
     # Backwards compatible in-memory API
@@ -38,6 +40,11 @@ class ClusterStore:
 
     # ------------------------------------------------------------------
     # Exemplar persistence API
+    def add_listener(self, fn: Callable[[dict[str, object]], None]) -> None:
+        """Register ``fn`` to be called with each new exemplar."""
+
+        self._listeners.append(fn)
+
     def add_exemplar(
         self,
         label: str,
@@ -47,14 +54,15 @@ class ClusterStore:
     ) -> None:
         """Append an exemplar description to the in-memory buffer."""
 
-        self._data["exemplars"].append(
-            {
-                "label": label,
-                "bbox": list(bbox),
-                "embedding": list(embedding),
-                "provenance": provenance,
-            }
-        )
+        item: dict[str, object] = {
+            "label": label,
+            "bbox": list(bbox),
+            "embedding": list(embedding),
+            "provenance": provenance,
+        }
+        self._data["exemplars"].append(item)
+        for fn in self._listeners:
+            fn(item)
 
     def flush(self) -> None:
         """Atomically persist the current exemplars to disk."""
@@ -72,3 +80,20 @@ class ClusterStore:
         if p.exists():
             store._data = json.loads(p.read_text())
         return store
+
+
+class JsonClusterStore(ClusterStore):
+    """ClusterStore that loads existing exemplars on initialization."""
+
+    def __init__(self, path: str | Path = "data/kb.json") -> None:
+        super().__init__(path)
+        if self._path.exists():
+            self._data = json.loads(self._path.read_text())
+
+    def load_all(self) -> list[dict[str, object]]:
+        """Return all persisted exemplar records."""
+
+        return list(self._data.get("exemplars", []))
+
+
+__all__ = ["ClusterStore", "JsonClusterStore"]

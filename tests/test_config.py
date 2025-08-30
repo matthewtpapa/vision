@@ -20,9 +20,13 @@ def test_defaults(tmp_path, monkeypatch):
     assert cfg.embedder.batch_size == 8
     assert cfg.embedder.device == "cpu"
     assert cfg.matcher.index_type == "faiss-flat"
-    assert cfg.matcher.threshold == 0.32
+    assert cfg.matcher.topk == 5
+    assert cfg.matcher.threshold == 0.35
+    assert cfg.matcher.min_neighbors == 1
     assert cfg.pipeline.frame_stride == 1
     assert cfg.latency.budget_ms == 66
+    assert cfg.paths.kb_json == "data/kb.json"
+    assert cfg.paths.telemetry_csv == "artifacts/telemetry.csv"
 
 
 def test_toml_overrides(tmp_path, monkeypatch):

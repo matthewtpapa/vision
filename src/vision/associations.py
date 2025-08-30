@@ -4,6 +4,8 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
+from vision.matcher.types import MatchResult
+
 from .embedding_types import Embedding
 from .types import Track
 
@@ -14,6 +16,7 @@ class TrackEmbedding:
 
     track: Track
     embedding: Embedding
+    match: MatchResult | None = None
 
 
 __all__ = ["TrackEmbedding"]

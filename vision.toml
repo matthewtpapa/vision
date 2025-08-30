@@ -12,10 +12,16 @@ device = "cpu"
 
 [matcher]
 index_type = "faiss-flat"
-threshold = 0.32
+topk = 5
+threshold = 0.35
+min_neighbors = 1
 
 [pipeline]
 frame_stride = 1
 
 [latency]
 budget_ms = 66
+
+[paths]
+kb_json = "data/kb.json"
+telemetry_csv = "artifacts/telemetry.csv"
