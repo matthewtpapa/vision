@@ -38,4 +38,3 @@ Deliver a real-time, open-set recognition SDK: detect, track, embed, and match o
 - **Charter (this doc)** → sets vision, roadmap, and themes. Evolves slowly (reviewed at major milestones)
 - **Specs (per milestone)** → exact contracts, telemetry schemas, CI gates. Evolve quickly, live close to code
 - Charter answers "what and why"; Specs answer "how and with what guarantees"
-
