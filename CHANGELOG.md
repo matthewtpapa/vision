@@ -3,7 +3,7 @@
 ## [Unreleased]
 
 ### Added
-
+- Matcher v1 with FAISS/NumPy backends, typed `MatchResult`, and pipeline introspection helpers
 - docs/charter.md: slim Charter (vision, roadmap, acceptance highlights)
 - docs/specs/m1.md: M1 developer spec (API, similarity semantics, telemetry schema, gates, determinism)
 - docs/eval.md: --eval guide with frozen JSON/CSV schemas
