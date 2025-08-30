@@ -5,6 +5,8 @@
 SHELL := bash
 .SHELLFLAGS := -eu -o pipefail -c
 
+MDLINT_BIN := node_modules/.bin/markdownlint-cli2
+
 help:
 >echo "make setup     - install package + dev tools"
 >echo "make lint      - ruff lint checks"
@@ -17,6 +19,8 @@ help:
 >echo "make mdlint    - run markdownlint (same rules as CI)"
 >echo "make mdfix     - auto-fix markdownlint issues (requires npx)"
 >echo "make verify    - run all local checks (lint, fmt-check, type, test, markdownlint)"
+>echo ""
+>echo "Tip: run 'npm ci' once to enable local markdownlint (make mdlint/mdfix)."
 
 setup:
 >pip install -e . || echo "⚠️ Skipped package install (pip blocked)"
@@ -46,22 +50,20 @@ type:
 >mypy src/vision
 
 mdlint:
->if command -v pre-commit >/dev/null 2>&1; then \
->pre-commit run markdownlint-cli2 --all-files; \
->elif command -v npx >/dev/null 2>&1; then \
->npx -y markdownlint-cli2 "**/*.md" --config .markdownlint-cli2.yaml; \
+>if [ -x "$(MDLINT_BIN)" ]; then \
+>  "$(MDLINT_BIN)" "**/*.md" "!**/site/**"; \
 >else \
->echo "⚠️  Markdownlint skipped (no pre-commit or npx available). CI will enforce."; \
+>  echo "⚠️  markdownlint not installed locally; run 'npm ci' or rely on CI."; \
 >fi
 
 mdpush:
 >@if command -v pre-commit >/dev/null 2>&1; then pre-commit run --all-files --hook-stage push || true; fi
 
 mdfix:
->if command -v npx >/dev/null 2>&1; then \
->npx -y markdownlint-cli2-fix "**/*.md" --config .markdownlint-cli2.yaml; \
+>if [ -x "$(MDLINT_BIN)" ]; then \
+>  "$(MDLINT_BIN)" --fix "**/*.md" "!**/site/**"; \
 >else \
->echo "⚠️  Markdownlint fix skipped (npx not available)."; \
+>  echo "⚠️  markdownlint not installed locally; run 'npm ci'."; \
 >fi
 
 verify:
