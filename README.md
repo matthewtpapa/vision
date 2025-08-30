@@ -238,10 +238,12 @@ pipe.kb_size()           # number of exemplars
 
 Config knobs in vision.toml:
 
+```toml
 [matcher]
 topk = 5
 threshold = 0.35
 min_neighbors = 1
+```
 
 ## Documentation
 
