@@ -32,7 +32,6 @@ Deliver a real-time, open-set recognition SDK: detect, track, embed, and match o
 - p95 latency ≤ 33 ms on reference CPU (CLIP-B32 baseline)
 - KB bootstrap ≤ 50 ms (N=1k)
 - Deterministic eval fixture (≥2k frames, seeded)
-
 ## Process Guardrails
 
 - **Charter (this doc)** → sets vision, roadmap, and themes. Evolves slowly (reviewed at major milestones)
