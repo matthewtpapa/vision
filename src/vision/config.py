@@ -40,7 +40,15 @@ class EmbedderConfig:
 @dataclass(frozen=True)
 class MatcherConfig:
     index_type: str = "faiss-flat"
-    threshold: float = 0.32
+    topk: int = 5
+    threshold: float = 0.35
+    min_neighbors: int = 1
+
+
+@dataclass(frozen=True)
+class PathsConfig:
+    kb_json: str = "data/kb.json"
+    telemetry_csv: str = "artifacts/telemetry.csv"
 
 
 @dataclass(frozen=True)
@@ -60,6 +68,7 @@ class Config:
     embedder: EmbedderConfig = field(default_factory=EmbedderConfig)
     matcher: MatcherConfig = field(default_factory=MatcherConfig)
     pipeline: PipelineConfig = field(default_factory=PipelineConfig)
+    paths: PathsConfig = field(default_factory=PathsConfig)
     latency: LatencyConfig = field(default_factory=LatencyConfig)
 
 
@@ -87,6 +96,7 @@ def _dict_to_config(data: dict[str, Any]) -> Config:
         embedder=EmbedderConfig(**data["embedder"]),
         matcher=MatcherConfig(**data["matcher"]),
         pipeline=PipelineConfig(**data["pipeline"]),
+        paths=PathsConfig(**data["paths"]),
         latency=LatencyConfig(**data["latency"]),
     )
 

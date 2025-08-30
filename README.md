@@ -224,6 +224,24 @@ t.set_gauge("latency_ms", 12.3)
 
 ```
 
+## Matcher backends & introspection
+At runtime the pipeline picks a matcher backend: `faiss` if installed, else
+NumPy. After processing a frame you can inspect the choice and knowledge-base
+size:
+```python
+from vision.pipeline_detect_track_embed import DetectTrackEmbedPipeline
+pipe = DetectTrackEmbedPipeline(det, trk, cropper, embedder)
+pipe.backend_selected()  # "faiss" or "numpy"
+pipe.kb_size()           # number of exemplars
+```
+Config knobs in `vision.toml`:
+```toml
+[matcher]
+topk = 5
+threshold = 0.35
+min_neighbors = 1
+```
+
 ## Documentation
 
 - [Project Charter](docs/charter.md)

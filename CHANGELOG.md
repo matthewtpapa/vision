@@ -1,5 +1,10 @@
 # Changelog
 
+## Unreleased
+
+### Added
+- Matcher v1 with FAISS/NumPy backends, typed `MatchResult`, and pipeline introspection helpers.
+
 ## v0.0.2 - 2025-08-28
 
 - Fixed markdownlint CI failures and blank-line issues.

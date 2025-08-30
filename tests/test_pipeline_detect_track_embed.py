@@ -2,6 +2,8 @@ from __future__ import annotations
 
 import pytest
 
+pytest.importorskip("numpy")
+
 from vision.associations import TrackEmbedding
 from vision.config import _reset_config_cache, get_config
 from vision.detect_adapter import FakeDetector
