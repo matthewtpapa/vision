@@ -7,10 +7,12 @@ vision --eval --input examples/eval_frames --output out/
 ```
 
 Artifacts:
+
 - `out/metrics.json` — JSON (schema frozen for M1)
 - `out/stage_timings.csv` — deterministic per-stage summary
 
 ## JSON Schema (M1)
+
 ```json
 {
   "stage_ms": {"detect": 0.0, "track": 0.0, "embed": 0.0, "match": 0.0, "overhead": 0.0},
@@ -25,9 +27,12 @@ Artifacts:
 ```
 
 ## CSV Columns
+
 `stage,count,total_ms,mean_ms,max_ms`
 
 ## Pass/Fail Gates (M1)
-- p95 ≤ 33 ms over ≥ 2,000 frames (warm-up 100 excluded)  
-- KB bootstrap ≤ 50 ms for N=1k  
+
+- p95 ≤ 33 ms over ≥ 2,000 frames (warm-up 100 excluded)
+- KB bootstrap ≤ 50 ms for N=1k
 - Non-zero exit on failure (CI-friendly)
+
