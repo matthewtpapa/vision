@@ -18,6 +18,7 @@ When changing runtime behavior or schemas, update the relevant Spec in the same 
 - Optional local run: `npm ci && npx markdownlint-cli2 "**/*.md"` (or install it globally).
 
 ### Local Markdown lint (pinned toolchain)
+
 ```bash
 npm ci               # one-time per clone / after updates (requires npm registry access)
 npm run mdlint       # or: make mdlint
@@ -38,4 +39,3 @@ npm run mdfix        # or: make mdfix
 - `spec` — changes to `docs/specs/*`, schema/gates
 - `charter` — roadmap/north star updates
 - `m1`/`m2`/... — milestone targeting
-

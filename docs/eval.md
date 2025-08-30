@@ -35,4 +35,3 @@ Artifacts:
 - p95 ≤ 33 ms over ≥ 2,000 frames (warm-up 100 excluded)
 - KB bootstrap ≤ 50 ms for N=1k
 - Non-zero exit on failure (CI-friendly)
-
