@@ -1,12 +1,12 @@
 # Vision SDK — Open-Set Recognition for Real-Time Apps
 
-**Problem:** Apps need to recognize *any* object, not just classes a model was trained on — and do it in real time on edge/consumer hardware.  
+**Problem:** Apps need to recognize *any* object, not just classes a model was trained on — and do it in real time on edge/consumer hardware.
 **Solution:** A modular SDK that detects, tracks, embeds, and **matches** crops against a growing exemplar KB, with tight latency budgets and boring reliability.
 
 **Who it's for:** AR, robotics, and vision teams that want infra, not a consumer app. Think *FFmpeg for open-set recognition.*
 
 ## Install
- 
+
 ```bash
 pip install vision-sdk
 ```
