@@ -1,66 +1,35 @@
-# Charter
+# Project Charter and Vision
 
-## Goal
+## North Star
+Deliver a real-time, open-set recognition SDK: detect, track, embed, and match objects in live video against a continually growing exemplar knowledge base.
 
-- Deliver a minimal vision pipeline to explore detection, tracking, embedding, matching, labeling, and exemplar persistence on webcam frames (or dry run), with deterministic stubs in M0.
+- Sustains latency-bounded performance on reference hardware  
+- Modular and backend-agnostic  
+- Exposes a simple, typed Python API  
+- Serves AR, robotics, and vision pipelines as infrastructure  
+- Not a consumer app — this is **FFmpeg-for-open-set recognition**: boring, reliable infra that others depend on.
 
-## Scope v0 (M0)
+## Milestones (Roadmap)
+- **M0 (Complete)** — Foundations: stubs, CLI scaffolding, local KB, dev workflow  
+- **M1 (In Progress)** — Latency-Bounded Vertical Slice: end-to-end loop; telemetry + `--eval`; incremental KB updates; factory-based matcher  
+- **M2** — Developer SDK: stable API; exemplar management; packaging & distribution; AR/robotics demos  
+- **M3** — Scaling: multi-backend abstraction (FAISS-GPU, Torch/ONNX); KB persistence/versioning; frozen telemetry schema; gRPC/REST API  
+- **M4** — Production Hardening: continuous ingestion; pruning/compaction; robustness tests; deployment profiles  
+- **M5 (Stretch)** — Enterprise: ARKit/ARCore/Vision Pro integrations; telemetry dashboard; licensing model; OSS + commercial split
 
-- Stub implementations for: Detector, Tracker, Embedder, Matcher, Labeler, Cluster Store, RIS (Reverse Image Search), and Telemetry.
-- Command line interface with `vision webcam` and `--dry-run`.
-- JSON persistence of exemplars (label, bbox, embedding, provenance).
-- Unit tests for each stub and CLI dry-run output.
+## M1 Focus (Highlights)
+- Real-time vertical slice (detect → track → embed → match)  
+- Incremental KB updates  
+- Telemetry with `--eval` export (latency, FPS, unknown-rate, KB size)  
+- Matcher factory: FAISS (preferred) + NumPy fallback  
+- Minimal Python API surface: `add_exemplar(...)`, `query_frame(...)`
 
-## Scope v1
+## Acceptance Highlights
+- p95 latency ≤ 33 ms on reference CPU (CLIP-B32 baseline)  
+- KB bootstrap ≤ 50 ms (N=1k)  
+- Deterministic eval fixture (≥2k frames, seeded)
 
-- Real detection and tracking models (e.g., YOLO/RT-DETR, DeepSORT/ByteTrack).
-- Replace Embedder with CLIP/OpenCLIP.
-- Real RIS connector + forward search; proper similarity thresholds and smoothing.
-- Telemetry backend integration; evaluation harness; label hysteresis.
-- Configurable thresholds; performance tuning.
-
-## Out of Scope (for now)
-
-- Training custom models, quantization/acceleration.
-- Multi-camera fusion/SLAM.
-- Cloud DBs (start local only).
-
-## Success Metrics (MVP)
-
-- Latency: P95 ≤ 800 ms @ 720p (single object).
-- Stability: ≥ 90% identical labels across a 2s window (stationary object).
-- Unknown resolution: ≤ 3.0 s median to resolve to a label (when RIS enabled in later milestones).
-- Reliability: zero crashes in a 20-minute webcam session.
-
-## Operating Principles
-
-- **Open-set first:** everything unknown until evidence accumulates.
-- **Provenance everywhere:** store sources, timestamps, confidence trails.
-- **Deterministic scaffolding:** swap implementations without churn.
-- **Atomic PRs:** small, testable, reviewable increments.
-- **Privacy & ToS:** persist embeddings, URLs, metadata only.
-
-## High-Level Architecture (modules)
-
-- `video/` — Frame capture loop (OpenCV) → `src/vision/webcam.py`
-- `detect/` — Object detection (stub → YOLO/RT-DETR) → `src/vision/fake_detector.py`
-- `track/` — Object tracking (stub → DeepSORT/ByteTrack) → `src/vision/tracker.py`
-- `embed/` — Embedding abstraction (stub → CLIP) → `src/vision/embedder.py`
-- `match/` — Similarity search → `src/vision/matcher.py`
-- `label/` — Label choice → `src/vision/labeler.py`
-- `kb/` — Cluster store (label, exemplars, provenance) → `src/vision/cluster_store.py`
-- `ris/` — Reverse image search connector → `src/vision/ris.py`
-- `telemetry/` — Metrics → `src/vision/telemetry.py`
-- `ui/` — AR overlay (OpenCV) → overlay in `webcam.py`
-
-## Deliverables
-
-- This charter (`docs/charter.md`) and the architecture doc (`docs/architecture.md`).
-- README entries that link to both docs and show exact CLI dry-run outputs.
-- CI runs markdown lint and tests.
-
-## Definition of Done
-
-- `docs/charter.md` and `docs/architecture.md` present and linked from README.
-- `pytest -q` passes; markdown lint in CI passes.
-- No changes to runtime behavior; all existing tests remain green.
+## Process Guardrails
+- **Charter (this doc)** → sets vision, roadmap, and themes. Evolves slowly (reviewed at major milestones)  
+- **Specs (per milestone)** → exact contracts, telemetry schemas, CI gates. Evolve quickly, live close to code  
+- Charter answers "what and why"; Specs answer "how and with what guarantees"
