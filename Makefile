@@ -5,8 +5,6 @@
 SHELL := bash
 .SHELLFLAGS := -eu -o pipefail -c
 
-MDLINT_BIN := node_modules/.bin/markdownlint-cli2
-
 help:
 >echo "make setup     - install package + dev tools"
 >echo "make lint      - ruff lint checks"
@@ -50,20 +48,28 @@ type:
 >mypy src/vision
 
 mdlint:
->if [ -x "$(MDLINT_BIN)" ]; then \
->  "$(MDLINT_BIN)" "**/*.md" "!**/site/**"; \
+>@if command -v npm >/dev/null 2>&1 && [ -f package.json ]; then \
+>  npm run --silent lint:md || npx --yes markdownlint-cli@0.39.0 $$(git ls-files "*.md") \
+>    --ignore-path .markdownlintignore \
+>    --config .markdownlint.jsonc; \
 >else \
->  echo "⚠️  markdownlint not installed locally; run 'npm ci' or rely on CI."; \
+>  npx --yes markdownlint-cli@0.39.0 $$(git ls-files "*.md") \
+>    --ignore-path .markdownlintignore \
+>    --config .markdownlint.jsonc; \
 >fi
 
 mdpush:
 >@if command -v pre-commit >/dev/null 2>&1; then pre-commit run --all-files --hook-stage push || true; fi
 
 mdfix:
->if [ -x "$(MDLINT_BIN)" ]; then \
->  "$(MDLINT_BIN)" --fix "**/*.md" "!**/site/**"; \
+>@if command -v npm >/dev/null 2>&1 && [ -f package.json ]; then \
+>  npx --yes markdownlint-cli@0.39.0 --fix $$(git ls-files "*.md") \
+>    --ignore-path .markdownlintignore \
+>    --config .markdownlint.jsonc; \
 >else \
->  echo "⚠️  markdownlint not installed locally; run 'npm ci'."; \
+>  npx --yes markdownlint-cli@0.39.0 --fix $$(git ls-files "*.md") \
+>    --ignore-path .markdownlintignore \
+>    --config .markdownlint.jsonc; \
 >fi
 
 verify:

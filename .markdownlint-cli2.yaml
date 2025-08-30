@@ -1,8 +1,0 @@
-# Baseline rules; tweak as we go
-config:
-  default: true
-  MD013: false        # line length off; CI friendliness
-  MD033: false        # inline HTML allowed in README snippets
-globs:
-  - "**/*.md"
-  - "!**/site/**"

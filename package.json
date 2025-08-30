@@ -2,10 +2,9 @@
   "name": "vision-docs-tools",
   "private": true,
   "devDependencies": {
-    "markdownlint-cli2": "0.12.1"
+    "markdownlint-cli": "0.39.0"
   },
   "scripts": {
-    "mdlint": "markdownlint-cli2 \"**/*.md\" \"!**/site/**\"",
-    "mdfix": "markdownlint-cli2 --fix \"**/*.md\" \"!**/site/**\""
+    "lint:md": "markdownlint $(git ls-files \"*.md\") --ignore-path .markdownlintignore --config .markdownlint.jsonc"
   }
 }
