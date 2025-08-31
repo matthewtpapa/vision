@@ -1,4 +1,5 @@
 # SPDX-License-Identifier: Apache-2.0
+# Copyright (c) 2025 The Vision Authors
 """Timing helpers for lightweight telemetry.
 
 This module provides a minimal in-memory aggregator for stage timings along

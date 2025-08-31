@@ -1,4 +1,5 @@
 # SPDX-License-Identifier: Apache-2.0
+# Copyright (c) 2025 The Vision Authors
 """Typed data contracts for detection and tracking.
 
 This module defines lightweight immutable dataclasses that model the

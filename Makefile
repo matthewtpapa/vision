@@ -1,4 +1,5 @@
 # SPDX-License-Identifier: Apache-2.0
+# Copyright (c) 2025 The Vision Authors
 .RECIPEPREFIX := >
 .PHONY: setup test test-cov cov-html lint fmt format type mdlint mdfix verify help
 
