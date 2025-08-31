@@ -36,9 +36,11 @@ print(result["label"], result.get("confidence"), result.get("is_unknown"))
 Evaluate latency and export telemetry:
 
 ```bash
-vision --eval --input examples/eval_frames --output out/
+python -m vision eval --input examples/eval_frames --output out/
 cat out/metrics.json
 ```
+
+If running without installing the package, use `PYTHONPATH=src python -m vision eval …` and ensure numpy + pillow are installed.
 
 Schema and details: see **[Eval Guide](docs/eval.md)**.
 
