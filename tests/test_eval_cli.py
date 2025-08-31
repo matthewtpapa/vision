@@ -13,6 +13,8 @@ from pathlib import Path
 
 import pytest
 
+from vision.config import _reset_config_cache
+
 pytest.importorskip("PIL")
 pytest.importorskip("numpy")
 from PIL import Image
@@ -89,3 +91,55 @@ def test_eval_cli_budget_breach_returns_nonzero(
 
     cp = run_cli("eval", "--input", str(in_dir), "--output", str(out_dir), "--warmup", "0")
     assert cp.returncode != 0
+
+
+def test_eval_cli_controller_block(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    in_dir = tmp_path / "in"
+    out_dir = tmp_path / "out"
+    out_dir2 = tmp_path / "out2"
+    in_dir.mkdir()
+    out_dir.mkdir()
+    out_dir2.mkdir()
+
+    for i in range(3):
+        img = Image.new("RGB", (64, 64), color=(i, 0, 0))
+        img.save(in_dir / f"{i}.png")
+
+    cp = run_cli("eval", "--input", str(in_dir), "--output", str(out_dir), "--warmup", "0")
+    assert cp.returncode == 0
+    data = json.loads((out_dir / "metrics.json").read_text())
+    assert "controller" in data
+    c = data["controller"]
+    expected_keys = {
+        "auto_stride",
+        "min_stride",
+        "max_stride",
+        "start_stride",
+        "end_stride",
+        "window",
+        "low_water",
+        "frames_total",
+        "frames_processed",
+        "p95_window_ms",
+    }
+    assert expected_keys <= c.keys()
+    assert c["frames_processed"] <= c["frames_total"]
+    assert c["min_stride"] <= c["start_stride"] <= c["max_stride"]
+    assert c["min_stride"] <= c["end_stride"] <= c["max_stride"]
+
+    monkeypatch.setenv("VISION__PIPELINE__AUTO_STRIDE", "0")
+    _reset_config_cache()
+    cp = run_cli(
+        "eval",
+        "--input",
+        str(in_dir),
+        "--output",
+        str(out_dir2),
+        "--warmup",
+        "0",
+    )
+    assert cp.returncode == 0
+    data2 = json.loads((out_dir2 / "metrics.json").read_text())
+    c2 = data2["controller"]
+    assert c2["start_stride"] == c2["end_stride"]
+    _reset_config_cache()
