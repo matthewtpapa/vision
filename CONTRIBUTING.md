@@ -17,6 +17,10 @@ When changing runtime behavior or schemas, update the relevant Spec in the same 
 - CI enforces markdownlint via a pinned GitHub Action.
 - Optional local run: `npm ci && npx markdownlint-cli2 "**/*.md"` (or install it globally).
 
+### Docs hygiene
+
+- Update `THIRD_PARTY.md` whenever docs or examples add a new external reference.
+
 ### Local Markdown lint (pinned toolchain)
 
 ```bash

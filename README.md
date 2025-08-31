@@ -59,6 +59,7 @@ print(result["label"], result.get("confidence"), result.get("is_unknown"))
 - Result Schema v0.1 (frozen): **[docs/schema.md](docs/schema.md)**
 - Latency & process model: **[docs/latency.md](docs/latency.md)**
 - Benchmarks methodology: **[docs/benchmarks.md](docs/benchmarks.md)**
+- Third-party attributions: **[THIRD_PARTY.md](THIRD_PARTY.md)**
 
 ## Demo path (coming in M1.1)
 
