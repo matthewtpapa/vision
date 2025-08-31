@@ -13,7 +13,8 @@ Deliver a real-time, open-set recognition SDK: detect, track, embed, and match o
 ## Milestones (Roadmap)
 
 - **M0 (Complete)** — Foundations: stubs, CLI scaffolding, local KB, dev workflow
-- **M1 (In Progress)** — Latency-Bounded Vertical Slice: end-to-end loop; telemetry + `--eval`; incremental KB updates; factory-based matcher
+- **M1** — Latency-Bounded Vertical Slice: end-to-end loop; telemetry + `--eval`; incremental KB updates; factory-based matcher
+- **M1.1 (In Progress)** — Investor-grade gates (SDK façade, install matrix, latency SLOs, reproducible benches)
 - **M2** — Developer SDK: stable API; exemplar management; packaging & distribution; AR/robotics demos
 - **M3** — Scaling: multi-backend abstraction (FAISS-GPU, Torch/ONNX); KB persistence/versioning; frozen telemetry schema; gRPC/REST API
 - **M4** — Production Hardening: continuous ingestion; pruning/compaction; robustness tests; deployment profiles
