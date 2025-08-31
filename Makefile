@@ -83,7 +83,7 @@ verify:
 >$(MAKE) mdpush
 
 eval:
->python -m vision --eval --input $(INPUT) --output $(OUTPUT) --warmup $(or $(WARMUP),100)
+>python -m vision eval --input $(INPUT) --output $(OUTPUT) --warmup $(or $(WARMUP),100)
 
 build:
 >python -m pip install --upgrade build twine
