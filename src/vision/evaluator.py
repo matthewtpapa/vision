@@ -69,8 +69,8 @@ def run_eval(input_dir: str, output_dir: str, warmup: int) -> int:
     pipeline.flush_telemetry_csv(str(out_dir / "stage_timings.csv"))
 
     per_frame_ms, per_stage_ms, unknown_flags = pipeline.get_eval_counters()
-    n = len(per_frame_ms)
-    warmup = min(max(0, warmup), n)
+    frames_total = len(per_frame_ms)
+    warmup = min(max(0, warmup), frames_total)
     if warmup:
         per_frame_ms = per_frame_ms[warmup:]
         unknown_flags = unknown_flags[warmup:]
@@ -87,6 +87,14 @@ def run_eval(input_dir: str, output_dir: str, warmup: int) -> int:
         backend,
         __version__,
     )
+    cfg_block = pipeline.controller_config()
+    metrics["controller"] = {
+        **cfg_block,
+        "end_stride": pipeline.current_stride(),
+        "frames_total": frames_total,
+        "frames_processed": pipeline.frames_processed(),
+        "p95_window_ms": pipeline.last_window_p95(),
+    }
     _atomic_write_json(out_dir / "metrics.json", metrics)
 
     budget = cfg.latency.budget_ms

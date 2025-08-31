@@ -56,11 +56,16 @@ class PathsConfig:
 @dataclass(frozen=True)
 class PipelineConfig:
     frame_stride: int = 1
+    min_stride: int = 1
+    max_stride: int = 4
+    auto_stride: bool = True
 
 
 @dataclass(frozen=True)
 class LatencyConfig:
     budget_ms: int = 66
+    window: int = 120
+    low_water: float = 0.8
 
 
 @dataclass(frozen=True)
