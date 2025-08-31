@@ -31,6 +31,32 @@ result = query_frame(frame)
 print(result["label"], result.get("confidence"), result.get("is_unknown"))
 ```
 
+### Schema v0.1
+
+This project ships a **frozen** result schema for the 0.1.x series. See
+**[docs/schema.md](docs/schema.md)** for the contract and invariants.
+
+**Example `MatchResult` (v0.1):**
+
+```json
+{
+  "label": "red-mug",
+  "confidence": 0.78,
+  "neighbors": [
+    { "label": "red-mug", "score": 0.78 },
+    { "label": "maroon-cup", "score": 0.65 }
+  ],
+  "backend": "numpy",
+  "stride": 1,
+  "budget_hit": false,
+  "bbox": [120, 96, 220, 196],
+  "timestamp_ms": 1725043200123,
+  "sdk_version": "0.1.1"
+}
+```
+
+> **Important:** Keep the README example **byte-for-byte identical** to the one in `docs/schema.md`. Subsequent PRs will add CI guards to prevent drift.
+
 ## CLI
 
 Invoke the evaluator to emit latency metrics and telemetry:
