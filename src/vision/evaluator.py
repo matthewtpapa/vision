@@ -7,6 +7,7 @@ from __future__ import annotations
 import json
 from collections.abc import Iterable
 from pathlib import Path
+from typing import Literal
 
 from . import __version__
 from .config import get_config
@@ -65,7 +66,7 @@ def run_eval(input_dir: str, output_dir: str, warmup: int) -> int:
             frame = np.asarray(img.convert("RGB"))
         pipeline.process(frame)
 
-    pipeline.flush_telemetry_csv(out_dir / "stage_timings.csv")
+    pipeline.flush_telemetry_csv(str(out_dir / "stage_timings.csv"))
 
     per_frame_ms, per_stage_ms, unknown_flags = pipeline.get_eval_counters()
     n = len(per_frame_ms)
@@ -75,12 +76,15 @@ def run_eval(input_dir: str, output_dir: str, warmup: int) -> int:
         unknown_flags = unknown_flags[warmup:]
         per_stage_ms = {k: v[warmup:] for k, v in per_stage_ms.items()}
 
+    selected = pipeline.backend_selected()
+    backend: Literal["faiss", "numpy"] = "faiss" if selected == "faiss" else "numpy"
+
     metrics = metrics_json(
         per_frame_ms,
         per_stage_ms,
         unknown_flags,
         pipeline.kb_size(),
-        pipeline.backend_selected(),
+        backend,
         __version__,
     )
     _atomic_write_json(out_dir / "metrics.json", metrics)
