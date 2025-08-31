@@ -67,7 +67,7 @@ print(result["label"], result.get("confidence"), result.get("is_unknown"))
 pip install latency-vision
 latvision hello
 latvision eval --frames 2000 --seed 42 --kb 1000 --budget-ms 33 \
-  --report out/metrics.json --stages out/stage_times.csv
+  --report out/metrics.json --stages out/stage_timings.csv
 make plot
 ```
 
@@ -124,7 +124,7 @@ Exit codes:
 The evaluator can adaptively skip frames to stay within the latency budget; see the **[Eval Guide](docs/eval.md)** and **[Latency Guide](docs/latency.md)** for controller details.
 
 See [Benchmarks](docs/benchmarks.md)
-for measurement details and artifact fields.
+for measurement details and artifact fields. Try `make bench` then `make plot` to generate local metrics and a latency PNG. See docs/benchmarks.md for details.
 
 Example with environment overrides:
 

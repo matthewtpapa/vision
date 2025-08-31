@@ -45,7 +45,7 @@ Related docs:
 - **Repro fields** (required for RCs):
   - `git_commit`, `hardware_id` (CPU model / SIMD flags / OS), `fixture_hash`
 
-**Stage summary (stage_times.csv):**
+**Stage summary (stage_timings.csv):**
 
 - Columns: `stage,total_ms,mean_ms,count`
 - Only **processed** frames contribute to `count`.
@@ -93,7 +93,7 @@ the manifest band `[low, high]`. CLI fails the bench if out of band.
 bench:
     python scripts/build_fixture.py --seed 42 --out data/fixture
     latvision eval --frames 2000 --kb 1000 --budget-ms 33 --seed 42 \
-      --report out/metrics.json --stages out/stage_times.csv
+      --report out/metrics.json --stages out/stage_timings.csv
     python scripts/print_summary.py out/metrics.json
 
 plot:
@@ -105,7 +105,7 @@ Attach to every RC tag:
 
 out/metrics.json
 
-out/stage_times.csv
+out/stage_timings.csv
 
 out/latency.png (time-series)
 

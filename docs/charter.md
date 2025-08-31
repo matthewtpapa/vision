@@ -55,7 +55,7 @@ Deliver a real-time, open-set recognition SDK: detect, track, embed, and match o
 
 - **Gate A — SDK Reality & Platform Matrix.** `pip install latency-vision` works on macOS/Windows/Linux; `from latency_vision import add_exemplar, query_frame` imports succeed; README 5-liner returns a `MatchResult` that matches **[docs/schema.md](../schema.md)**. CI matrix: Python 3.10/3.11/3.12 × macOS (x86_64/arm64), Windows (x86_64), Linux (manylinux2014 x86_64).
 - **Gate B — Latency & SLO.** On reference CPUs, windowed run (≥2k frames; warm-up excluded) yields `p95 ≤ 33 ms`, `p99 ≤ 66 ms`, `FPS ≥ 25`. Sustained 10-minute run: ≥99.5% frames within 33 ms. Cold-start ≤ 1.0 s, index bootstrap @ N=1k ≤ 50 ms.
-- **Gate C — Reproducibility (1 command).** `make bench` builds fixture, runs eval with fixed seed, emits `out/metrics.json` + `out/stage_times.csv`, and prints a summary. Artifacts record `sdk_version`, `git_commit`, `hardware_id`, `fixture_hash`.
+- **Gate C — Reproducibility (1 command).** `make bench` builds fixture, runs eval with fixed seed, emits `out/metrics.json` + `out/stage_timings.csv`, and prints a summary. Artifacts record `sdk_version`, `git_commit`, `hardware_id`, `fixture_hash`.
 - **Gate D — Installability & Hello World.** Clean macOS/Windows/Linux installs succeed; a Windows user can run the README 5-liner (NumPy backend fallback) and share `MatchResult` JSON.
 
 ### Cross-references

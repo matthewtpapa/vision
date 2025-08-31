@@ -106,3 +106,16 @@ clean:
 
 release: clean build check
 >@echo "✅ Artifacts ready in ./dist"
+
+.PHONY: bench plot
+
+bench:
+>python -c "import PIL" 2>/dev/null || { echo 'Missing dependency: pillow'; exit 3; }
+>python -c "import numpy" 2>/dev/null || { echo 'Missing dependency: numpy'; exit 3; }
+>python scripts/build_fixture.py --seed 42 --out data/fixture
+>python -m vision eval --input data/fixture --output out --warmup 100
+>python scripts/print_summary.py out/metrics.json
+
+plot:
+>python -c "import matplotlib" 2>/dev/null || { echo 'Missing dependency: matplotlib'; exit 3; }
+>MPLBACKEND=Agg python scripts/plot_latency.py --metrics out/metrics.json --out out/latency.png
