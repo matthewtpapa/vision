@@ -2,25 +2,16 @@
 
 Latency-bounded open-set recognition SDK — predictable, measurable, embeddable in AR/robotics pipelines.
 
-<!-- markdownlint-disable-next-line MD001 -->
-> ### Name mapping (current → M1.1)
->
-> **Today (this repo):**
->
-> - PyPI/package: `vision` (dev install)
-> - Import: `vision`
-> - CLI: `python -m vision` (or `vision` via entry point)
->
-> **M1.1 target (investor-grade):**
+> **Name mapping**
 >
 > - PyPI: `latency-vision`
 > - Import: `latency_vision`
-> - CLI: `latvision`  *(best-effort alias: `vision`)*
+> - CLI: `latvision` (best-effort alias: `vision`)
 
 ## Install
 
 ```bash
-pip install vision-sdk
+pip install latency-vision
 ```
 
 ## Quickstart
@@ -52,6 +43,28 @@ result = query_frame(frame)
 print(result["label"], result.get("confidence"), result.get("is_unknown"))
 ```
 
+### Demo: hello → eval → plot
+
+```bash
+# 1) Hello — environment snapshot
+python -m vision hello
+
+# 2) Eval — build a tiny fixture, run evaluator, print summary
+python scripts/build_fixture.py --out bench/fixture --n 400
+PYTHONPATH=src python -m vision eval --input bench/fixture --output bench/out
+python scripts/print_summary.py --metrics bench/out/metrics.json
+# Example:
+# fps=... p95=... p99=... frames=... processed=... backend=... sdk=... stride=... window_p95=...
+
+# 3) Plot (optional)
+python scripts/plot_latency.py --input bench/out/stage_timings.csv
+# Writes bench/out/latency.png
+```
+
+Exit codes: 0 success · 2 user/data error (bad path, empty/invalid files) · 3 missing optional dep (pillow, matplotlib).
+
+See docs/latency.md (process model), docs/benchmarks.md (method: monotonic_ns, NumPy percentile “linear”, warm-up exclusion, GC/BLAS notes, CPU features), and docs/schema.md (v0.1).
+
 ## Docs
 
 - Charter (vision & roadmap): **[docs/charter.md](docs/charter.md)**
@@ -60,18 +73,6 @@ print(result["label"], result.get("confidence"), result.get("is_unknown"))
 - Latency & process model: **[docs/latency.md](docs/latency.md)**
 - Benchmarks methodology: **[docs/benchmarks.md](docs/benchmarks.md)**
 - Third-party attributions: **[THIRD_PARTY.md](THIRD_PARTY.md)**
-
-## Demo path (coming in M1.1)
-
-```bash
-pip install latency-vision
-latvision hello
-latvision eval --frames 2000 --seed 42 --kb 1000 --budget-ms 33 \
-  --report out/metrics.json --stages out/stage_times.csv
-make plot
-```
-
-latvision hello prints OS/Python, SIMD flags (AVX2/NEON/no-SIMD), backend availability, and versions.
 
 ### Schema v0.1
 
@@ -113,13 +114,19 @@ Running from a source checkout? Use the local fallback:
 PYTHONPATH=src python -m vision eval …
 ```
 
-Required dependencies: `numpy` and `pillow`. A friendly guard exits with code `3` if either is missing.
+Dependencies:
+
+- **numpy** — required
+- **pillow** — required when evaluating from image directories (e.g., PNG fixtures)
+- **matplotlib** — optional; only needed for `scripts/plot_latency.py`
+
+Guards print a clear message and exit with code `3` when an optional dep is missing.
 
 Exit codes:
 
 - `0` — success
-- `2` — `p95` latency budget breached
-- `3` — missing `numpy` or `pillow`
+- `2` — user/data error (bad path, empty/invalid files)
+- `3` — missing optional dependency (`pillow`, `matplotlib`)
 
 The evaluator can adaptively skip frames to stay within the latency budget; see the **[Eval Guide](docs/eval.md)** and **[Latency Guide](docs/latency.md)** for controller details.
 
