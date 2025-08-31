@@ -1,39 +1,145 @@
-# Latency Controller
+# Latency Controller & Process Model (v0.1)
 
-The evaluator uses a windowed p95 controller to adapt frame stride.
+This document defines the **official latency behavior** of the SDK for the
+0.1.x line. It is investor-grade and forms the basis of our SLO claims.
 
-## Windowed p95
+- Controller policy: **windowed p95**, **stride/skip only** (no model degrade).
+- Process model: **single-process, single-stream**; reads thread-safe, writes serialized.
+- Skipped-frame semantics are **well-defined** to avoid metric distortion.
 
-- Rolling window (default 120 frames)
-- Inclusive p95 computation
-- Low-water hysteresis of 0.8
-- Bounds: `min_stride=1`, `max_stride=4`
+---
 
-## Policy
+## Process / Thread Model (v0.1)
 
-- `p95 > budget_ms` → `stride + 1` (capped at `max_stride`)
-- `p95 < budget_ms * low_water` for a full window → `stride - 1` (floored at `min_stride`)
+- **Single-process, single-stream** pipeline.
+- **Reads are thread-safe**; `add_exemplar` writes are **serialized**.
+- There is **no embedding de-grade path** in v0.1. Adaptive behavior is *only*:
+  - **Stride increase** (process every Nth frame) when over budget.
+  - **Stride decrease** (back toward 1) when clearly under budget for a window.
 
-Skipped frames:
+> Rationale: predictable behavior under load; easy to reason about tail latencies.
 
-- Per-frame timing is still recorded.
-- Stage timings only include processed frames.
-- Unknown flag is reused from the last processed frame.
+---
 
-## Configuration
+## Controller: Windowed p95 (Stride/Skip Only)
 
-| Env var | Description |
-| --- | --- |
-| `VISION__LATENCY__BUDGET_MS` | Target p95 latency budget in ms |
-| `VISION__LATENCY__WINDOW` | Size of the rolling window |
-| `VISION__LATENCY__LOW_WATER` | Low-water hysteresis ratio |
-| `VISION__PIPELINE__FRAME_STRIDE` | Starting frame stride |
-| `VISION__PIPELINE__MIN_STRIDE` | Minimum allowed stride |
-| `VISION__PIPELINE__MAX_STRIDE` | Maximum allowed stride |
-| `VISION__PIPELINE__AUTO_STRIDE` | Enable adaptive stride |
+We maintain a rolling **window** of per-frame latencies (default `window=120`).
+On each frame:
 
-## Troubleshooting
+1. Compute **inclusive p95** of the window.
+2. Compare to **budget_ms** and **low_water** hysteresis.
+3. Adjust **frame_stride** accordingly.
 
-- `p95_window_ms=null` → run longer or reduce the window size.
-- Unknown rate spikes → ensure you're on a build ≥ this PR (skipped-frame fix).
-- In bare environments, install `numpy` and `pillow` or rely on the built-in guard.
+### Policy
+
+- If `p95 > budget_ms` → `frame_stride = min(frame_stride + 1, max_stride)`
+- If `p95 < budget_ms * low_water` for ≥ `window` samples
+  → `frame_stride = max(frame_stride - 1, min_stride)`
+- Else → hold stride.
+
+### Defaults (v0.1)
+
+- `budget_ms`: 66 (example default; README/demo may use 33)
+- `window`: 120
+- `low_water`: 0.8
+- `min_stride`: 1
+- `max_stride`: 4
+- `auto_stride`: true
+
+> **Warm-up:** `p95_window_ms` remains `null` until we have ≥30 samples; this avoids
+> reporting unstable tail stats early in the run.
+
+---
+
+## Skipped-Frame Semantics (Metrics Integrity)
+
+- We **record per-frame duration** for every frame (processed or skipped).
+- **Stage timings** (detect/track/embed/match) are recorded **only** for **processed** frames.
+- The `unknown` flag for skipped frames **reuses the last processed frame’s value** to prevent
+  artificial inflation of unknown-rate when frames are skipped due to stride.
+- Controller state exposed in metrics:
+  - `start_stride`, `end_stride`, `frames_total`, `frames_processed`, `p95_window_ms`,
+    and the controller config (`auto_stride`, `min_stride`, `max_stride`, `window`, `low_water`).
+
+---
+
+## Configuration & Env Overrides
+
+All knobs are configurable via `vision.toml` and environment overrides.
+
+| Key                                   | Type    | Default | Env override                           |
+|--------------------------------------|---------|---------|----------------------------------------|
+| `latency.budget_ms`                  | int     | 66      | `VISION__LATENCY__BUDGET_MS`           |
+| `latency.window`                     | int     | 120     | `VISION__LATENCY__WINDOW`              |
+| `latency.low_water`                  | float   | 0.8     | `VISION__LATENCY__LOW_WATER`           |
+| `pipeline.frame_stride`              | int     | 1       | `VISION__PIPELINE__FRAME_STRIDE`       |
+| `pipeline.min_stride`                | int     | 1       | `VISION__PIPELINE__MIN_STRIDE`         |
+| `pipeline.max_stride`                | int     | 4       | `VISION__PIPELINE__MAX_STRIDE`         |
+| `pipeline.auto_stride`               | bool    | true    | `VISION__PIPELINE__AUTO_STRIDE`        |
+
+### Examples
+
+Increase the budget and disable adaptation:
+
+```bash
+VISION__LATENCY__BUDGET_MS=33 \
+VISION__PIPELINE__AUTO_STRIDE=0 \
+python -m vision eval --input frames --output out
+```
+
+Force a bounded stride range:
+
+```bash
+VISION__PIPELINE__MIN_STRIDE=1 \
+VISION__PIPELINE__MAX_STRIDE=2 \
+python -m vision eval --input frames --output out
+```
+
+## What We Report
+
+Per-run envelope (metrics.json):
+
+fps, p50, p95
+
+stage_ms (means for detect/track/embed/match/overhead)
+
+kb_size, backend_selected, sdk_version
+
+Controller block (see above)
+
+Per-stage summary (stage_timings.csv):
+
+Columns: stage,total_ms,mean_ms,count
+
+Only processed frames contribute to count.
+
+## Stress Narrative (template)
+
+We include a qualitative narrative alongside artifacts to make controller behavior
+interpretable at a glance. Use the template below for RC notes:
+
+Scenario: 10-minute sustained run; budget 33 ms; window 120; low-water 0.8.
+Behavior: At ~190s, background tasks increased CPU pressure; p95 exceeded budget.
+Controller raised stride from 1→2, holding p95 under 33 ms while FPS stayed ≥25.
+Pressure subsided around ~420s; after one full window under low-water, stride decreased
+back to 1. Error budget stayed under 0.5%; no model degrade was used.
+
+## FAQ
+
+Why stride/skip only?
+Predictability. We avoid dynamic model changes that can alter accuracy; we control latency
+by reducing processed frames under load, then recover.
+
+Does skipping lie about latency?
+No. We measure per-frame timing for every frame and expose controller decisions explicitly.
+
+Where are SIMD/CPU features reported?
+A separate latvision hello banner (PR 8) prints OS/Python, wheel flavor, and SIMD (AVX2/NEON/no-SIMD).
+
+## Related Docs
+
+Milestone spec & gates: docs/specs/m1.1.md
+
+Result schema (frozen): docs/schema.md
+
+Benchmarks methodology: docs/benchmarks.md
