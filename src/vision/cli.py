@@ -58,6 +58,19 @@ def main(argv: Sequence[str] | None = None) -> int:
     elif args.command == "webcam":
         webcam.loop(dry_run=args.dry_run, use_fake=args.use_fake_detector)
     elif args.command == "eval":
+        try:
+            import numpy  # noqa: F401
+            from PIL import Image  # noqa: F401
+        except Exception:
+            print(
+                (
+                    "vision eval requires numpy and pillow. "
+                    "Install with: pip install numpy pillow "
+                    "(or run pip install -e .)."
+                ),
+                file=sys.stderr,
+            )
+            return 3
         ret = evaluator.run_eval(args.input, args.output, args.warmup)
         sys.exit(ret)
     else:

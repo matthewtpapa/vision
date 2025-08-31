@@ -83,7 +83,11 @@ verify:
 >$(MAKE) mdpush
 
 eval:
->python -m vision eval --input $(INPUT) --output $(OUTPUT) --warmup $(or $(WARMUP),100)
+>if python -c "import vision" >/dev/null 2>&1; then \
+>  python -m vision eval --input $(INPUT) --output $(OUTPUT) --warmup $(or $(WARMUP),100); \
+>else \
+>  PYTHONPATH=src python -m vision eval --input $(INPUT) --output $(OUTPUT) --warmup $(or $(WARMUP),100); \
+>fi
 
 build:
 >python -m pip install --upgrade build twine
