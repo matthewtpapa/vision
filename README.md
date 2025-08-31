@@ -1,9 +1,21 @@
 # Vision SDK — Open-Set Recognition for Real-Time Apps
 
-**Problem:** Apps need to recognize *any* object, not just classes a model was trained on — and do it in real time on edge/consumer hardware.
-**Solution:** A modular SDK that detects, tracks, embeds, and **matches** crops against a growing exemplar KB, with tight latency budgets and boring reliability.
+Latency-bounded open-set recognition SDK — predictable, measurable, embeddable in AR/robotics pipelines.
 
-**Who it's for:** AR, robotics, and vision teams that want infra, not a consumer app. Think *FFmpeg for open-set recognition.*
+<!-- markdownlint-disable-next-line MD001 -->
+> ### Name mapping (current → M1.1)
+>
+> **Today (this repo):**
+>
+> - PyPI/package: `vision` (dev install)
+> - Import: `vision`
+> - CLI: `python -m vision` (or `vision` via entry point)
+>
+> **M1.1 target (investor-grade):**
+>
+> - PyPI: `latency-vision`
+> - Import: `latency_vision`
+> - CLI: `latvision`  *(best-effort alias: `vision`)*
 
 ## Install
 
@@ -13,23 +25,52 @@ pip install vision-sdk
 
 ## Quickstart
 
+### (M1.1 façade – target)
+
 ```python
 import numpy as np
-from vision import add_exemplar, query_frame
+from latency_vision import add_exemplar, query_frame
 
-# Add a known exemplar (embedding can be raw; SDK will L2-normalize float32)
-add_exemplar(
-    label="red-mug",
-    embedding=np.random.rand(512).astype("float32"),
-    bbox=None,
-    provenance={"source": "example"},
-)
+add_exemplar("red-mug", np.random.rand(512).astype("float32"))
+frame = np.zeros((640, 640, 3), dtype=np.uint8)
+result = query_frame(frame)
+print(result["label"], result["confidence"], result["backend"])
+```
 
-# Query a frame (numpy image array)
+Note: The façade lands in a subsequent PR. Until then, use the current snippet:
+
+(Current repo – today)
+
+```python
+import numpy as np
+from vision import add_exemplar, query_frame  # placeholder; façade arrives in a later PR
+
+# API shape will match the schema v0.1 in docs/schema.md
+add_exemplar(label="red-mug", embedding=np.random.rand(512).astype("float32"))
 frame = np.zeros((640, 640, 3), dtype=np.uint8)
 result = query_frame(frame)
 print(result["label"], result.get("confidence"), result.get("is_unknown"))
 ```
+
+## Docs
+
+- Charter (vision & roadmap): **[docs/charter.md](docs/charter.md)**
+- Milestone M1.1 Spec (Gates A–D): **[docs/specs/m1.1.md](docs/specs/m1.1.md)**
+- Result Schema v0.1 (frozen): **[docs/schema.md](docs/schema.md)**
+- Latency & process model: **[docs/latency.md](docs/latency.md)**
+- Benchmarks methodology: **[docs/benchmarks.md](docs/benchmarks.md)**
+
+## Demo path (coming in M1.1)
+
+```bash
+pip install latency-vision
+latvision hello
+latvision eval --frames 2000 --seed 42 --kb 1000 --budget-ms 33 \
+  --report out/metrics.json --stages out/stage_times.csv
+make plot
+```
+
+latvision hello prints OS/Python, SIMD flags (AVX2/NEON/no-SIMD), backend availability, and versions.
 
 ### Schema v0.1
 
@@ -115,11 +156,6 @@ frame_stride = 1
 ## Architecture (M1 vertical slice)
 
 Webcam → Detect (YOLO) → Track (ByteTrack) → Embed (CLIP-B32) → Match (FAISS/NumPy) → Label/Unknown → Persist Exemplar → Telemetry
-
-## Roadmap & Spec
-
-- Charter (north star, roadmap): [docs/charter.md](docs/charter.md)
-- M1 Spec (contracts, schemas, gates): [docs/specs/m1.md](docs/specs/m1.md)
 
 ## Contributing
 
