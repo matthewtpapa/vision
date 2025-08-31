@@ -1,37 +1,55 @@
-# Evaluation & Telemetry (`vision --eval`)
+# Evaluation & Telemetry (`vision eval`)
 
-Run the vertical-slice evaluator to produce latency/FPS/unknown-rate metrics:
+## Quickstart
 
-```bash
-vision --eval --input examples/eval_frames --output out/
+Generate a small set of synthetic frames:
+
+```python
+from pathlib import Path
+from PIL import Image
+
+in_dir = Path("in")
+in_dir.mkdir()
+for i in range(8):
+    img = Image.new("RGB", (64, 64), color=(i, 0, 0))
+    img.save(in_dir / f"{i}.png")
 ```
 
-Artifacts:
+Run the evaluator and inspect the outputs:
 
-- `out/metrics.json` — JSON (schema frozen for M1)
-- `out/stage_timings.csv` — deterministic per-stage summary
+```bash
+python -m vision eval --input in --output out --warmup 0
+cat out/metrics.json
+cat out/stage_timings.csv
+```
 
-## JSON Schema (M1)
+## Metrics schema
 
 ```json
 {
-  "stage_ms": {"detect": 0.0, "track": 0.0, "embed": 0.0, "match": 0.0, "overhead": 0.0},
   "fps": 0.0,
   "p50": 0.0,
   "p95": 0.0,
-  "unknown_rate": 0.0,
   "kb_size": 0,
   "backend_selected": "faiss",
-  "sdk_version": "0.1.0"
+  "stage_ms": {"detect": 0.0, "track": 0.0, "embed": 0.0, "match": 0.0, "overhead": 0.0},
+  "controller": {
+    "auto_stride": false,
+    "min_stride": 1, "max_stride": 4,
+    "start_stride": 1, "end_stride": 1,
+    "window": 120, "low_water": 0.8,
+    "frames_total": 0, "frames_processed": 0,
+    "p95_window_ms": null
+  }
 }
 ```
 
-## CSV Columns
+`p95_window_ms` remains `null` until enough samples (≥ window warmup; defaults to 30) accumulate.
 
-`stage,count,total_ms,mean_ms,max_ms`
+## Interpreting results
 
-## Pass/Fail Gates (M1)
+- If `p95` exceeds `budget_ms`, the CLI exits with code `2`; inspect `end_stride` and `frames_processed/frames_total`.
+- To tune, increase `budget_ms` or `max_stride`, or reduce model cost.
+- `stage_timings.csv` columns: `stage,total_ms,mean_ms,count`. Only processed frames contribute to `count`; skipped frames are omitted.
 
-- p95 ≤ 33 ms over ≥ 2,000 frames (warm-up 100 excluded)
-- KB bootstrap ≤ 50 ms for N=1k
-- Non-zero exit on failure (CI-friendly)
+See [latency.md](latency.md) for controller policy details.

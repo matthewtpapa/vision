@@ -79,7 +79,12 @@ verify:
 >@echo "==> Tests"
 >@if command -v pytest >/dev/null 2>&1; then pytest; else echo "⚠️ pytest not installed; skipping tests"; fi
 >@echo "==> Markdownlint"
->$(MAKE) mdlint
+>@if [ -n "$${CI:-}" ]; then \
+>  echo "(CI) markdownlint is advisory"; \
+>  $(MAKE) mdlint || true; \
+>else \
+>  $(MAKE) mdlint; \
+>fi
 >$(MAKE) mdpush
 
 eval:

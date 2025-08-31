@@ -22,7 +22,7 @@ jobs:
           from PIL import Image, ImageDraw
           import os, pathlib
           d = pathlib.Path("ci_frames"); d.mkdir(exist_ok=True)
-          for i in range(12):
+          for i in range(42):
               img = Image.new("RGB",(96,96),(i*10%255, 40, 80))
               ImageDraw.Draw(img).rectangle((10+i,10, 60,60), outline=(255,255,255))
               img.save(d/f"{i:02d}.png")
