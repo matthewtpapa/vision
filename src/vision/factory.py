@@ -1,4 +1,5 @@
 # SPDX-License-Identifier: Apache-2.0
+# Copyright (c) 2025 The Vision Authors
 """Factories for constructing detector and tracker implementations."""
 
 from __future__ import annotations

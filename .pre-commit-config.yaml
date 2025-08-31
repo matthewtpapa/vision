@@ -1,4 +1,5 @@
 # SPDX-License-Identifier: Apache-2.0
+# Copyright (c) 2025 The Vision Authors
 repos:
   - repo: https://github.com/astral-sh/ruff-pre-commit
     rev: v0.4.4

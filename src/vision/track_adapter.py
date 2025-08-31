@@ -1,4 +1,5 @@
 # SPDX-License-Identifier: Apache-2.0
+# Copyright (c) 2025 The Vision Authors
 """Tracking adapter interfaces and simple implementations."""
 
 from __future__ import annotations

@@ -1,4 +1,5 @@
 # SPDX-License-Identifier: Apache-2.0
+# Copyright (c) 2025 The Vision Authors
 """Protocol definitions for embedding matchers.
 
 Vectors are expected to be L2-normalised ``float32`` arrays and similarity is
