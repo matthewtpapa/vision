@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: Apache-2.0
 """Cluster store stub with JSON persistence."""
 
 from __future__ import annotations

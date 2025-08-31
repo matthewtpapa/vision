@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: Apache-2.0
 .RECIPEPREFIX := >
 .PHONY: setup test test-cov cov-html lint fmt format type mdlint mdfix verify help
 
@@ -51,7 +52,7 @@ type:
 
 mdlint:
 >if [ -x "$(MDLINT_BIN)" ]; then \
->  "$(MDLINT_BIN)" "**/*.md" "!**/site/**"; \
+>  "$(MDLINT_BIN)"; \
 >else \
 >  echo "⚠️  markdownlint not installed locally; run 'npm ci' or rely on CI."; \
 >fi
@@ -61,7 +62,7 @@ mdpush:
 
 mdfix:
 >if [ -x "$(MDLINT_BIN)" ]; then \
->  "$(MDLINT_BIN)" --fix "**/*.md" "!**/site/**"; \
+>  "$(MDLINT_BIN)" --fix; \
 >else \
 >  echo "⚠️  markdownlint not installed locally; run 'npm ci'."; \
 >fi

@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: Apache-2.0
 name: ci
 permissions:
   contents: read
@@ -14,8 +15,6 @@ jobs:
       - uses: actions/checkout@v4
       - uses: DavidAnson/markdownlint-cli2-action@v15
         with:
-          globs: |
-            **/*.md
           config: .markdownlint-cli2.yaml
 
   build:
@@ -45,3 +44,24 @@ jobs:
       - run: vision --version
       - run: vision webcam --dry-run
       - run: vision webcam --use-fake-detector --dry-run
+
+  package:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: "pip"
+          cache-dependency-path: |
+            requirements-dev.txt
+      - run: python -m pip install --upgrade pip
+      - run: python -m pip install build twine
+      - run: python -m build
+      - run: python -m twine check dist/*
+      - uses: actions/upload-artifact@v4
+        with:
+          name: python-dist
+          path: dist/*
+          if-no-files-found: error

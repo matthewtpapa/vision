@@ -1,11 +1,12 @@
 {
   "name": "vision-docs-tools",
   "private": true,
+  "license": "Apache-2.0",
   "devDependencies": {
     "markdownlint-cli2": "0.12.1"
   },
   "scripts": {
-    "mdlint": "markdownlint-cli2 \"**/*.md\" \"!**/site/**\"",
-    "mdfix": "markdownlint-cli2 --fix \"**/*.md\" \"!**/site/**\""
+    "mdlint": "markdownlint-cli2",
+    "mdfix": "markdownlint-cli2 --fix"
   }
 }

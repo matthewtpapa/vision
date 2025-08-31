@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: Apache-2.0
 """ByteTrack-like tracker adapter."""
 
 from __future__ import annotations

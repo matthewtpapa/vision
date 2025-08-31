@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: Apache-2.0
 """Configuration management for the vision package.
 
 This module exposes a single public function :func:`get_config` which returns

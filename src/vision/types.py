@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: Apache-2.0
 """Typed data contracts for detection and tracking.
 
 This module defines lightweight immutable dataclasses that model the

@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: Apache-2.0
 """Typed associations between tracks and embeddings."""
 
 from __future__ import annotations

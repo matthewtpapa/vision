@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: Apache-2.0
 """Top-level package for vision."""
 
 from .embedder import Embedder

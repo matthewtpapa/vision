@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: Apache-2.0
 """Utilities for working with matcher indices."""
 
 from __future__ import annotations

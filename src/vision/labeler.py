@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: Apache-2.0
 """Labeler stub."""
 
 from __future__ import annotations

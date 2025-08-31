@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: Apache-2.0
 """Fake object detector stub."""
 
 from __future__ import annotations

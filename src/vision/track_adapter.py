@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: Apache-2.0
 """Tracking adapter interfaces and simple implementations."""
 
 from __future__ import annotations

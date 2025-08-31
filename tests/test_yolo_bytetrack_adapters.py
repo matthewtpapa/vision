@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: Apache-2.0
 from vision.detect_yolo_adapter import YoloLikeDetector
 from vision.track_bytetrack_adapter import ByteTrackLikeTracker
 from vision.types import Detection
