@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 """Generate a deterministic set of PNG frames for benchmarking."""
+
 from __future__ import annotations
 
 import argparse

@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 """Plot per-frame latency from a stage timings CSV."""
+
 from __future__ import annotations
 
 import argparse
@@ -60,6 +61,7 @@ def main() -> None:
     args = parse_args()
     try:
         import matplotlib
+
         matplotlib.use("Agg")
         import matplotlib.pyplot as plt
     except ModuleNotFoundError:  # pragma: no cover - explicit exit

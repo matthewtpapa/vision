@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 """Print a concise summary from a metrics.json file."""
+
 from __future__ import annotations
 
 import argparse
