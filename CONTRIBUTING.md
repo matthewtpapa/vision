@@ -29,6 +29,15 @@ npm run mdfix        # or: make mdfix
 > If npm ci fails (e.g., corporate proxy or 403 from the npm registry), skip local markdownlint.
 > CI will still enforce the exact same rules via a pinned GitHub Action.
 
+### License headers
+
+New source files must begin with:
+
+```text
+SPDX-License-Identifier: Apache-2.0
+Copyright (c) 2025 The Vision Authors
+```
+
 ## CI gates (M1)
 
 - `vision --eval` must pass latency/bootstrap thresholds

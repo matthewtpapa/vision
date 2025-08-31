@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: Apache-2.0
 """Factories for constructing detector and tracker implementations."""
 
 from __future__ import annotations

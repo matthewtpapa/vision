@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: Apache-2.0
 """Detection → tracking → embedding pipeline."""
 
 from __future__ import annotations

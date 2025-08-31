@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: Apache-2.0
 """Embedding data contracts and helpers."""
 
 from __future__ import annotations

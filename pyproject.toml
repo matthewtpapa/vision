@@ -8,12 +8,12 @@ version = "0.0.2"
 description = "Minimal vision pipeline stubs with CLI (M0)"
 readme = "README.md"
 requires-python = ">=3.11"
-license = {text = "MIT"}
-authors = [{ name = "Vision Authors", email = "dev@example.com" }]
+license = { file = "LICENSE" }
+authors = [{ name = "The Vision Authors", email = "dev@example.com" }]
 classifiers = [
   "Programming Language :: Python :: 3",
   "Programming Language :: Python :: 3.11",
-  "License :: OSI Approved :: MIT License",
+  "License :: OSI Approved :: Apache Software License",
   "Operating System :: OS Independent",
 ]
 dependencies = []
@@ -28,3 +28,6 @@ Issues = "https://github.com/matthewtpapa/vision/issues"
 
 [project.scripts]
 vision = "vision.cli:main"
+
+[tool.setuptools]
+license-files = ["LICENSE", "NOTICE"]

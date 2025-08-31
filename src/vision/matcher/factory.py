@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: Apache-2.0
 """Factory for building the best available matcher backend."""
 
 from __future__ import annotations

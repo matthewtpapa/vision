@@ -77,4 +77,4 @@ See [CONTRIBUTING.md](CONTRIBUTING.md). PRs should not change both Charter and S
 
 ## License
 
-Apache-2.0 (TBD; see LICENSE)
+Apache-2.0 — see LICENSE and NOTICE
