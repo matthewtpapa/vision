@@ -81,6 +81,9 @@ Exit codes:
 
 The evaluator can adaptively skip frames to stay within the latency budget; see the **[Eval Guide](docs/eval.md)** and **[Latency Guide](docs/latency.md)** for controller details.
 
+See [Benchmarks](docs/benchmarks.md)
+for measurement details and artifact fields.
+
 Example with environment overrides:
 
 ```bash
