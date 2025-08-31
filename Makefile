@@ -21,6 +21,7 @@ help:
 >echo "make mdlint    - run markdownlint (same rules as CI)"
 >echo "make mdfix     - auto-fix markdownlint issues (requires npx)"
 >echo "make verify    - run all local checks (lint, fmt-check, type, test, markdownlint)"
+>echo "make eval      - run evaluator on a directory of frames"
 >echo ""
 >echo "Tip: run 'npm ci' once to enable local markdownlint (make mdlint/mdfix)."
 
@@ -80,6 +81,9 @@ verify:
 >@echo "==> Markdownlint"
 >$(MAKE) mdlint
 >$(MAKE) mdpush
+
+eval:
+>python -m vision --eval --input $(INPUT) --output $(OUTPUT) --warmup $(or $(WARMUP),100)
 
 build:
 >python -m pip install --upgrade build twine

@@ -5,9 +5,10 @@
 from __future__ import annotations
 
 import argparse
+import sys
 from collections.abc import Sequence
 
-from . import __version__, webcam
+from . import __version__, evaluator, webcam
 from .config import get_config
 
 _ = get_config()
@@ -34,6 +35,16 @@ def build_parser() -> argparse.ArgumentParser:
         action="store_true",
         help="Run the webcam loop with the FakeDetector stub.",
     )
+
+    eval_parser = subparsers.add_parser("eval", help="Run evaluator over images.")
+    eval_parser.add_argument("--input", required=True, help="Dir of images")
+    eval_parser.add_argument("--output", required=True, help="Dir for artifacts")
+    eval_parser.add_argument(
+        "--warmup",
+        type=int,
+        default=100,
+        help="Number of warmup frames to skip",
+    )
     return parser
 
 
@@ -46,6 +57,9 @@ def main(argv: Sequence[str] | None = None) -> int:
         print(f"Vision {__version__}")
     elif args.command == "webcam":
         webcam.loop(dry_run=args.dry_run, use_fake=args.use_fake_detector)
+    elif args.command == "eval":
+        ret = evaluator.run_eval(args.input, args.output, args.warmup)
+        sys.exit(ret)
     else:
         parser.print_help()
     return 0

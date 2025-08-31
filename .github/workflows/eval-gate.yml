@@ -1,0 +1,41 @@
+name: eval-gate
+on:
+  pull_request:
+    branches: [ main ]
+  push:
+    branches: [ main ]
+jobs:
+  eval:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: { python-version: '3.11' }
+      - name: Install
+        run: |
+          pip install -e .
+          pip install -r requirements-dev.txt
+          pip install pillow numpy
+      - name: Generate synthetic frames
+        run: |
+          python - <<'PY'
+          from PIL import Image, ImageDraw
+          import os, pathlib
+          d = pathlib.Path("ci_frames"); d.mkdir(exist_ok=True)
+          for i in range(12):
+              img = Image.new("RGB",(96,96),(i*10%255, 40, 80))
+              ImageDraw.Draw(img).rectangle((10+i,10, 60,60), outline=(255,255,255))
+              img.save(d/f"{i:02d}.png")
+          PY
+      - name: Run evaluator
+        env:
+          VISION__LATENCY__BUDGET_MS: "200"
+        run: |
+          python -m vision --eval --input ci_frames --output ci_out --warmup 2
+      - name: Upload artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: eval-artifacts
+          path: ci_out/
+
