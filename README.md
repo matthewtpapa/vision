@@ -33,16 +33,35 @@ print(result["label"], result.get("confidence"), result.get("is_unknown"))
 
 ## CLI
 
-Evaluate latency and export telemetry:
+Invoke the evaluator to emit latency metrics and telemetry:
 
 ```bash
-python -m vision eval --input examples/eval_frames --output out/
-cat out/metrics.json
+python -m vision eval --input <dir> --output <dir> --warmup <int>
 ```
 
-If running without installing the package, use `PYTHONPATH=src python -m vision eval …` and ensure numpy + pillow are installed.
+Running from a source checkout? Use the local fallback:
 
-Schema and details: see **[Eval Guide](docs/eval.md)**.
+```bash
+PYTHONPATH=src python -m vision eval …
+```
+
+Required dependencies: `numpy` and `pillow`. A friendly guard exits with code `3` if either is missing.
+
+Exit codes:
+
+- `0` — success
+- `2` — `p95` latency budget breached
+- `3` — missing `numpy` or `pillow`
+
+The evaluator can adaptively skip frames to stay within the latency budget; see the **[Eval Guide](docs/eval.md)** and **[Latency Guide](docs/latency.md)** for controller details.
+
+Example with environment overrides:
+
+```bash
+VISION__LATENCY__BUDGET_MS=33 \
+VISION__PIPELINE__AUTO_STRIDE=0 \
+python -m vision eval --input <dir> --output <dir>
+```
 
 ## Config
 

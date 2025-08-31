@@ -17,6 +17,13 @@
 
 - No runtime code changes; docs-only reorg
 
+## [0.1.1] - 2025-08-30
+
+- Added eval subcommand + latency budget gate with CI artifacts
+- Added adaptive stride controller with telemetry integrity
+- Added controller block to metrics.json
+- CLI env guard + Makefile fallback
+
 ## v0.0.2 - 2025-08-28
 
 - Fixed markdownlint CI failures and blank-line issues.
