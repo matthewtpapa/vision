@@ -17,6 +17,15 @@
 
 - No runtime code changes; docs-only reorg
 
+## [0.1.0-rc.1] - 2025-09-01
+
+- M1.1 delivered (Gates A–D)
+- Scripts: build fixture / print summary / plot latency
+- Makefile targets: bench, plot
+- README: demo (hello → eval → plot), exit codes, name mapping
+- Docs: charter/spec (M1.1), schema v0.1 (frozen), latency, benchmarks
+- THIRD_PARTY added
+
 ## [0.1.1] - 2025-08-30
 
 - Added eval subcommand + latency budget gate with CI artifacts

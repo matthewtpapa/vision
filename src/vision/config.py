@@ -14,11 +14,32 @@ instance.
 from __future__ import annotations
 
 import os
-import tomllib
 from collections.abc import Mapping
 from dataclasses import asdict, dataclass, field
 from pathlib import Path
 from typing import Any
+
+
+def _parse_toml_bytes(data: bytes) -> dict[str, Any]:
+    """Parse TOML from bytes using stdlib tomllib (3.11+) or tomli backport.
+
+    - tomllib.loads accepts bytes
+    - tomli.loads expects str
+    """
+
+    try:
+        import tomllib  # Python 3.11+
+
+        try:
+            return tomllib.loads(data)  # type: ignore[arg-type]
+        except TypeError:
+            return tomllib.loads(data.decode("utf-8"))
+    except ModuleNotFoundError:
+        try:
+            import tomli
+        except ModuleNotFoundError:
+            return {}
+        return tomli.loads(data.decode("utf-8"))
 
 
 @dataclass(frozen=True)
@@ -155,8 +176,7 @@ def get_config(toml_path: str | None = None) -> Config:
         cfg_dict = asdict(Config())
         path = Path(toml_path) if toml_path is not None else Path.cwd() / "vision.toml"
         if path.is_file():
-            with path.open("rb") as fh:
-                overrides = tomllib.load(fh)
+            overrides = _parse_toml_bytes(path.read_bytes())
             cfg_dict = _deep_merge(cfg_dict, overrides)
         env_cfg = _env_overrides(cfg_dict)
         if env_cfg:
