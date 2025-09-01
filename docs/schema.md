@@ -1,3 +1,6 @@
+<!-- markdownlint-disable-next-line MD041 -->
+Status: Frozen for 0.1.x — stamped 0.1.0-rc.1 (2025-09-01)
+
 # Result Schema — v0.1 (Frozen for 0.1.x)
 
 This document freezes the public result object returned by the façade API
@@ -47,7 +50,7 @@ change to this schema is disallowed in the 0.1.x series.
   "budget_hit": false,
   "bbox": [120, 96, 220, 196],
   "timestamp_ms": 1725043200123,
-  "sdk_version": "0.1.1"
+  "sdk_version": "0.1.0-rc.1"
 }
 ```
 
