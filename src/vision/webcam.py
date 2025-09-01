@@ -4,8 +4,9 @@
 
 from __future__ import annotations
 
-from datetime import UTC, datetime
+from datetime import datetime
 
+from ._compat import UTC
 from .cluster_store import ClusterStore
 from .embedder import Embedder
 from .fake_detector import FakeDetector
