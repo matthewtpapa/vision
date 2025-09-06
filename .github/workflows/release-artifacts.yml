@@ -7,6 +7,11 @@ on:
 jobs:
   artifacts:
     runs-on: ubuntu-latest
+    env:
+      PIP_INDEX_URL: https://pypi.org/simple
+      PIP_EXTRA_INDEX_URL: ""
+      PIP_DISABLE_PIP_VERSION_CHECK: "1"
+      PIP_NO_CACHE_DIR: "1"
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -18,7 +23,14 @@ jobs:
           python -m pip install --upgrade setuptools wheel build
           pip install -e .
           pip install -r requirements-dev.txt
-          pip install numpy pillow matplotlib
+          # Wheels only, pinned to broad-availability builds
+          python -m pip install --only-binary=:all: \
+            numpy==1.26.4 \
+            pillow==10.4.0 \
+            matplotlib==3.8.4
+      - name: Pip diagnostics (capture)
+        if: failure()
+        run: python -m pip debug --verbose || true
       - name: Import smoke (alias + legacy)
         run: |
           python - <<'PY'
