@@ -21,13 +21,19 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           python -m pip install --upgrade setuptools wheel build
-          pip install -e .
-          pip install -r requirements-dev.txt
+          python -m pip install -e .
+          python -m pip install -r requirements-dev.txt
           # Wheels only, pinned to broad-availability builds
           python -m pip install --only-binary=:all: \
             numpy==1.26.4 \
             pillow==10.4.0 \
             matplotlib==3.8.4
+
+      - name: Sanity: show Python/pip & import numpy
+        run: |
+          python -c "import sys; print('exe:', sys.executable)"
+          python -m pip --version
+          python -c "import numpy as np; print('numpy:', np.__version__)"
       - name: Pip diagnostics (capture)
         if: failure()
         run: python -m pip debug --verbose || true
