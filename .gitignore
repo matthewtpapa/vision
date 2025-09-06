@@ -22,8 +22,9 @@ parts/
 sdist/
 var/
 wheels/
-!third_party/wheels/
 share/python-wheels/
+wheelhouse/
+node_modules/
 *.egg-info/
 .installed.cfg
 *.egg

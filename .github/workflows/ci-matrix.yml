@@ -12,27 +12,37 @@ jobs:
       matrix:
         os: [ubuntu-latest, macos-13, macos-14, windows-latest]
         python-version: ["3.10", "3.11", "3.12"]
+    env:
+      PIP_INDEX_URL: https://pypi.org/simple
+      PIP_EXTRA_INDEX_URL: ""
+      PIP_DISABLE_PIP_VERSION_CHECK: "1"
+      PIP_NO_CACHE_DIR: "1"
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with:
           python-version: ${{ matrix.python-version }}
 
-      - name: Install deps from wheelhouse
-        shell: bash
+      - name: Pip diagnostics
+        run: |
+          python -m pip debug --verbose || true
+
+      - name: Install dev deps
         run: |
           python -m pip install --upgrade pip
-          python -m pip install --upgrade setuptools wheel
+          python -m pip install --upgrade setuptools wheel build
           python -m pip install -e .
-          wh="third_party/wheels/${{ runner.os }}-py${{ matrix.python-version }}"
-          python -m pip install -r requirements-dev.txt --no-index --find-links "$wh"
-          python -m pip install --no-index --find-links "$wh" \
-            numpy==1.26.4 pillow==10.4.0 typing_extensions==4.12.2
+          python -m pip install -r requirements-dev.txt
+          python -m pip install --only-binary=:all: \
+            typing_extensions==4.12.2 \
+            numpy==1.26.4 \
+            pillow==10.4.0
 
-      - name: Sanity: NumPy presence (non-fatal)
-        continue-on-error: true
+      - name: Sanity: show Python/pip & import numpy
         run: |
-          python -c "import importlib; print('numpy:', bool(importlib.util.find_spec('numpy')))"
+          python -c "import sys; print('exe:', sys.executable)"
+          python -m pip --version
+          python -c "import numpy as np; print('numpy:', np.__version__)"
 
       - name: Lint / type / tests
         env:
@@ -58,7 +68,6 @@ jobs:
         env:
           CIBW_ARCHS_MACOS: universal2
           CIBW_SKIP: "pp*"
-          # Build only the CPython versions we test in matrix
           CIBW_BUILD: "cp310-* cp311-* cp312-*"
         run: |
           python -m pip install cibuildwheel
@@ -69,10 +78,9 @@ jobs:
           print("Wheels:", [w.name for w in ws])
           PY
 
-      - name: Fresh venv install + import smoke (diagnostic)
+      - name: Fresh venv install + import smoke
         shell: bash
         run: |
-          set -euo pipefail
           python - <<'PY'
           import os, sys, subprocess, venv, pathlib, shutil
           root = pathlib.Path.cwd()
@@ -81,21 +89,9 @@ jobs:
               shutil.rmtree(vdir)
           venv.EnvBuilder(with_pip=True).create(vdir)
           py = str(vdir / ("Scripts/python.exe" if os.name == "nt" else "bin/python"))
-          # pick wheel dir depending on OS
           wdir = root / ("wheelhouse" if sys.platform == "darwin" else "dist")
-          wheels = sorted(wdir.glob("*.whl"))
-          if not wheels:
-              contents = [str(p) for p in wdir.glob('*')]
-              raise SystemExit(f"No wheels built in {wdir}! Contents: {contents}")
-          wheel = str(wheels[-1])
-          print("Installing wheel:", wheel)
-          subprocess.check_call([py, "-m", "pip", "install", "--upgrade", "pip", "setuptools", "wheel", "typing_extensions"])
-          subprocess.check_call([py, "-m", "pip", "install", wheel])
-          # Show what got installed (helps debug namespace/package discovery issues)
-          subprocess.check_call([py, "-c", "import pkgutil; print('pkgs:', sorted([m.name for m in pkgutil.iter_modules()])[:50], '...')"])
-          # Canonical alias must import; legacy alias must import (may warn)
-          cmd = r"""import latency_vision as lv, vision as v, pathlib
-print('lv_version', lv.__version__)
-print('vision_path', pathlib.Path(v.__file__).resolve())"""
+          wheel = sorted(wdir.glob("*.whl"))[-1]
+          subprocess.check_call([py, "-m", "pip", "install", str(wheel)])
+          cmd = 'import latency_vision as lv; import vision as v; print(lv.__version__)'
           subprocess.check_call([py, "-c", cmd])
           PY

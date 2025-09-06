@@ -28,8 +28,8 @@ def _to_int(x, default: int = 0) -> int:
         return default
     if isinstance(x, int):
         return x
-    if isinstance(x, str | bytes | bytearray):
-        s = x.decode() if isinstance(x, bytes | bytearray) else x
+    if isinstance(x, (str, bytes, bytearray)):  # noqa: UP038
+        s = x.decode() if isinstance(x, (bytes, bytearray)) else x  # noqa: UP038
         return int(s)
     raise TypeError(f"cannot coerce to int: {type(x).__name__}")
 
