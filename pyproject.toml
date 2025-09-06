@@ -34,3 +34,9 @@ latvision = "vision.cli:main"
 
 [tool.setuptools]
 license-files = ["LICENSE", "NOTICE"]
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-data]
+vision = ["py.typed"]
