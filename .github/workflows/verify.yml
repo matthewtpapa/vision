@@ -34,22 +34,11 @@ jobs:
           PY
           ruff --version
           mypy --version
-      - uses: actions/setup-node@v4
-        with:
-          node-version: '20'
-      - name: Install markdownlint (no lockfile)
-        run: npm i --no-save markdownlint-cli2 markdownlint
-      - name: Ensure markdownlint on PATH
-        run: |
-          export PATH="$PWD/node_modules/.bin:$PATH"
-          which markdownlint-cli2
-          markdownlint-cli2 --version
+      # Use the official action to avoid npm 403s and honor repo config
       - name: Markdownlint (scoped)
-        run: |
-          set -euo pipefail
-          export PATH="$PWD/node_modules/.bin:$PATH"
-          # Honor repo config and ignores
-          markdownlint-cli2
+        uses: DavidAnson/markdownlint-cli2-action@v15
+        with:
+          config: .markdownlint-cli2.yaml
       - name: Type/Lint preflight
         env:
           MPLBACKEND: Agg
@@ -72,7 +61,4 @@ jobs:
         env:
           MPLBACKEND: Agg
           MYPYPATH: src
-        run: |
-          # Ensure local npm bin is available to make verify (markdownlint-cli2)
-          export PATH="$GITHUB_WORKSPACE/node_modules/.bin:$PATH"
-          make verify
+        run: make verify

@@ -5,8 +5,10 @@
 from __future__ import annotations
 
 from collections.abc import Sequence
+from typing import Any, cast
 
 import numpy as np
+import numpy.typing as npt
 
 from .matcher_protocol import Label, MatcherProtocol, Neighbor
 
@@ -15,17 +17,21 @@ try:  # pragma: no cover - import guarded for environments without faiss
 except Exception as e:  # pragma: no cover
     raise ImportError("faiss not available") from e
 
-_EPS = 1e-12
+
+def _normalize_rows(arr: npt.NDArray[np.float32]) -> npt.NDArray[np.float32]:
+    norms = np.linalg.norm(arr, axis=1, keepdims=True).astype(np.float32)
+    norms[norms == 0] = 1.0
+    out = arr / norms
+    return cast(npt.NDArray[np.float32], out)
 
 
-def _ensure_norm_f32(x: Sequence[float] | np.ndarray) -> np.ndarray:
-    """Return row-wise L2-normalised float32 array."""
-    arr = np.asarray(x, dtype=np.float32)
+def _ensure_norm_f32(
+    vecs: Sequence[Sequence[float]] | npt.NDArray[Any],
+) -> npt.NDArray[np.float32]:
+    arr = np.asarray(vecs, dtype=np.float32)
     if arr.ndim == 1:
         arr = arr[None, :]
-    norms = np.linalg.norm(arr, axis=1, keepdims=True)
-    norms = np.maximum(norms, _EPS)
-    return arr / norms
+    return _normalize_rows(arr)
 
 
 class FaissMatcher(MatcherProtocol):

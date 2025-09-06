@@ -7,24 +7,22 @@ from __future__ import annotations
 import logging
 from collections import deque
 from collections.abc import Callable
-from contextlib import nullcontext
+from contextlib import AbstractContextManager, nullcontext
 from statistics import quantiles
-from typing import Literal, cast
+from typing import Any, Literal, cast
+
+import numpy.typing as npt
 
 from .associations import TrackEmbedding
 from .cluster_store import JsonClusterStore
 from .config import get_config
-from .detect_adapter import Detector
-from .embedder_adapter import Embedder
+from .embedding_types import Embedding
 from .index_utils import add_exemplars_to_index
 from .matcher.factory import build_matcher
 from .matcher.matcher_protocol import MatcherProtocol
 from .matcher.types import MatchResult
 from .telemetry import StageTimer, Telemetry, now_ns
-from .track_adapter import Tracker
-from .types import BBox, Track
-
-Cropper = Callable[[object, list[BBox]], list[object]]
+from .types import BBox, Detection, Track
 
 
 class DetectTrackEmbedPipeline:
@@ -32,10 +30,10 @@ class DetectTrackEmbedPipeline:
 
     def __init__(
         self,
-        detector: Detector,
-        tracker: Tracker,
-        cropper: Cropper,
-        embedder: Embedder,
+        detector: Callable[[npt.NDArray[Any]], list[Detection]],
+        tracker: Callable[[list[Detection]], list[Track]],
+        cropper: Callable[[npt.NDArray[Any], list[BBox]], list[npt.NDArray[Any]]],
+        embedder: Callable[[list[npt.NDArray[Any]]], list[Embedding]],
         telemetry: Telemetry | None = None,
     ) -> None:
         self._detector = detector
@@ -71,31 +69,33 @@ class DetectTrackEmbedPipeline:
         idx = self._frame_idx
         self._frame_idx += 1
         frame_t0 = now_ns()
-        cm = StageTimer(self._tel, "frame") if self._tel else nullcontext()
+        cm: AbstractContextManager[object] = (
+            StageTimer(self._tel, "frame") if self._tel else nullcontext()
+        )
         results: list[TrackEmbedding] = []
         with cm:
             run_full = idx % self._frame_stride == 0
             if run_full:
                 self._frames_processed += 1
                 t0 = now_ns()
-                with StageTimer(self._tel, "detect") if self._tel else nullcontext():
-                    detections = self._detector.detect(frame)
+                with (StageTimer(self._tel, "detect") if self._tel else nullcontext()):
+                    detections = self._detector(frame)
                 detect_ms = (now_ns() - t0) / 1e6
                 self._eval_stage_ms.setdefault("detect", []).append(detect_ms)
 
                 t0 = now_ns()
-                with StageTimer(self._tel, "track") if self._tel else nullcontext():
-                    tracks: list[Track] = self._tracker.update(detections)
+                with (StageTimer(self._tel, "track") if self._tel else nullcontext()):
+                    tracks: list[Track] = self._tracker(detections)
                 track_ms = (now_ns() - t0) / 1e6
                 self._eval_stage_ms.setdefault("track", []).append(track_ms)
 
                 bboxes = [t.bbox for t in tracks]
-                with StageTimer(self._tel, "crop") if self._tel else nullcontext():
+                with (StageTimer(self._tel, "crop") if self._tel else nullcontext()):
                     crops = self._cropper(frame, bboxes)
 
                 t0 = now_ns()
-                with StageTimer(self._tel, "embed") if self._tel else nullcontext():
-                    embeddings = self._embedder.encode(crops)
+                with (StageTimer(self._tel, "embed") if self._tel else nullcontext()):
+                    embeddings = self._embedder(crops)
                 embed_ms = (now_ns() - t0) / 1e6
                 self._eval_stage_ms.setdefault("embed", []).append(embed_ms)
 
@@ -120,7 +120,7 @@ class DetectTrackEmbedPipeline:
                         self._store.add_listener(_on_exemplar)
                     assert self._matcher is not None
                     t0_match = now_ns()
-                    with StageTimer(self._tel, "match") if self._tel else nullcontext():
+                    with (StageTimer(self._tel, "match") if self._tel else nullcontext()):
                         neighbors = self._matcher.topk(emb.vec, k=self._cfg.matcher.topk)
                     match_ms = (now_ns() - t0_match) / 1e6
                     match_total += match_ms
@@ -224,4 +224,4 @@ class DetectTrackEmbedPipeline:
         self._eval_unknown_flags.clear()
 
 
-__all__ = ["DetectTrackEmbedPipeline", "Cropper"]
+__all__ = ["DetectTrackEmbedPipeline"]

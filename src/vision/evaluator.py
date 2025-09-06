@@ -7,7 +7,9 @@ from __future__ import annotations
 import json
 from collections.abc import Iterable
 from pathlib import Path
-from typing import Literal
+from typing import Any, Literal
+
+import numpy.typing as npt
 
 from . import __version__
 from .config import get_config
@@ -17,6 +19,7 @@ from .eval_reporting import metrics_json
 from .pipeline_detect_track_embed import DetectTrackEmbedPipeline
 from .telemetry import Telemetry
 from .track_bytetrack_adapter import ByteTrackLikeTracker
+from .types import BBox
 
 _ALLOWED_EXTS = {".jpg", ".jpeg", ".png", ".bmp"}
 
@@ -51,15 +54,26 @@ def run_eval(input_dir: str, output_dir: str, warmup: int) -> int:
     detector = FakeDetector()
     tracker = ByteTrackLikeTracker()
 
-    def cropper(frame: np.ndarray, bboxes: list[tuple[int, int, int, int]]) -> list[np.ndarray]:
+    def cropper(
+        frame: npt.NDArray[Any],
+        bboxes: list[BBox],
+    ) -> list[npt.NDArray[Any]]:
         return [frame[y1:y2, x1:x2] for x1, y1, x2, y2 in bboxes]
 
-    def runner(crops, *, dim: int, batch_size: int) -> list[list[float]]:
+    def runner(
+        crops: list[npt.NDArray[Any]], *, dim: int, batch_size: int
+    ) -> list[list[float]]:
         return [[0.0] * dim for _ in crops]
 
     embedder = ClipLikeEmbedder(runner, dim=4, normalize=False, batch_size=cfg.embedder.batch_size)
 
-    pipeline = DetectTrackEmbedPipeline(detector, tracker, cropper, embedder, telemetry=tel)
+    pipeline = DetectTrackEmbedPipeline(
+        detector.detect,
+        tracker.update,
+        cropper,
+        embedder.encode,
+        telemetry=tel,
+    )
 
     for frame_path in frames:
         with Image.open(frame_path) as img:

@@ -5,39 +5,46 @@
 from __future__ import annotations
 
 from collections.abc import Sequence
+from typing import Any, cast
 
 import numpy as np
-from numpy.typing import ArrayLike
+import numpy.typing as npt
 
 from .matcher_protocol import Label, MatcherProtocol, Neighbor
 
-_EPS = 1e-12
+
+def _normalize_rows(arr: npt.NDArray[np.float32]) -> npt.NDArray[np.float32]:
+    norms = np.linalg.norm(arr, axis=1, keepdims=True).astype(np.float32)
+    norms[norms == 0] = 1.0
+    out = arr / norms
+    return cast(npt.NDArray[np.float32], out)
+
+
+def _ensure_norm_f32(
+    vecs: Sequence[Sequence[float]] | npt.NDArray[Any],
+) -> npt.NDArray[np.float32]:
+    arr = np.asarray(vecs, dtype=np.float32)
+    if arr.ndim == 1:
+        arr = arr[None, :]
+    return _normalize_rows(arr)
 
 
 class NumpyMatcher(MatcherProtocol):
     """In-memory matcher using NumPy with deterministic tie-breaking."""
 
     def __init__(self) -> None:
-        self._embeddings: np.ndarray | None = None
+        self._embeddings: npt.NDArray[np.float32] | None = None
         self._labels: list[Label] = []
         self._dim: int | None = None
 
-    @staticmethod
-    def _ensure_norm_f32(x: ArrayLike) -> np.ndarray:
-        """Return row-wise L2-normalised float32 array."""
-        arr = np.asarray(x, dtype=np.float32)
-        if arr.ndim == 1:
-            arr = arr[None, :]
-        norms = np.linalg.norm(arr, axis=1, keepdims=True)
-        norms = np.maximum(norms, _EPS)
-        return arr / norms
-
     def add(self, vec: Sequence[float], label: Label) -> None:
-        arr = self._ensure_norm_f32(vec)
+        arr = _ensure_norm_f32(vec)
         self._add_many(arr, [label])
 
-    def add_many(self, vecs: ArrayLike, labels: Sequence[Label]) -> None:
-        arr = self._ensure_norm_f32(vecs)
+    def add_many(
+        self, vecs: Sequence[Sequence[float]] | npt.NDArray[Any], labels: Sequence[Label]
+    ) -> None:
+        arr = _ensure_norm_f32(vecs)
         label_list = list(labels)
         if arr.shape[0] != len(label_list):
             raise ValueError("vecs and labels length mismatch")
@@ -57,7 +64,7 @@ class NumpyMatcher(MatcherProtocol):
     def topk(self, query: Sequence[float], k: int) -> list[Neighbor]:
         if self._embeddings is None or k <= 0:
             return []
-        q = self._ensure_norm_f32(query)
+        q = _ensure_norm_f32(query)
         if q.shape[1] != self._dim:
             raise ValueError(f"dim mismatch: expected {self._dim}, got {q.shape[1]}")
         scores = self._embeddings @ q[0]

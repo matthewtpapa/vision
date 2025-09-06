@@ -39,7 +39,7 @@ def _parse_toml_bytes(data: bytes) -> dict[str, Any]:
             import tomli
         except ModuleNotFoundError:
             return {}
-        return cast(dict[str, Any], tomli.loads(data.decode("utf-8")))
+        return tomli.loads(data.decode("utf-8"))  # type: ignore[no-any-return]
 
 
 @dataclass(frozen=True)
