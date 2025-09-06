@@ -49,6 +49,8 @@ jobs:
         env:
           CIBW_ARCHS_MACOS: universal2
           CIBW_SKIP: "pp*"
+          # Build only the CPython versions we test in matrix
+          CIBW_BUILD: "cp310-* cp311-* cp312-*"
         run: |
           python -m pip install cibuildwheel
           cibuildwheel --output-dir wheelhouse
@@ -58,9 +60,10 @@ jobs:
           print("Wheels:", [w.name for w in ws])
           PY
 
-      - name: Fresh venv install + import smoke
+      - name: Fresh venv install + import smoke (diagnostic)
         shell: bash
         run: |
+          set -euo pipefail
           python - <<'PY'
           import os, sys, subprocess, venv, pathlib, shutil
           root = pathlib.Path.cwd()
@@ -69,11 +72,21 @@ jobs:
               shutil.rmtree(vdir)
           venv.EnvBuilder(with_pip=True).create(vdir)
           py = str(vdir / ("Scripts/python.exe" if os.name == "nt" else "bin/python"))
-          # pick wheel path depending on OS
+          # pick wheel dir depending on OS
           wdir = root / ("wheelhouse" if sys.platform == "darwin" else "dist")
-          wheel = sorted(wdir.glob("*.whl"))[-1]
-          subprocess.check_call([py, "-m", "pip", "install", str(wheel)])
-          # Import smoke (prefer latency_vision; vision must still import)
-          cmd = 'import latency_vision as lv; import vision as v; print(lv.__version__)'
+          wheels = sorted(wdir.glob("*.whl"))
+          if not wheels:
+              contents = [str(p) for p in wdir.glob('*')]
+              raise SystemExit(f"No wheels built in {wdir}! Contents: {contents}")
+          wheel = str(wheels[-1])
+          print("Installing wheel:", wheel)
+          subprocess.check_call([py, "-m", "pip", "install", "--upgrade", "pip", "setuptools", "wheel", "typing_extensions"])
+          subprocess.check_call([py, "-m", "pip", "install", wheel])
+          # Show what got installed (helps debug namespace/package discovery issues)
+          subprocess.check_call([py, "-c", "import pkgutil; print('pkgs:', sorted([m.name for m in pkgutil.iter_modules()])[:50], '...')"])
+          # Canonical alias must import; legacy alias must import (may warn)
+          cmd = r"""import latency_vision as lv, vision as v, pathlib
+print('lv_version', lv.__version__)
+print('vision_path', pathlib.Path(v.__file__).resolve())"""
           subprocess.check_call([py, "-c", cmd])
           PY
