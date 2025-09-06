@@ -28,7 +28,7 @@ jobs:
       - name: Lint / type / tests
         run: |
           ruff check .
-          mypy .
+          mypy --config-file mypy.ini src tests
           pytest -q
 
       - name: Build wheel (non-macOS)
