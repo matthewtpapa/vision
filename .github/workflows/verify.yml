@@ -29,7 +29,8 @@ jobs:
       - name: Verify
         env:
           MPLBACKEND: Agg
+          MYPYPATH: src
         run: |
           ruff check .
-          mypy --config-file mypy.ini --pretty src
+          mypy --config-file mypy.ini --pretty -p vision
           make verify

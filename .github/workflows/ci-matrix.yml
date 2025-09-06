@@ -28,10 +28,11 @@ jobs:
       - name: Lint / type / tests
         env:
           MPLBACKEND: Agg
+          MYPYPATH: src
         run: |
           ruff check .
-          mypy --config-file mypy.ini --pretty src
-          pytest -q -q
+          mypy --config-file mypy.ini --pretty -p vision
+          pytest -q
 
       - name: Build wheel (non-macOS)
         if: ${{ matrix.os != 'macos-13' && matrix.os != 'macos-14' }}
