@@ -26,10 +26,12 @@ jobs:
           pip install -r requirements-dev.txt
 
       - name: Lint / type / tests
+        env:
+          MPLBACKEND: Agg
         run: |
           ruff check .
-          mypy --config-file mypy.ini src tests
-          pytest -q
+          mypy --config-file mypy.ini --pretty src
+          pytest -q -q
 
       - name: Build wheel (non-macOS)
         if: ${{ matrix.os != 'macos-13' && matrix.os != 'macos-14' }}

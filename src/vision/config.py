@@ -17,7 +17,7 @@ import os
 from collections.abc import Mapping
 from dataclasses import asdict, dataclass, field
 from pathlib import Path
-from typing import Any
+from typing import Any, cast
 
 
 def _parse_toml_bytes(data: bytes) -> dict[str, Any]:
@@ -31,15 +31,15 @@ def _parse_toml_bytes(data: bytes) -> dict[str, Any]:
         import tomllib  # Python 3.11+
 
         try:
-            return tomllib.loads(data)  # type: ignore[arg-type]
+            return cast(dict[str, Any], tomllib.loads(data))
         except TypeError:
-            return tomllib.loads(data.decode("utf-8"))
+            return cast(dict[str, Any], tomllib.loads(data.decode("utf-8")))
     except ModuleNotFoundError:
         try:
             import tomli
         except ModuleNotFoundError:
             return {}
-        return tomli.loads(data.decode("utf-8"))
+        return cast(dict[str, Any], tomli.loads(data.decode("utf-8")))
 
 
 @dataclass(frozen=True)

@@ -25,4 +25,9 @@ jobs:
       - name: Install markdownlint (no lockfile)
         run: npm i --no-save markdownlint-cli2 markdownlint
       - name: Verify
-        run: make verify
+        env:
+          MPLBACKEND: Agg
+        run: |
+          ruff check .
+          mypy --config-file mypy.ini --pretty src
+          make verify
