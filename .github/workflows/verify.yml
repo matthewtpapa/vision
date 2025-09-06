@@ -39,6 +39,11 @@ jobs:
           node-version: '20'
       - name: Install markdownlint (no lockfile)
         run: npm i --no-save markdownlint-cli2 markdownlint
+      - name: Ensure markdownlint on PATH
+        run: |
+          export PATH="$PWD/node_modules/.bin:$PATH"
+          which markdownlint-cli2
+          markdownlint-cli2 --version
       - name: Type/Lint preflight
         env:
           MPLBACKEND: Agg
@@ -61,5 +66,7 @@ jobs:
         env:
           MPLBACKEND: Agg
           MYPYPATH: src
+          # Ensure local npm bin is available to make verify (markdownlint-cli2)
+          PATH: ${{ github.workspace }}/node_modules/.bin:${{ env.PATH }}
         run: |
           make verify

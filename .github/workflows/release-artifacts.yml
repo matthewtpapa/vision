@@ -29,6 +29,8 @@ jobs:
           print("vision_path:", pathlib.Path(v.__file__).resolve())
           PY
       - name: Bench (offline)
+        env:
+          MPLBACKEND: Agg
         run: |
           python scripts/build_fixture.py --out bench/fixture --n 400
           latvision eval --input bench/fixture --output bench/out --budget-ms 33
