@@ -30,6 +30,7 @@ Issues = "https://github.com/matthewtpapa/vision/issues"
 
 [project.scripts]
 vision = "vision.cli:main"
+latvision = "vision.cli:main"
 
 [tool.setuptools]
 license-files = ["LICENSE", "NOTICE"]

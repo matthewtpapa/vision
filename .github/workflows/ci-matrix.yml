@@ -1,0 +1,76 @@
+name: ci-matrix
+on:
+  pull_request:
+  push:
+    branches: [ main ]
+jobs:
+  test:
+    name: ${{ matrix.os }} / py${{ matrix.python-version }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-13, macos-14, windows-latest]
+        python-version: ["3.10", "3.11", "3.12"]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Install dev deps
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install --upgrade setuptools wheel build
+          pip install -e .
+          pip install -r requirements-dev.txt
+
+      - name: Lint / type / tests
+        run: |
+          ruff check .
+          mypy .
+          pytest -q
+
+      - name: Build wheel (non-macOS)
+        if: ${{ matrix.os != 'macos-13' && matrix.os != 'macos-14' }}
+        run: |
+          python -m build
+          python - <<'PY'
+          import pathlib; ws=list(pathlib.Path("dist").glob("*.whl"))
+          assert ws, "no wheels built"
+          print("Wheels:", [w.name for w in ws])
+          PY
+
+      - name: Build wheel (macOS universal2 via cibuildwheel)
+        if: ${{ matrix.os == 'macos-13' || matrix.os == 'macos-14' }}
+        env:
+          CIBW_ARCHS_MACOS: universal2
+          CIBW_SKIP: "pp*"
+        run: |
+          python -m pip install cibuildwheel
+          cibuildwheel --output-dir wheelhouse
+          python - <<'PY'
+          import pathlib; ws=list(pathlib.Path("wheelhouse").glob("*.whl"))
+          assert ws, "no universal2 wheels built"
+          print("Wheels:", [w.name for w in ws])
+          PY
+
+      - name: Fresh venv install + import smoke
+        shell: bash
+        run: |
+          python - <<'PY'
+          import os, sys, subprocess, venv, pathlib, shutil
+          root = pathlib.Path.cwd()
+          vdir = root / ".venv-smoke"
+          if vdir.exists():
+              shutil.rmtree(vdir)
+          venv.EnvBuilder(with_pip=True).create(vdir)
+          py = str(vdir / ("Scripts/python.exe" if os.name == "nt" else "bin/python"))
+          # pick wheel path depending on OS
+          wdir = root / ("wheelhouse" if sys.platform == "darwin" else "dist")
+          wheel = sorted(wdir.glob("*.whl"))[-1]
+          subprocess.check_call([py, "-m", "pip", "install", str(wheel)])
+          # Import smoke (prefer latency_vision; vision must still import)
+          cmd = 'import latency_vision as lv; import vision as v; print(lv.__version__)'
+          subprocess.check_call([py, "-c", cmd])
+          PY

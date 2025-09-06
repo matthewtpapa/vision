@@ -15,7 +15,7 @@ def test_listener_updates_matcher(tmp_path):
     store = JsonClusterStore(tmp_path / "kb.json")
 
     def _on_exemplar(item: dict[str, object]) -> None:
-        matcher.add(item["embedding"], str(item["label"]))  # type: ignore[arg-type]
+        matcher.add(item["embedding"], str(item["label"]))
 
     store.add_listener(_on_exemplar)
 

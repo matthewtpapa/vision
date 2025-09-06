@@ -23,6 +23,17 @@ ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT / "src"))
 
 
+def _to_int(x, default: int = 0) -> int:
+    if x is None:
+        return default
+    if isinstance(x, int):
+        return x
+    if isinstance(x, (str, bytes, bytearray)):
+        s = x.decode() if isinstance(x, (bytes, bytearray)) else x
+        return int(s)
+    raise TypeError(f"cannot coerce to int: {type(x).__name__}")
+
+
 def run_cli(*args: str) -> subprocess.CompletedProcess[str]:
     from vision.cli import main
 
@@ -33,7 +44,7 @@ def run_cli(*args: str) -> subprocess.CompletedProcess[str]:
         with redirect_stdout(out), redirect_stderr(err):
             main(list(args))
     except SystemExit as exc:  # pragma: no cover - CLI uses sys.exit
-        code = int(exc.code)
+        code = _to_int(exc.code)
     return subprocess.CompletedProcess(
         args=[sys.executable, "-m", "vision", *args],
         returncode=code,
