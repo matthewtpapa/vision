@@ -6,3 +6,7 @@ pytest-cov~=4.1
 mypy==1.10.0
 ruff~=0.4
 tomli>=2.0.1 ; python_version < "3.11"
+# Test/runtime deps required by pipeline & tests
+numpy==1.26.4
+pillow==10.4.0
+typing_extensions==4.12.2
