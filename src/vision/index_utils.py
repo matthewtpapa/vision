@@ -7,8 +7,6 @@ from __future__ import annotations
 from collections.abc import Iterable, Sequence
 from typing import Any, cast
 
-import numpy as np
-
 from vision.matcher.matcher_protocol import MatcherProtocol
 
 
@@ -35,6 +33,8 @@ def add_exemplars_to_index(index: MatcherProtocol, items: Iterable[dict[str, Any
 
     if not labels:
         return 0
+
+    import numpy as np
 
     vecs = np.asarray(embeddings, dtype=np.float32)
     # Protocol expects Sequence[Sequence[float]]; keep runtime fast, but satisfy typing

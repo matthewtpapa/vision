@@ -72,7 +72,7 @@ def _make_pipeline(
         return [[0.0] * dim for _ in crops]
 
     emb = ClipLikeEmbedder(runner, dim=3, normalize=False, batch_size=2)
-    pipe = DetectTrackEmbedPipeline(det, trk, cropper, emb)
+    pipe = DetectTrackEmbedPipeline(det.detect, trk.update, cropper, emb.encode)
     return pipe, set_step
 
 

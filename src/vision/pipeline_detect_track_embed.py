@@ -9,9 +9,13 @@ from collections import deque
 from collections.abc import Callable
 from contextlib import AbstractContextManager, nullcontext
 from statistics import quantiles
-from typing import Any, Literal, cast
+from typing import TYPE_CHECKING, Any, Literal, cast
 
-import numpy.typing as npt
+if TYPE_CHECKING:
+    import numpy.typing as npt
+else:  # pragma: no cover - runtime fallback when NumPy is absent
+    class npt:  # type: ignore
+        NDArray = Any
 
 from .associations import TrackEmbedding
 from .cluster_store import JsonClusterStore

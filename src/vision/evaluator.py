@@ -7,9 +7,13 @@ from __future__ import annotations
 import json
 from collections.abc import Iterable
 from pathlib import Path
-from typing import Any, Literal
+from typing import TYPE_CHECKING, Any, Literal
 
-import numpy.typing as npt
+if TYPE_CHECKING:
+    import numpy.typing as npt
+else:  # pragma: no cover - runtime fallback when NumPy is absent
+    class npt:  # type: ignore
+        NDArray = Any
 
 from . import __version__
 from .config import get_config
