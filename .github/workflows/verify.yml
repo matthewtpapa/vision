@@ -15,22 +15,51 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: ${{ matrix.python-version }}
-      - name: Install
+      - name: Install base + dev deps
         run: |
           python -m pip install --upgrade pip
           python -m pip install --upgrade setuptools wheel build
           pip install -e .
           pip install -r requirements-dev.txt
+          # ensure typing backports & demo deps are present across 3.10–3.12
+          pip install typing_extensions numpy pillow
+
+      - name: Tool versions
+        run: |
+          python --version
+          pip --version
+          python - <<'PY'
+          import sys, setuptools
+          print("setuptools", setuptools.__version__, "py", ".".join(map(str, sys.version_info[:3])))
+          PY
+          ruff --version
+          mypy --version
       - uses: actions/setup-node@v4
         with:
           node-version: '20'
       - name: Install markdownlint (no lockfile)
         run: npm i --no-save markdownlint-cli2 markdownlint
-      - name: Verify
+      - name: Type/Lint preflight
         env:
           MPLBACKEND: Agg
           MYPYPATH: src
         run: |
           ruff check .
           mypy --config-file mypy.ini --pretty -p vision
+
+      - name: Import smoke (alias + legacy)
+        run: |
+          python - <<'PY'
+          import pathlib
+          import latency_vision as lv
+          import vision as v
+          print("lv_version:", lv.__version__)
+          print("vision_path:", pathlib.Path(v.__file__).resolve())
+          PY
+
+      - name: Verify (make target)
+        env:
+          MPLBACKEND: Agg
+          MYPYPATH: src
+        run: |
           make verify

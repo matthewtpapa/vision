@@ -19,6 +19,15 @@ jobs:
           pip install -e .
           pip install -r requirements-dev.txt
           pip install numpy pillow matplotlib
+      - name: Import smoke (alias + legacy)
+        run: |
+          python - <<'PY'
+          import pathlib
+          import latency_vision as lv
+          import vision as v
+          print("lv_version:", lv.__version__)
+          print("vision_path:", pathlib.Path(v.__file__).resolve())
+          PY
       - name: Bench (offline)
         run: |
           python scripts/build_fixture.py --out bench/fixture --n 400
