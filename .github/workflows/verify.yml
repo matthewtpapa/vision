@@ -44,6 +44,12 @@ jobs:
           export PATH="$PWD/node_modules/.bin:$PATH"
           which markdownlint-cli2
           markdownlint-cli2 --version
+      - name: Markdownlint (scoped)
+        run: |
+          set -euo pipefail
+          export PATH="$PWD/node_modules/.bin:$PATH"
+          # Honor repo config and ignores
+          markdownlint-cli2
       - name: Type/Lint preflight
         env:
           MPLBACKEND: Agg

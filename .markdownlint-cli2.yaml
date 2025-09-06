@@ -1,10 +1,24 @@
-# SPDX-License-Identifier: Apache-2.0
-# Copyright (c) 2025 The Vision Authors
+# Keep markdownlint focused and non-noisy for CI
+# Docs: https://github.com/DavidAnson/markdownlint-cli2
+
 config:
-  default: true
+  # Long lines are common in tables/links; don’t fail CI on them
   MD013: false
+  # Allow inline HTML snippets in docs/README
   MD033: false
+  # Allow bare URLs (GitHub issues, PRs)
+  MD034: false
+
+ignores:
+  - "node_modules/**"
+  - ".venv*/**"
+  - "dist/**"
+  - "wheelhouse/**"
+  - "build/**"
+  - "bench/**"
+
+# Limit linting to actual docs / repo text
 globs:
   - "**/*.md"
-  - "!**/site/**"
-  - "!**/node_modules/**"
+  - "!node_modules/**"
+  - "!.venv*/**"
