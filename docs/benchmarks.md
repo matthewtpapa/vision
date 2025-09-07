@@ -124,7 +124,7 @@ On reference boxes (see spec for models):
 | p50 / p95 / p99 (ms)       | ≤ 33 / ≤ 33 / ≤ 66                  |
 | Cold-start (ms)            | ≤ 1,000                             |
 | <a id="cold-start-definition"></a>Cold-start definition | SDK ready (post-deps, pipeline initialized) → first MatchResult |
-| Index bootstrap @ N=1k (ms)| ≤ 50                                |
+| Index bootstrap @ N=1k (ms) (metric key: index_bootstrap_ms)| ≤ 50                                |
 | Sustained in-budget (%)    | ≥ 99.5% within 33 ms (10-min run)   |
 | Unknown-rate (fixture band)| Fixture-defined. Synthetic: [0.0, 1.0]. COCO target: [0.10, 0.40]. |
 | RAM @ N=1k (MB)            | publish                             |
@@ -144,7 +144,7 @@ unknown-rate    0.21
 backend    numpy
 kb_size    1000
 cold-start (ms)    722
-bootstrap (ms)    41
+index_bootstrap_ms    41
 
 Include a single-line verdict: PASS or FAIL for Gate B conditions.
 

@@ -81,7 +81,7 @@ def test_eval_cli_creates_artifacts(tmp_path: Path) -> None:
         "hardware_id",
         "fixture_hash",
         "cold_start_ms",
-        "bootstrap_ms",
+        "index_bootstrap_ms",
         "slo_budget_ms",
         "slo_within_budget_pct",
         "error_budget_pct",

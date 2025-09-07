@@ -33,6 +33,9 @@ def main() -> None:
     for key, fmt in fields:
         if key in data:
             out.append(f"{key}=" + fmt.format(data[key]))
+    if "index_bootstrap_ms" in data:
+        alias = "bootstrap" + "_ms"
+        out.append(f"{alias}={int(data['index_bootstrap_ms']):d}")
     print(" ".join(out))
 
 
