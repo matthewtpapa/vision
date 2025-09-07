@@ -1,0 +1,15 @@
+name: readme-smoke
+
+on: pull_request
+
+jobs:
+  readme-smoke:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"  # Pin minor to avoid runner drift
+      - run: python -m pip install -U pip setuptools wheel
+      - run: pip install -e . numpy
+      - run: python scripts/smoke_readme.py

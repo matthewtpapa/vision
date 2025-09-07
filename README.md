@@ -37,6 +37,8 @@ Until PyPI publish, run locally with: PYTHONPATH=src latvision …
 
 ## Quickstart
 
+Prereq: `pip install numpy`
+
 ### (M1.1 façade – target)
 
 ```python
@@ -172,6 +174,10 @@ frame_stride = 1
 
 Webcam → Detect (YOLO) → Track (ByteTrack) → Embed (CLIP-B32) → Match (FAISS/NumPy) → Label/Unknown → Persist Exemplar → Telemetry
 
+## Changelog
+
+See [CHANGELOG.md](CHANGELOG.md).
+
 ## Contributing
 
 See [CONTRIBUTING.md](CONTRIBUTING.md). PRs should not change both Charter and Spec in one go; Specs track code, Charter evolves at milestone boundaries.
@@ -179,3 +185,5 @@ See [CONTRIBUTING.md](CONTRIBUTING.md). PRs should not change both Charter and S
 ## License
 
 Apache-2.0 — see LICENSE and NOTICE
+
+[Contributing](CONTRIBUTING.md) • [Changelog](CHANGELOG.md)

@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: Apache-2.0
 # Copyright (c) 2025 The Vision Authors
 .RECIPEPREFIX := >
-.PHONY: setup test test-cov cov-html lint fmt format type mdlint mdfix verify hooks help
+.PHONY: setup test test-cov cov-html lint fmt format type mdlint mdfix verify readme-smoke hooks help
 
 # Safer bash in make recipes
 SHELL := bash
@@ -22,6 +22,7 @@ help:
 >echo "make mdfix     - auto-fix markdownlint issues (requires npx)"
 >echo "make verify    - run all local checks (lint, fmt-check, type, test, markdownlint)"
 >echo "make hooks     - install and autoupdate pre-commit hooks"
+>echo "make readme-smoke - run README Quickstart smoke test"
 >echo "make hello     - print environment information"
 >echo "make bench     - run fixture → eval → summary"
 >echo "make demo      - run fixture → eval → plot demo"
@@ -103,6 +104,13 @@ verify:
 >  $(MAKE) mdlint; \
 >fi
 >$(MAKE) mdpush
+
+readme-smoke:
+>@python -c "import numpy" 2>/dev/null || { \
+  echo "NumPy not found. Install with 'pip install numpy' (or run CI workflow: readme-smoke)."; \
+  exit 1; \
+}
+>python scripts/smoke_readme.py
 
 hooks:
 >pre-commit install

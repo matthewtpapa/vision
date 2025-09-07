@@ -3,6 +3,9 @@
 include LICENSE
 include NOTICE
 include THIRD_PARTY.md
+include README.md
+include CONTRIBUTING.md
+include CHANGELOG.md
 recursive-include docs *
 recursive-include scripts *
 recursive-include src/latency_vision py.typed
