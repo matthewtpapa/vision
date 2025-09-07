@@ -1,6 +1,6 @@
 # Schema Guide (v0.1)
 
-`docs/schema.md` contains the frozen JSON contract for `MatchResult`. This guide documents additional metrics fields emitted alongside results.
+The JSON contract lives in `docs/schema.md`. This guide covers metrics emitted by the evaluator.
 
 ## metrics.json top-level fields
 

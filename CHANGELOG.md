@@ -15,7 +15,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/).
 - CLI: `--duration-min` wording + `--unknown-rate-band` precedence clarified.
 - Tests: precedence + cold-start startpoint.
 
-## [0.1.0-rc.2] - 2025-09-??
+## [0.1.0-rc.2] - 2025-09-15
 
 ### Added
 

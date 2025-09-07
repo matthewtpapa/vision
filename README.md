@@ -141,15 +141,12 @@ Exit codes:
 
 ### Flags
 
---duration-min (replaces any "sustain-minutes" mentions)
-
---unknown-rate-band LOW,HIGH is optional; precedence = CLI > fixture manifest > default [0.10,0.40]
-
-Cold-start is defined as [SDK ready (post-deps, pipeline initialized) → first MatchResult](docs/benchmarks.md#cold-start-definition).
+- `--duration-min` (replaces any "sustain-minutes" mentions)
+- `--unknown-rate-band LOW,HIGH` is optional; precedence = CLI > fixture manifest > default [0.10,0.40]
+- Cold-start is defined as [SDK ready (post-deps, pipeline initialized) → first MatchResult](docs/benchmarks.md#cold-start-definition)
+- See [schema](docs/schema.md) and [schema guide](docs/schema-guide.md) for `metrics_schema_version`, resolved `unknown_rate_band`, and the debug-only `process_cold_start_ms`
 
 The evaluator can adaptively skip frames to stay within the latency budget; see the **[Eval Guide](docs/eval.md)** and **[Latency Guide](docs/latency.md)** for controller details.
-
-See [schema](docs/schema.md) and [schema guide](docs/schema-guide.md) for `metrics_schema_version`, resolved `unknown_rate_band`, and the debug-only `process_cold_start_ms`.
 
 Example with environment overrides:
 
