@@ -7,6 +7,7 @@ from __future__ import annotations
 import argparse
 import os
 import sys
+import time
 from collections.abc import Sequence
 from pathlib import Path
 
@@ -93,7 +94,7 @@ def build_parser() -> argparse.ArgumentParser:
         help="Number of warmup frames to skip",
     )
     eval_parser.add_argument(
-        "--sustain-minutes",
+        "--duration-min",
         type=int,
         default=0,
         help="Run for N minutes (wall clock); 0 disables sustained mode",
@@ -103,12 +104,6 @@ def build_parser() -> argparse.ArgumentParser:
         type=int,
         default=33,
         help="Latency budget for SLO tracking",
-    )
-    eval_parser.add_argument(
-        "--fixture-manifest",
-        type=str,
-        default=None,
-        help="Path to JSON manifest with eval settings (e.g., unknown_band).",
     )
     eval_parser.add_argument(
         "--unknown-rate-band",
@@ -123,9 +118,11 @@ def build_parser() -> argparse.ArgumentParser:
 
 def main(argv: Sequence[str] | None = None) -> int:
     """Run the main program."""
+    t0_process_ns = time.monotonic_ns()
     _warn_alias_once()
     parser = build_parser()
     args = parser.parse_args(argv)
+    args._t0_process = t0_process_ns
 
     if args.version:
         print(f"Latency Vision {__version__}")
@@ -151,9 +148,9 @@ def main(argv: Sequence[str] | None = None) -> int:
             args.output,
             args.warmup,
             budget_ms=args.budget_ms,
-            sustain_minutes=args.sustain_minutes,
-            fixture_manifest=args.fixture_manifest,
-            unknown_band=(low, high),
+            duration_min=args.duration_min,
+            unknown_rate_band=(low, high),
+            process_start_ns=args._t0_process,
         )
         sys.exit(ret)
     elif args.command == "hello":

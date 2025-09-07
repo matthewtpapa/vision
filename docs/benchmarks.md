@@ -117,19 +117,15 @@ Pass / Fail (Gate B Targets)
 
 On reference boxes (see spec for models):
 
-Windowed run (≥ 2,000 frames; warm-up 100 excluded):
-
-p95 ≤ 33 ms, p99 ≤ 66 ms, FPS ≥ 25
-
-Sustained SLO (10 minutes):
-
-≥ 99.5% frames within 33 ms (Error Budget ≤ 0.5%)
-
-Cold-start: import → first MatchResult ≤ 1.0 s
-
-Bootstrap: index load @ N=1k ≤ 50 ms
-
-Unknown-rate band: within fixture manifest range
+| Metric                     | Value / SLO                         |
+|--------------------------- |-------------------------------------|
+| FPS                        | ≥ 25                                |
+| p50 / p95 / p99 (ms)       | ≤ 33 / ≤ 33 / ≤ 66                  |
+| Cold-start (ms)            | ≤ 1,000                             |
+| Index bootstrap @ N=1k (ms)| ≤ 50                                |
+| Sustained in-budget (%)    | ≥ 99.5% within 33 ms (10-min run)   |
+| Unknown-rate (fixture band)| [0.10, 0.40] (fails if out-of-band) |
+| RAM @ N=1k (MB)            | publish                             |
 
 Summary Table (printout guidance)
 

@@ -57,9 +57,9 @@ def run_eval(
     warmup: int,
     *,
     budget_ms: int = 33,
-    sustain_minutes: int = 0,
-    fixture_manifest: str | None = None,
-    unknown_band: tuple[float, float] = (0.10, 0.40),
+    duration_min: int = 0,
+    unknown_rate_band: tuple[float, float] = (0.10, 0.40),
+    process_start_ns: int | None = None,
 ) -> int:
     """Run the evaluation pipeline over frames in *input_dir*."""
     import numpy as np
@@ -71,12 +71,14 @@ def run_eval(
 
     import json as _json
 
-    if fixture_manifest:
+    band_min, band_max = unknown_rate_band
+    manifest_path = in_dir / "manifest.json"
+    if manifest_path.exists():
         try:
-            m = _json.loads(Path(fixture_manifest).read_text(encoding="utf-8"))
-            band = m.get("unknown_band")
+            m = _json.loads(manifest_path.read_text(encoding="utf-8"))
+            band = m.get("unknown_rate_band")
             if isinstance(band, list | tuple) and len(band) == 2:
-                unknown_band = (float(band[0]), float(band[1]))
+                band_min, band_max = float(band[0]), float(band[1])
         except Exception:
             pass
 
@@ -98,12 +100,14 @@ def run_eval(
     pipeline = DetectTrackEmbedPipeline(detector, tracker, cropper, embedder)
 
     start_ns = time.monotonic_ns()
+    if process_start_ns is None:
+        process_start_ns = start_ns
     deadline = None
-    if sustain_minutes > 0:
-        deadline = time.monotonic() + sustain_minutes * 60.0
+    if duration_min > 0:
+        deadline = time.monotonic() + duration_min * 60.0
         warmup = 100
 
-    frame_iter = frames if sustain_minutes == 0 else itertools.cycle(frames)
+    frame_iter = frames if duration_min == 0 else itertools.cycle(frames)
 
     first_result_ns: int | None = None
     processed = 0
@@ -121,8 +125,8 @@ def run_eval(
     if first_result_ns is None:
         first_result_ns = end_ns
 
-    cold_start_ms = (first_result_ns - start_ns) / 1e6
-    bootstrap_ms = pipeline.bootstrap_time_ms() or 0.0
+    cold_start_ms = (first_result_ns - process_start_ns) / 1e6
+    index_bootstrap_ms = pipeline.bootstrap_time_ms() or 0.0
 
     per_frame_ms, per_stage_ms, unknown_flags, controller_log = pipeline.get_eval_counters()
     _write_stage_csv(out_dir / "stage_times.csv", per_frame_ms, controller_log)
@@ -143,10 +147,14 @@ def run_eval(
     )
     prov = collect_provenance(frames)
     metrics.update(prov)
+    latencies_effective = per_frame_ms[warmup:]
+    in_budget = sum(1 for t in latencies_effective if t <= float(budget_ms))
+    total_eff = max(1, len(latencies_effective))
     metrics.update(
         {
             "cold_start_ms": cold_start_ms,
-            "bootstrap_ms": bootstrap_ms,
+            "index_bootstrap_ms": index_bootstrap_ms,
+            "sustained_in_budget": round(in_budget / total_eff, 6),
         }
     )
     cfg_block = pipeline.controller_config()
@@ -160,21 +168,20 @@ def run_eval(
         "p99_window_ms": pipeline.last_window_p99(),
         "fps_window": pipeline.last_window_fps(),
     }
-    low, high = unknown_band
-    metrics["unknown_band_low"] = float(low)
-    metrics["unknown_band_high"] = float(high)
-    _atomic_write_json(out_dir / "metrics.json", metrics)
-
+    metrics["unknown_rate_band"] = [band_min, band_max]
     budget = float(budget_ms)
-    exit_code = 2 if metrics["p95_ms"] > budget else 0
-
+    exit_code = 0
+    if metrics["p95_ms"] > budget:
+        exit_code = 2
     ur = float(metrics.get("unknown_rate", 0.0))
-    if not (low <= ur <= high):
+    if not (band_min <= ur <= band_max):
+        metrics["unknown_rate_violation"] = True
         exit_code = 2
         print(
-            f"[guardrail] unknown_rate {ur:.3f} outside band [{low:.3f}, {high:.3f}]",
+            f"[guardrail] unknown_rate {ur:.3f} outside band [{band_min:.3f}, {band_max:.3f}]",
             file=sys.stderr,
         )
+    _atomic_write_json(out_dir / "metrics.json", metrics)
 
     return exit_code
 

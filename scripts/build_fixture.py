@@ -54,10 +54,11 @@ def build_fixture(out: Path, n: int, seed: int) -> None:
     h.update(json.dumps(transforms, sort_keys=True).encode("utf-8"))
     manifest = {
         "seed": seed,
-        "unknown_band": [0.10, 0.40],
         "ids": file_names,
         "transforms": transforms,
         "fixture_hash": h.hexdigest(),
+        # Guardrail for Gate A/D consistency checks during eval
+        "unknown_rate_band": [0.10, 0.40],  # default band; tune per fixture if needed
     }
     (out / "manifest.json").write_text(
         json.dumps(manifest, ensure_ascii=False, indent=2),

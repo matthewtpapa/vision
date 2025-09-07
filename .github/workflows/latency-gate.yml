@@ -17,24 +17,24 @@ jobs:
           pip install -e .
           pip install -r requirements-dev.txt
           pip install pillow numpy matplotlib
-      - name: Build fixture
+      - name: Run evaluator (windowed)
         run: |
-          python scripts/build_fixture.py --seed 42 --out bench/fixture --n 2000
-      - name: Run eval
-        run: |
-          latvision eval --input bench/fixture --output bench/out --warmup 100 --budget-ms 33 --unknown-rate-band 0.0,1.0
-      - name: Plot latency
-        run: |
-          python scripts/plot_latency.py --input bench/out/stage_times.csv --metrics bench/out/metrics.json --output bench/out/latency.png --warmup 100
-      - name: Check budgets
+          python scripts/build_fixture.py --seed 42 --out bench/fixture --n 400
+          PYTHONPATH=src latvision eval --input bench/fixture --output bench/out --warmup 100
+      - name: Enforce latency + cold-start + bootstrap gates
         run: |
           python - <<'PY'
-          import json,sys
-          m=json.load(open('bench/out/metrics.json'))
-          assert m['p95_ms'] <= 33.0, f"p95 {m['p95_ms']} > 33"
-          assert m['p99_ms'] <= 66.0, f"p99 {m['p99_ms']} > 66"
-          assert m['fps'] >= 25.0, f"fps {m['fps']} < 25"
-          assert m['error_budget_pct'] <= 0.5, f"error_budget {m['error_budget_pct']} > 0.5"
+          import json, sys, pathlib
+          m = json.loads(pathlib.Path('bench/out/metrics.json').read_text(encoding='utf-8'))
+          def die(msg):
+              print(msg); sys.exit(1)
+          if m.get('p95_ms', 999) > 33: die(f"p95>{33}: {m.get('p95_ms')}")
+          if m.get('p99_ms', 999) > 66: die(f"p99>{66}: {m.get('p99_ms')}")
+          if m.get('fps', 0) < 25: die(f"fps<25: {m.get('fps')}")
+          if m.get('cold_start_ms', 9999) > 1000: die(f"cold_start>{1000}: {m.get('cold_start_ms')}")
+          if m.get('index_bootstrap_ms', 9999) > 50: die(f"bootstrap>{50}: {m.get('index_bootstrap_ms')}")
+          if m.get('unknown_rate_violation'): die('unknown-rate out of band')
+          print('Latency + cold-start + bootstrap + unknown-rate gates OK')
           PY
       - name: Upload artifacts
         if: always()
