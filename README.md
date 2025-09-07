@@ -6,9 +6,10 @@ Latency-bounded open-set recognition SDK — predictable, measurable, embeddable
 >
 > - PyPI: `latency-vision`
 > - Import: `latency_vision`
-> - CLI: `latvision` (best-effort alias: `vision`)
+> - CLI: `latvision`
+> - `vision` (alias; deprecated, removed in M1.2)
 
-`vision` remains a temporary alias of `latvision`.
+`vision` remains a temporary alias of `latvision` (deprecated; removed in M1.2).
 
 ## Install
 
