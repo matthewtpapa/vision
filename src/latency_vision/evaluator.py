@@ -108,9 +108,9 @@ def run_eval(
 
     pipeline = DetectTrackEmbedPipeline(detector, tracker, cropper, embedder)
 
-    start_ns = time.monotonic_ns()
+    t0_ready_ns = time.monotonic_ns()
     if process_start_ns is None:
-        process_start_ns = start_ns
+        process_start_ns = t0_ready_ns
     deadline = None
     if duration_min > 0:
         deadline = time.monotonic() + duration_min * 60.0
@@ -134,7 +134,8 @@ def run_eval(
     if first_result_ns is None:
         first_result_ns = end_ns
 
-    cold_start_ms = (first_result_ns - process_start_ns) / 1e6
+    start_anchor_ns = max(process_start_ns, t0_ready_ns)
+    cold_start_ms = (first_result_ns - start_anchor_ns) / 1e6
     index_bootstrap_ms = pipeline.bootstrap_time_ms() or 0.0
 
     per_frame_ms, per_stage_ms, unknown_flags, controller_log = pipeline.get_eval_counters()

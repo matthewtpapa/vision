@@ -136,13 +136,14 @@ Exit codes:
 - `0` — success
 - `2` — user/data error (bad path, empty/invalid files)
 - `3` — missing optional dependency (`pillow`, `matplotlib`)
+
 ### Flags
 
 --duration-min (replaces any "sustain-minutes" mentions)
 
 --unknown-rate-band LOW,HIGH is optional; precedence = CLI > fixture manifest > default [0.10,0.40]
 
-Cold-start is defined as post-deps check → first MatchResult.
+Cold-start is defined as SDK ready (post-deps, pipeline initialized) → first MatchResult.
 
 The evaluator can adaptively skip frames to stay within the latency budget; see the **[Eval Guide](docs/eval.md)** and **[Latency Guide](docs/latency.md)** for controller details.
 

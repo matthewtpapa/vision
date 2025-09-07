@@ -61,4 +61,3 @@ def test_default_band_when_missing(tmp_path: Path) -> None:
     evaluator.run_eval(str(in_dir), str(out_dir), warmup=0)
     band = _read_band(out_dir / "metrics.json")
     assert band == [0.10, 0.40]
-

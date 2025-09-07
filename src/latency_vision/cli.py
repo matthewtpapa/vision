@@ -97,7 +97,7 @@ def build_parser() -> argparse.ArgumentParser:
         "--duration-min",
         type=int,
         default=0,
-        help="Run for N minutes (wall clock); 0 disables sustained mode (replaces any 'sustain-minutes' mentions)",
+        help=("Run N minutes (wall clock); 0 disables sustained mode (replaces 'sustain-minutes')"),
     )
     eval_parser.add_argument(
         "--budget-ms",
@@ -110,8 +110,8 @@ def build_parser() -> argparse.ArgumentParser:
         type=str,
         default="",
         help=(
-            "Unknown rate band as LOW,HIGH. Optional; precedence: CLI > fixture "
-            "manifest > default 0.10,0.40."
+            "Unknown rate band LOW,HIGH. Optional; precedence: CLI > "
+            "fixture manifest > default 0.10,0.40."
         ),
     )
 

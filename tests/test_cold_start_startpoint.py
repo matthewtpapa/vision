@@ -4,7 +4,6 @@
 from __future__ import annotations
 
 import json
-import time
 from pathlib import Path
 
 import pytest
@@ -26,19 +25,20 @@ def _cold_start(metrics_path: Path) -> float:
     return float(data["cold_start_ms"])
 
 
-def test_cold_start_respects_process_start(tmp_path: Path) -> None:
+def test_cold_start_respects_process_start(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
     in_dir = tmp_path / "in"
-    out1 = tmp_path / "o1"
-    out2 = tmp_path / "o2"
+    out = tmp_path / "o"
     _create_frame(in_dir)
 
-    start = time.monotonic_ns()
-    evaluator.run_eval(str(in_dir), str(out1), warmup=0, process_start_ns=start)
-    base = _cold_start(out1 / "metrics.json")
+    # Fake timestamps: ready=100ms, first result=200ms, end=250ms
+    calls = iter([100_000_000, 200_000_000, 250_000_000])
 
-    earlier = start - 1_000_000_000  # 1 second earlier
-    evaluator.run_eval(str(in_dir), str(out2), warmup=0, process_start_ns=earlier)
-    shifted = _cold_start(out2 / "metrics.json")
+    def fake_monotonic_ns() -> int:
+        return next(calls)
 
-    assert 900.0 <= shifted - base <= 1100.0
+    monkeypatch.setattr(evaluator.time, "monotonic_ns", fake_monotonic_ns)
 
+    evaluator.run_eval(str(in_dir), str(out), warmup=0, process_start_ns=150_000_000)
+    cold_start = _cold_start(out / "metrics.json")
+
+    assert 49.0 <= cold_start <= 51.0
