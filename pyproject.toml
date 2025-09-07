@@ -32,6 +32,8 @@ gpu = [
 [project.urls]
 Homepage = "https://github.com/matthewtpapa/vision"
 Repository = "https://github.com/matthewtpapa/vision"
+Documentation = "https://github.com/matthewtpapa/vision#readme"
+Changelog = "https://github.com/matthewtpapa/vision/blob/main/CHANGELOG.md"
 Issues = "https://github.com/matthewtpapa/vision/issues"
 
 [project.scripts]
