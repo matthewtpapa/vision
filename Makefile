@@ -140,3 +140,7 @@ clean:
 
 release: clean build check
 >@echo "✅ Artifacts ready in ./dist"
+
+release-rc:
+>@echo "git tag -a v0.1.0-rc.2 -m \"M1.1 RC drill\""
+>@echo "git push origin v0.1.0-rc.2"
