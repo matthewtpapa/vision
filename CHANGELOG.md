@@ -2,6 +2,8 @@
 
 All notable changes to this project are documented in this file.
 
+<!-- markdownlint-disable MD024 -->
+
 The format is based on [Keep a Changelog](https://keepachangelog.com/).
 
 ## [Unreleased]
@@ -9,6 +11,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/).
 ## [0.1.0-rc.2] - 2025-09-??
 
 ### Added
+
 - Package flip to `latency-vision` with façade freeze. (Issue 1)
 - manylinux2014, universal2, and Windows wheels via cibuildwheel. (Issue 3)
 - Windows demo gate. (Issue 4)
@@ -19,4 +22,5 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/).
 ## [0.1.0-rc.1] - 2025-09-01
 
 ### Added
+
 - M1.1 vertical slice with evaluator, fixture builder, and plots.

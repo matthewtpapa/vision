@@ -36,14 +36,19 @@ def main() -> int:
         code = (
             f"{snippet}\nimport json,sys\nprint('{MARKER}:' + json.dumps(sorted({var}.keys())))\n"
         )
-        proc = subprocess.run(
-            [sys.executable, "-"],
-            input=code,
-            text=True,
-            capture_output=True,
-            cwd=td,
-            env={"PYTHONPATH": str(ROOT / "src")},
-        )
+        try:
+            proc = subprocess.run(
+                [sys.executable, "-"],
+                input=code,
+                text=True,
+                capture_output=True,
+                cwd=td,
+                env={"PYTHONPATH": str(ROOT / "src")},
+                timeout=15,
+            )
+        except subprocess.TimeoutExpired:
+            sys.stderr.write("Snippet timed out\n")
+            return 1
     if proc.returncode != 0:
         sys.stderr.write(proc.stdout + proc.stderr)
         return 1
