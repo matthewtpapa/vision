@@ -5,13 +5,34 @@
 from __future__ import annotations
 
 import argparse
+import os
 import sys
 from collections.abc import Sequence
+from pathlib import Path
 
 from . import __version__, evaluator, webcam
 from .config import get_config
 
 _ = get_config()
+
+_ALIAS_WARNED = False
+
+
+def _warn_alias_once() -> None:
+    """Emit the deprecated alias warning once per process."""
+    global _ALIAS_WARNED
+    if _ALIAS_WARNED:
+        return
+    if os.getenv("VISION_SILENCE_DEPRECATION") == "1":
+        return
+
+    argv0 = Path(sys.argv[0]).name
+    if argv0 == "vision" or (__package__ == "vision" and argv0 == "__main__.py"):
+        print(
+            "[deprecation] 'vision' is an alias of 'latvision' and will be removed in M1.2. Use 'latvision'.",
+            file=sys.stderr,
+        )
+        _ALIAS_WARNED = True
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -74,6 +95,7 @@ def build_parser() -> argparse.ArgumentParser:
 
 def main(argv: Sequence[str] | None = None) -> int:
     """Run the main program."""
+    _warn_alias_once()
     parser = build_parser()
     args = parser.parse_args(argv)
 

@@ -1,4 +1,4 @@
-# Evaluation & Telemetry (`latvision eval`)
+# Evaluation & Telemetry (`latvision eval`) — Prefer latvision; vision prints a deprecation warning.
 
 ## Quickstart
 
