@@ -122,10 +122,13 @@ hello:
 >  PYTHONPATH=src latvision hello; \
 >fi
 
-bench:
+bench: bench-deps
 >python scripts/build_fixture.py --out bench/fixture --n 400
 >latvision eval --input bench/fixture --output bench/out
 >python scripts/print_summary.py --metrics bench/out/metrics.json
+
+bench-deps:
+>@python scripts/check_bench_deps.py
 
 demo:
 >python scripts/build_fixture.py --out bench/fixture --n 400

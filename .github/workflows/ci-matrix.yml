@@ -57,7 +57,7 @@ PY
 
       - name: Typecheck
         run: |
-          if command -v mypy >/dev/null 2>&1; then mypy src/vision; else echo "mypy not installed"; fi
+          if command -v mypy >/dev/null 2>&1; then mypy src/latency_vision; else echo "mypy not installed"; fi
 
       - name: Unit tests
         run: |
@@ -86,30 +86,63 @@ assert isinstance(m.get("sdk_version"), str) and m["sdk_version"], "sdk_version 
 print("Windows demo OK:", m["backend_selected"], m["sdk_version"])
 PY
 
-      - name: Build wheels with cibuildwheel
-        uses: pypa/cibuildwheel@v2.20
-        env:
-          CIBW_BUILD: "cp310-* cp311-* cp312-*"
-          CIBW_SKIP: "pp*"
-          CIBW_ARCHS_MACOS: "universal2"
-          CIBW_ARCHS_LINUX: "x86_64"
-          CIBW_MANYLINUX_X86_64_IMAGE: "manylinux2014"
-        with:
-          output-dir: wheelhouse
+        - name: Build wheels with cibuildwheel
+          uses: pypa/cibuildwheel@v2.20
+          env:
+            CIBW_BUILD: "cp310-* cp311-* cp312-*"
+            CIBW_SKIP: "pp*"
+            CIBW_ARCHS_MACOS: "universal2"
+            CIBW_ARCHS_LINUX: "x86_64"
+            CIBW_MANYLINUX_X86_64_IMAGE: "manylinux2014"
+          with:
+            output-dir: wheelhouse
 
-      - name: Fresh venv smoke install (from wheel)
+        - name: Audit wheel tags
+          run: |
+            python - <<'PY'
+            import glob, sys
+            files = glob.glob("wheelhouse/*.whl")
+            if not files: sys.exit("no wheels built")
+            blob = " ".join(files)
+            if "manylinux2014_x86_64" not in blob: sys.exit("Missing manylinux2014 wheel")
+            if "win_amd64" not in blob: sys.exit("Missing win_amd64 wheel")
+            if "universal2" not in blob: sys.exit("Missing macOS universal2 wheel")
+            print("Wheel tags present.")
+            PY
+
+        - name: Fresh venv smoke install (from wheel)
+          run: |
+            python -m venv .venv
+            . .venv/bin/activate || .\.venv\Scripts\activate
+            python -m pip install wheelhouse/*.whl || python -m pip install -e .
+            python - <<'PY'
+  import latency_vision as lv
+  print("latency_vision", lv.__version__)
+  PY
+
+        - name: Upload wheel artifacts
+          uses: actions/upload-artifact@v4
+          with:
+            name: wheels-${{ runner.os }}-py${{ matrix.python }}
+            path: wheelhouse/*.whl
+
+  schema-drift:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: { python-version: "3.11" }
+      - name: Check README example equals docs/schema.md
         run: |
-          python -m venv .venv
-          . .venv/bin/activate || .\.venv\Scripts\activate
-          python -m pip install wheelhouse/*.whl || python -m pip install -e .
           python - <<'PY'
-import latency_vision as lv
-print("latency_vision", lv.version)
-PY
-
-      - name: Upload wheel artifacts
-        uses: actions/upload-artifact@v4
-        with:
-          name: wheels-${{ runner.os }}-py${{ matrix.python }}
-          path: wheelhouse/*.whl
+          import re, json, pathlib, sys
+          rd = pathlib.Path("README.md").read_text(encoding="utf-8")
+          m = re.search(r"```json\n(.*?)\n```", rd, re.S)
+          if not m: sys.exit("README JSON example not found")
+          rj = json.loads(m.group(1))
+          sj = json.loads(pathlib.Path("docs/schema.md").read_text(encoding="utf-8"))
+          if json.dumps(rj, sort_keys=True, separators=(",",":")) != json.dumps(sj, sort_keys=True, separators=(",",":")):
+              sys.exit("README example != docs/schema.md")
+          print("Schema examples match.")
+          PY
 
