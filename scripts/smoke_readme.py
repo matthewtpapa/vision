@@ -34,9 +34,7 @@ def main() -> int:
     snippet, var = _extract_snippet()
     with tempfile.TemporaryDirectory() as td:
         code = (
-            f"{snippet}\n"
-            "import json,sys\n"
-            f"print('{MARKER}:' + json.dumps(sorted({var}.keys())))\n"
+            f"{snippet}\nimport json,sys\nprint('{MARKER}:' + json.dumps(sorted({var}.keys())))\n"
         )
         proc = subprocess.run(
             [sys.executable, "-"],
@@ -60,9 +58,7 @@ def main() -> int:
     snippet_keys = json.loads(out_key)
     schema_keys = sorted(json.loads(SCHEMA_PATH.read_text(encoding="utf-8")).keys())
     if snippet_keys != schema_keys:
-        sys.stderr.write(
-            f"Schema keys mismatch: snippet={snippet_keys} schema={schema_keys}\n"
-        )
+        sys.stderr.write(f"Schema keys mismatch: snippet={snippet_keys} schema={schema_keys}\n")
         return 1
     print("README Quickstart OK")
     return 0
