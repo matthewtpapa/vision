@@ -64,7 +64,7 @@ def test_eval_cli_creates_artifacts(tmp_path: Path) -> None:
     assert result.returncode == 0
 
     metrics_path = out_dir / "metrics.json"
-    timings_path = out_dir / "stage_timings.csv"
+    timings_path = out_dir / "stage_times.csv"
     assert metrics_path.exists()
     assert timings_path.exists()
 
@@ -84,13 +84,14 @@ def test_eval_cli_creates_artifacts(tmp_path: Path) -> None:
         "bootstrap_ms",
         "slo_budget_ms",
         "slo_within_budget_pct",
+        "error_budget_pct",
         "sdk_version",
     }
     assert expected <= data.keys()
     assert "overhead" in data["stage_ms"]
 
     header = timings_path.read_text().splitlines()[0]
-    for col in ["stage", "total_ms", "mean_ms", "count"]:
+    for col in ["frame_idx", "total_ns", "stride", "budget_hit"]:
         assert col in header
 
 
@@ -155,7 +156,10 @@ def test_eval_cli_controller_block(tmp_path: Path, monkeypatch: pytest.MonkeyPat
         "low_water",
         "frames_total",
         "frames_processed",
+        "p50_window_ms",
         "p95_window_ms",
+        "p99_window_ms",
+        "fps_window",
     }
     assert expected_keys <= c.keys()
     assert c["frames_processed"] <= c["frames_total"]

@@ -149,9 +149,10 @@ def test_telemetry_lengths(monkeypatch: pytest.MonkeyPatch) -> None:
     total = 10
     for _ in range(total):
         pipe.process(None)
-    per_frame, per_stage, unknown_flags = pipe.get_eval_counters()
+    per_frame, per_stage, unknown_flags, controller = pipe.get_eval_counters()
     assert len(per_frame) == total
     processed = len([i for i in range(total) if i % 3 == 0])
     assert sum(len(v) for v in per_stage.values()) == processed * 4
     assert len(unknown_flags) == total
     assert not any(unknown_flags)
+    assert len(controller) == total

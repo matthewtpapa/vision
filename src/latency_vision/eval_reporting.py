@@ -77,6 +77,7 @@ def metrics_json(
         if per_frame_ms
         else 0.0
     )
+    error_budget_pct = 100.0 - slo_within
 
     return {
         "stage_ms": stage_means,
@@ -86,6 +87,7 @@ def metrics_json(
         "p99_ms": p99,
         "slo_budget_ms": float(slo_budget_ms),
         "slo_within_budget_pct": slo_within,
+        "error_budget_pct": error_budget_pct,
         "unknown_rate": unknown_rate,
         "kb_size": int(kb_size),
         "backend_selected": backend_selected,

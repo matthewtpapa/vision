@@ -1,0 +1,44 @@
+name: latency-gate
+on:
+  pull_request:
+    branches: [ main ]
+  push:
+    branches: [ main ]
+jobs:
+  latency-gate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install
+        run: |
+          pip install -e .
+          pip install -r requirements-dev.txt
+          pip install pillow numpy matplotlib
+      - name: Build fixture
+        run: |
+          python scripts/build_fixture.py --seed 42 --out bench/fixture --n 2000
+      - name: Run eval
+        run: |
+          latvision eval --input bench/fixture --output bench/out --warmup 100 --budget-ms 33 --unknown-rate-band 0.0,1.0
+      - name: Plot latency
+        run: |
+          python scripts/plot_latency.py --input bench/out/stage_times.csv --metrics bench/out/metrics.json --output bench/out/latency.png --warmup 100
+      - name: Check budgets
+        run: |
+          python - <<'PY'
+          import json,sys
+          m=json.load(open('bench/out/metrics.json'))
+          assert m['p95_ms'] <= 33.0, f"p95 {m['p95_ms']} > 33"
+          assert m['p99_ms'] <= 66.0, f"p99 {m['p99_ms']} > 66"
+          assert m['fps'] >= 25.0, f"fps {m['fps']} < 25"
+          assert m['error_budget_pct'] <= 0.5, f"error_budget {m['error_budget_pct']} > 0.5"
+          PY
+      - name: Upload artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: latency-gate-artifacts
+          path: bench/out/
