@@ -51,18 +51,14 @@ def _cpu_flags() -> str:
 
 
 def _detect_backend() -> str:
-    """Return the available matcher backend."""
-    try:
-        import faiss  # type: ignore  # noqa: F401
+    """Return the available matcher backend without importing heavy modules."""
+    import importlib.util as _imputil
 
+    if _imputil.find_spec("faiss") is not None:
         return "faiss"
-    except Exception:
-        try:
-            import numpy  # type: ignore  # noqa: F401
-
-            return "numpy"
-        except Exception:
-            return "none"
+    if _imputil.find_spec("numpy") is not None:
+        return "numpy"
+    return "none"
 
 
 def build_parser() -> argparse.ArgumentParser:
