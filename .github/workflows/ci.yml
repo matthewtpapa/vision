@@ -48,6 +48,23 @@ PY
           python -m pip debug --verbose
       - run: make verify
       - run: PYTEST_ADDOPTS="-ra" make test-cov | tee pytest.log
+      - name: Fail on skips
+        run: |
+          python - <<'PY' > pytest-summary.txt
+import re, pathlib
+text = pathlib.Path('pytest.log').read_text()
+line = ''
+for l in text.splitlines():
+    if re.search(r'==+ .* in .* seconds ==+', l):
+        line = l
+m = re.search(r'(skipped=\d+|\d+\s+skipped)', line or '')
+skipped = 0
+if m:
+    skipped = int(re.search(r'\d+', m.group()).group())
+print(f'skipped={skipped}')
+exit(skipped != 0)
+PY
+          grep -q 'skipped=0' pytest-summary.txt
       - name: Show pytest tail on failure
         if: failure()
         run: |
