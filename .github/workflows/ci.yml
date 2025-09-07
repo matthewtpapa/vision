@@ -29,8 +29,9 @@ jobs:
           cache-dependency-path: |
             requirements-dev.txt
       - run: python -m pip install --upgrade pip setuptools wheel
-      - run: python -m pip install numpy pillow matplotlib
-      - run: make setup
+      - run: python -m pip install -r requirements-dev.txt
+      - run: pip install -e .
+      - run: make setup  # still ok; now it's a no-op if the above succeeded
       - name: Environment report
         run: |
           python -V
@@ -46,8 +47,12 @@ PY
         run: |
           python - <<'PY' > pytest-summary.txt
 import re, pathlib
-line = pathlib.Path('pytest.log').read_text().splitlines()[-1]
-m = re.search(r'(skipped=\d+|\d+\s+skipped)', line)
+text = pathlib.Path('pytest.log').read_text()
+line = ''
+for l in text.splitlines():
+    if re.search(r'==+ .* in .* seconds ==+', l):
+        line = l
+m = re.search(r'(skipped=\d+|\d+\s+skipped)', line or '')
 skipped = 0
 if m:
     skipped = int(re.search(r'\d+', m.group()).group())

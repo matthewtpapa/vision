@@ -27,8 +27,13 @@ help:
 >echo "Tip: run 'npm ci' once to enable local markdownlint (make mdlint/mdfix)."
 
 setup:
->pip install -e . || echo "⚠️ Skipped package install (pip blocked)"
->pip install -r requirements-dev.txt || echo "⚠️ Skipped dev deps install (pip blocked)"
+>if [ -n "$${CI:-}" ]; then \
+>  pip install -e .; \
+>  pip install -r requirements-dev.txt; \
+>else \
+>  pip install -e . || echo "⚠️ Skipped package install (pip blocked)"; \
+>  pip install -r requirements-dev.txt || echo "⚠️ Skipped dev deps install (pip blocked)"; \
+>fi
 
 test:
 >pytest
