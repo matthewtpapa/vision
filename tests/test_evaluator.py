@@ -34,8 +34,8 @@ def test_sustain_enforces_warmup(monkeypatch: pytest.MonkeyPatch, tmp_path: Path
 
     monkeypatch.setattr(evaluator, "metrics_json", fake_metrics_json)
 
-    evaluator.run_eval(str(in_dir), str(out_dir), warmup=7, sustain_minutes=0)
+    evaluator.run_eval(str(in_dir), str(out_dir), warmup=7, duration_min=0)
     assert captured["warmup"] == 7
 
-    evaluator.run_eval(str(in_dir), str(out_dir), warmup=7, sustain_minutes=1)
+    evaluator.run_eval(str(in_dir), str(out_dir), warmup=7, duration_min=1)
     assert captured["warmup"] == 100

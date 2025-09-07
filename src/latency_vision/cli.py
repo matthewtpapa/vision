@@ -108,8 +108,11 @@ def build_parser() -> argparse.ArgumentParser:
     eval_parser.add_argument(
         "--unknown-rate-band",
         type=str,
-        default="0.10,0.40",
-        help="Fallback band for unknown rate as LOW,HIGH (overridden by manifest).",
+        default="",
+        help=(
+            "Unknown rate band as LOW,HIGH. If omitted, uses fixture manifest; "
+            "if no manifest, defaults to 0.10,0.40."
+        ),
     )
 
     subparsers.add_parser("hello", help="Print environment information.")
@@ -142,14 +145,19 @@ def main(argv: Sequence[str] | None = None) -> int:
                 file=sys.stderr,
             )
             return 3
-        low, high = (float(x) for x in args.unknown_rate_band.split(",", 1))
+        band_arg: tuple[float, float] | None
+        if args.unknown_rate_band.strip():
+            low, high = (float(x) for x in args.unknown_rate_band.split(",", 1))
+            band_arg = (low, high)
+        else:
+            band_arg = None
         ret = evaluator.run_eval(
             args.input,
             args.output,
             args.warmup,
             budget_ms=args.budget_ms,
             duration_min=args.duration_min,
-            unknown_rate_band=(low, high),
+            unknown_rate_band=band_arg,
             process_start_ns=args._t0_process,
         )
         sys.exit(ret)

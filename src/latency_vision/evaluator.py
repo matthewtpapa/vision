@@ -58,7 +58,7 @@ def run_eval(
     *,
     budget_ms: int = 33,
     duration_min: int = 0,
-    unknown_rate_band: tuple[float, float] = (0.10, 0.40),
+    unknown_rate_band: tuple[float, float] | None = None,
     process_start_ns: int | None = None,
 ) -> int:
     """Run the evaluation pipeline over frames in *input_dir*."""
@@ -71,16 +71,23 @@ def run_eval(
 
     import json as _json
 
-    band_min, band_max = unknown_rate_band
-    manifest_path = in_dir / "manifest.json"
-    if manifest_path.exists():
-        try:
-            m = _json.loads(manifest_path.read_text(encoding="utf-8"))
-            band = m.get("unknown_rate_band")
-            if isinstance(band, list | tuple) and len(band) == 2:
-                band_min, band_max = float(band[0]), float(band[1])
-        except Exception:
-            pass
+    # Resolve unknown-rate band by precedence: CLI > manifest > default
+    band_min: float | None = None
+    band_max: float | None = None
+    if unknown_rate_band is not None:
+        band_min, band_max = float(unknown_rate_band[0]), float(unknown_rate_band[1])
+    else:
+        manifest_path = in_dir / "manifest.json"
+        if manifest_path.exists():
+            try:
+                m = _json.loads(manifest_path.read_text(encoding="utf-8"))
+                band = m.get("unknown_rate_band")
+                if isinstance(band, (list, tuple)) and len(band) == 2:  # noqa: UP038
+                    band_min, band_max = float(band[0]), float(band[1])
+            except Exception:
+                pass
+    if band_min is None or band_max is None:
+        band_min, band_max = 0.10, 0.40
 
     frames = _discover_images(in_dir)
 
