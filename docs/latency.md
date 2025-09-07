@@ -19,7 +19,7 @@ Run a local demo to generate a synthetic fixture, evaluate, and plot latency:
 make demo
 ```
 
-The plot excludes warm-up frames from SLO calculations.
+This runs with `--warmup 0` and a wide `--unknown-rate-band 0.0,1.0` to ensure usable rows. The plot excludes warm-up frames from SLO calculations.
 
 This produces:
 
