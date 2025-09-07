@@ -25,7 +25,7 @@ jobs:
 
       - name: Build tiny fixture (best effort)
         run: |
-          python scripts/build_fixture.py --out bench/fixture --n 400 || true
+          python scripts/build_fixture.py --seed 42 --out bench/fixture --n 400 || true
 
       - name: Run evaluator (best effort; guardrails relaxed)
         env:
@@ -55,7 +55,7 @@ PY
 
       - name: Plot latency (best effort)
         run: |
-          python scripts/plot_latency.py --input bench/out/stage_timings.csv || true
+          python scripts/plot_latency.py --input bench/out/stage_times.csv || true
 
       - name: Build wheels
         run: |
@@ -68,7 +68,7 @@ PY
           name: rc-artifacts
           path: |
             bench/out/metrics.json
-            bench/out/stage_timings.csv
+            bench/out/stage_times.csv
             bench/out/latency.png
             dist/*.whl
           if-no-files-found: warn

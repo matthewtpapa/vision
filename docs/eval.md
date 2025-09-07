@@ -20,7 +20,7 @@ Run the evaluator and inspect the outputs:
 ```bash
 latvision eval --input in --output out --warmup 0
 cat out/metrics.json
-cat out/stage_timings.csv
+cat out/stage_times.csv
 ```
 
 ## Metrics schema
@@ -50,6 +50,6 @@ cat out/stage_timings.csv
 
 - If `p95` exceeds `budget_ms`, the CLI exits with code `2`; inspect `end_stride` and `frames_processed/frames_total`.
 - To tune, increase `budget_ms` or `max_stride`, or reduce model cost.
-- `stage_timings.csv` columns: `stage,total_ms,mean_ms,count`. Only processed frames contribute to `count`; skipped frames are omitted.
+- `stage_times.csv` columns: `stage,total_ms,mean_ms,count`. Only processed frames contribute to `count`; skipped frames are omitted.
 
 See [latency.md](latency.md) for controller policy details.

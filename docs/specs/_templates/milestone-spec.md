@@ -28,10 +28,10 @@
 ```bash
 # demo flow must pass on a clean machine (offline/headless)
 latvision hello
-python scripts/build_fixture.py --out bench/fixture --n 400
+python scripts/build_fixture.py --seed 42 --out bench/fixture --n 400
 PYTHONPATH=src latvision eval --input bench/fixture --output bench/out
 python scripts/print_summary.py --metrics bench/out/metrics.json
-python scripts/plot_latency.py --input bench/out/stage_timings.csv
+python scripts/plot_latency.py --input bench/out/stage_times.csv
 ```
 
 Exit codes

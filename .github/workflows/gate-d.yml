@@ -23,7 +23,7 @@ jobs:
         run: make demo
       - name: Warn if missing outputs
         run: |
-          for f in metrics.json stage_timings.csv latency.png; do
+          for f in metrics.json stage_times.csv latency.png; do
             if [ ! -f "bench/out/$f" ]; then
               echo "::warning ::bench/out/$f missing"
             fi

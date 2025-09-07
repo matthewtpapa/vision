@@ -145,8 +145,8 @@ def run_eval(
     metrics.update(prov)
     metrics.update(
         {
-        "cold_start_ms": cold_start_ms,
-        "bootstrap_ms": bootstrap_ms,
+            "cold_start_ms": cold_start_ms,
+            "bootstrap_ms": bootstrap_ms,
         }
     )
     cfg_block = pipeline.controller_config()

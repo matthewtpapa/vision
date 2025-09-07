@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Plot per-frame latency from a stage timings CSV."""
+"""Plot per-frame latency from a stage times CSV."""
 
 from __future__ import annotations
 
@@ -69,7 +69,7 @@ def _percentile(values: list[float], q: float) -> float:
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser()
-    parser.add_argument("--input", required=True, type=Path, help="path to stage_timings.csv")
+    parser.add_argument("--input", required=True, type=Path, help="path to stage_times.csv")
     parser.add_argument("--output", type=Path, help="output PNG path")
     parser.add_argument("--metrics", type=Path, help="metrics.json for SLO budget", default=None)
     parser.add_argument("--slo-ms", type=float, default=33.0, help="SLO budget in ms")
