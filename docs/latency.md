@@ -113,6 +113,23 @@ Columns: stage,total_ms,mean_ms,count
 
 Only processed frames contribute to count.
 
+## Sustained 10-min run (warm-up excluded)
+
+Sustained mode runs the evaluator for a fixed wall-clock duration while
+dropping the first 100 frames from SLO and percentile calculations.
+
+```bash
+latvision eval --sustain-minutes 10 --budget-ms 33
+```
+
+cold_start_ms = import/process start → first result
+
+bootstrap_ms = start → frame #1000 processed, or last frame if <1000
+
+During a reference run, background work at ~190s pushed p95 above budget and
+the controller raised stride to 2. The system recovered around ~420s and
+stride returned to 1. See GitHub Releases → the latest RC tag for the full metrics.json and annotated latency plot.
+
 ## Stress Narrative (template)
 
 We include a qualitative narrative alongside artifacts to make controller behavior

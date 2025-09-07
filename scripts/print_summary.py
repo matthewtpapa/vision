@@ -10,21 +10,31 @@ from pathlib import Path
 from typing import Any
 
 ORDER = [
+    "sdk_version",
+    "git_commit",
+    "hardware_id",
+    "fixture_hash",
+    "cold_start_ms",
+    "bootstrap_ms",
     "fps",
-    "p95",
-    "p99",
+    "p50_ms",
+    "p95_ms",
+    "p99_ms",
+    "slo_within_budget_pct",
+    "slo_budget_ms",
     "frames",
     "processed",
     "backend",
     "kb",
-    "sdk",
     "stride",
     "window_p95",
 ]
 
 SYNONYMS = {
-    "p95": ["p95", "p95_ms"],
-    "p99": ["p99", "p99_ms"],
+    "sdk_version": ["sdk_version", "sdk"],
+    "p50_ms": ["p50", "p50_ms"],
+    "p95_ms": ["p95", "p95_ms"],
+    "p99_ms": ["p99", "p99_ms"],
     "window_p95": ["window_p95", "window_p95_ms"],
 }
 

@@ -9,6 +9,29 @@ Thanks for contributing! This project keeps Charter and Specs separate:
 
 When changing runtime behavior or schemas, update the relevant Spec in the same PR. Charter updates should be rare and reviewed broadly.
 
+## Dev setup
+
+```bash
+python -m pip install -r requirements-dev.txt
+pre-commit install           # or: make hooks
+pre-commit run --all-files   # optional first run
+```
+
+Hooks run on staged files (ruff + format + basic hygiene). CI does not run pre-commit; ruff/mypy/pytest remain the enforcement gates.
+The `make hooks` target installs and autoupdates the pre-commit hooks. Autoupdate may change hook revs; don’t commit those bumps unless explicitly requested.
+
+Run a single hook:
+
+```bash
+pre-commit run ruff --all-files
+```
+
+Skip a hook:
+
+```bash
+SKIP=ruff pre-commit run --all-files
+```
+
 ## Dev workflow
 
 - `make fmt` / `make lint` / `make type` / `make test` / `make verify`
@@ -52,3 +75,4 @@ Copyright (c) 2025 The Vision Authors
 - `spec` — changes to `docs/specs/*`, schema/gates
 - `charter` — roadmap/north star updates
 - `m1`/`m2`/... — milestone targeting
+

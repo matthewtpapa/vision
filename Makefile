@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: Apache-2.0
 # Copyright (c) 2025 The Vision Authors
 .RECIPEPREFIX := >
-.PHONY: setup test test-cov cov-html lint fmt format type mdlint mdfix verify help
+.PHONY: setup test test-cov cov-html lint fmt format type mdlint mdfix verify hooks help
 
 # Safer bash in make recipes
 SHELL := bash
@@ -21,6 +21,7 @@ help:
 >echo "make mdlint    - run markdownlint (same rules as CI)"
 >echo "make mdfix     - auto-fix markdownlint issues (requires npx)"
 >echo "make verify    - run all local checks (lint, fmt-check, type, test, markdownlint)"
+>echo "make hooks     - install and autoupdate pre-commit hooks"
 >echo "make eval      - run evaluator on a directory of frames"
 >echo ""
 >echo "Tip: run 'npm ci' once to enable local markdownlint (make mdlint/mdfix)."
@@ -86,6 +87,10 @@ verify:
 >  $(MAKE) mdlint; \
 >fi
 >$(MAKE) mdpush
+
+hooks:
+>pre-commit install
+>pre-commit autoupdate
 
 eval:
 >if python -c "import vision" >/dev/null 2>&1; then \

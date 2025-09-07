@@ -5,6 +5,7 @@ from __future__ import annotations
 
 import argparse
 import csv
+import json
 import sys
 from pathlib import Path
 
@@ -50,34 +51,79 @@ def read_latencies(csv_path: Path) -> list[float]:
         sys.exit(2)
 
 
+def _percentile(values: list[float], q: float) -> float:
+    if not values:
+        return 0.0
+    s = sorted(values)
+    if len(s) == 1:
+        return float(s[0])
+    k = (len(s) - 1) * (q / 100.0)
+    f = int(k)
+    c = min(f + 1, len(s) - 1)
+    if f == c:
+        return float(s[f])
+    d0 = s[f] * (c - k)
+    d1 = s[c] * (k - f)
+    return float(d0 + d1)
+
+
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser()
     parser.add_argument("--input", required=True, type=Path, help="path to stage_timings.csv")
     parser.add_argument("--output", type=Path, help="output PNG path")
+    parser.add_argument("--metrics", type=Path, help="metrics.json for SLO budget", default=None)
+    parser.add_argument("--slo-ms", type=float, default=33.0, help="SLO budget in ms")
     return parser.parse_args()
+
+
+def render_plot(latencies: list[float], budget_ms: float, output: Path):
+    import matplotlib
+
+    matplotlib.use("Agg")
+    import matplotlib.pyplot as plt
+
+    trimmed = latencies[100:] if len(latencies) > 100 else []
+    p50 = _percentile(trimmed, 50.0)
+    p95 = _percentile(trimmed, 95.0)
+    p99 = _percentile(trimmed, 99.0)
+    slo_pct = (
+        sum(1 for x in trimmed if x <= budget_ms) / len(trimmed) * 100
+        if trimmed
+        else 0.0
+    )
+
+    fig, ax = plt.subplots()
+    ax.plot(range(len(latencies)), latencies)
+    ax.axhline(budget_ms, color="red", linestyle="--")
+    ax.set_xlabel("frame")
+    ax.set_ylabel("latency (ms)")
+    ax.set_title(f"p50={p50:.1f} p95={p95:.1f} p99={p99:.1f}")
+    fig.text(
+        0.5,
+        0.01,
+        f"SLO_in_budget={slo_pct:.1f}% warm-up excluded",
+        ha="center",
+    )
+    fig.tight_layout()
+    fig.savefig(output)
+    return fig
 
 
 def main() -> None:
     args = parse_args()
-    try:
-        import matplotlib
-
-        matplotlib.use("Agg")
-        import matplotlib.pyplot as plt
-    except ModuleNotFoundError:  # pragma: no cover - explicit exit
-        print("Missing dependency: matplotlib", file=sys.stderr)
-        sys.exit(3)
     latencies = read_latencies(args.input)
     if not latencies:
         print("No latency data found", file=sys.stderr)
         sys.exit(2)
+    budget = args.slo_ms
+    if args.metrics and args.metrics.exists():
+        try:
+            data = json.loads(args.metrics.read_text())
+            budget = float(data.get("slo_budget_ms", budget))
+        except Exception:
+            pass
     output = args.output or args.input.with_name("latency.png")
-    plt.figure()
-    plt.plot(range(len(latencies)), latencies)
-    plt.xlabel("frame")
-    plt.ylabel("latency (ms)")
-    plt.tight_layout()
-    plt.savefig(output)
+    render_plot(latencies, budget, output)
     print(f"Wrote {output}")
 
 

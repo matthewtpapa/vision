@@ -45,6 +45,18 @@ def build_parser() -> argparse.ArgumentParser:
         default=100,
         help="Number of warmup frames to skip",
     )
+    eval_parser.add_argument(
+        "--sustain-minutes",
+        type=int,
+        default=0,
+        help="Run for N minutes (wall clock); 0 disables sustained mode",
+    )
+    eval_parser.add_argument(
+        "--budget-ms",
+        type=int,
+        default=33,
+        help="Latency budget for SLO tracking",
+    )
     return parser
 
 
@@ -71,7 +83,13 @@ def main(argv: Sequence[str] | None = None) -> int:
                 file=sys.stderr,
             )
             return 3
-        ret = evaluator.run_eval(args.input, args.output, args.warmup)
+        ret = evaluator.run_eval(
+            args.input,
+            args.output,
+            args.warmup,
+            budget_ms=args.budget_ms,
+            sustain_minutes=args.sustain_minutes,
+        )
         sys.exit(ret)
     else:
         parser.print_help()

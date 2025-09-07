@@ -52,7 +52,15 @@ def test_eval_cli_creates_artifacts(tmp_path: Path) -> None:
         img = Image.new("RGB", (64, 64), color=(i, 0, 0))
         img.save(in_dir / f"{i}.png")
 
-    result = run_cli("eval", "--input", str(in_dir), "--output", str(out_dir), "--warmup", "0")
+    result = run_cli(
+        "eval",
+        "--input",
+        str(in_dir),
+        "--output",
+        str(out_dir),
+        "--warmup",
+        "0",
+    )
     assert result.returncode == 0
 
     metrics_path = out_dir / "metrics.json"
@@ -61,7 +69,24 @@ def test_eval_cli_creates_artifacts(tmp_path: Path) -> None:
     assert timings_path.exists()
 
     data = json.loads(metrics_path.read_text())
-    assert {"fps", "p50", "p95", "kb_size", "backend_selected", "stage_ms"} <= data.keys()
+    expected = {
+        "fps",
+        "p50_ms",
+        "p95_ms",
+        "p99_ms",
+        "kb_size",
+        "backend_selected",
+        "stage_ms",
+        "git_commit",
+        "hardware_id",
+        "fixture_hash",
+        "cold_start_ms",
+        "bootstrap_ms",
+        "slo_budget_ms",
+        "slo_within_budget_pct",
+        "sdk_version",
+    }
+    assert expected <= data.keys()
     assert "overhead" in data["stage_ms"]
 
     header = timings_path.read_text().splitlines()[0]
@@ -89,7 +114,17 @@ def test_eval_cli_budget_breach_returns_nonzero(
     monkeypatch.setattr("vision.pipeline_detect_track_embed.now_ns", lambda: next(seq))
     monkeypatch.setenv("VISION__LATENCY__BUDGET_MS", "30")
 
-    cp = run_cli("eval", "--input", str(in_dir), "--output", str(out_dir), "--warmup", "0")
+    cp = run_cli(
+        "eval",
+        "--input",
+        str(in_dir),
+        "--output",
+        str(out_dir),
+        "--warmup",
+        "0",
+        "--budget-ms",
+        "30",
+    )
     assert cp.returncode != 0
 
 
@@ -143,3 +178,29 @@ def test_eval_cli_controller_block(tmp_path: Path, monkeypatch: pytest.MonkeyPat
     c2 = data2["controller"]
     assert c2["start_stride"] == c2["end_stride"]
     _reset_config_cache()
+
+
+def test_budget_flag_propagates(tmp_path: Path) -> None:
+    in_dir = tmp_path / "in"
+    out_dir = tmp_path / "out"
+    in_dir.mkdir()
+    out_dir.mkdir()
+
+    for i in range(3):
+        img = Image.new("RGB", (64, 64), color=(i, 0, 0))
+        img.save(in_dir / f"{i}.png")
+
+    cp = run_cli(
+        "eval",
+        "--input",
+        str(in_dir),
+        "--output",
+        str(out_dir),
+        "--warmup",
+        "0",
+        "--budget-ms",
+        "40",
+    )
+    assert cp.returncode == 0
+    data = json.loads((out_dir / "metrics.json").read_text())
+    assert data["slo_budget_ms"] == 40
