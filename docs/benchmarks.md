@@ -124,7 +124,7 @@ On reference boxes (see spec for models):
 | Cold-start (ms)            | ≤ 1,000                             |
 | Index bootstrap @ N=1k (ms)| ≤ 50                                |
 | Sustained in-budget (%)    | ≥ 99.5% within 33 ms (10-min run)   |
-| Unknown-rate (fixture band)| [0.10, 0.40] (fails if out-of-band) |
+| Unknown-rate (fixture band)| Fixture-defined. Synthetic: [0.0, 1.0]. COCO target: [0.10, 0.40]. |
 | RAM @ N=1k (MB)            | publish                             |
 
 Summary Table (printout guidance)
