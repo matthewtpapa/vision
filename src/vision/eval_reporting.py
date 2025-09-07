@@ -1,8 +1,8 @@
 # SPDX-License-Identifier: Apache-2.0
 # Copyright (c) 2025 The Vision Authors
-from __future__ import annotations
-
 """Helpers for summarising evaluation latency metrics."""
+
+from __future__ import annotations
 
 from statistics import fmean
 from typing import Literal

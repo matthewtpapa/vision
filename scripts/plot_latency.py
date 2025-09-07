@@ -115,9 +115,8 @@ def render_plot(
     lat_line = ax.plot(range(len(latencies)), latencies, label="Latency")[0]
     slo_line = ax.axhline(budget_ms, color="red", linestyle="--", label="SLO")
 
-    warm_patch = ax.axvspan(0, warmup, color="gray", alpha=0.1)
+    ax.axvspan(0, warmup, color="gray", alpha=0.1)
 
-    breach_patch = None
     breaches: list[tuple[int, int]] = []
     if rolling_p95:
         in_breach = False
@@ -132,7 +131,7 @@ def render_plot(
         if in_breach:
             breaches.append((start, len(rolling_p95) - 1))
         for s, e in breaches:
-            breach_patch = ax.axvspan(
+            ax.axvspan(
                 warmup + s,
                 warmup + e + 1,
                 color="red",
@@ -144,7 +143,7 @@ def render_plot(
     ax.set_title(f"p50={p50:.1f} p95={p95:.1f} p99={p99:.1f}")
 
     legend_handles = [lat_line, slo_line, Patch(color="gray", alpha=0.1, label="Warm-up")]
-    if breach_patch is not None:
+    if breaches:
         legend_handles.append(Patch(color="red", alpha=0.1, label="p95>budget windows"))
     ax.legend(handles=legend_handles)
 

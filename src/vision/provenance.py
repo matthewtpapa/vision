@@ -7,8 +7,8 @@ import hashlib
 import os
 import platform
 import subprocess
+from collections.abc import Iterable
 from pathlib import Path
-from typing import Iterable
 
 
 def _git_commit() -> str:

@@ -4,9 +4,9 @@
 
 from __future__ import annotations
 
+import itertools
 import json
 import time
-import itertools
 from collections.abc import Iterable
 from pathlib import Path
 from typing import Literal
@@ -16,8 +16,8 @@ from .config import get_config
 from .detect_adapter import FakeDetector
 from .embedder_adapter import ClipLikeEmbedder
 from .eval_reporting import metrics_json
-from .provenance import collect_provenance
 from .pipeline_detect_track_embed import DetectTrackEmbedPipeline
+from .provenance import collect_provenance
 from .telemetry import Telemetry
 from .track_bytetrack_adapter import ByteTrackLikeTracker
 
