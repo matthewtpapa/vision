@@ -1,0 +1,98 @@
+name: ci-matrix
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-13, macos-14, windows-latest]
+        python-version: ['3.10', '3.11', '3.12']
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e . -r requirements-dev.txt
+      - name: Lint
+        run: |
+          ruff check .
+          mypy src
+      - name: Test
+        run: pytest -q
+      - name: README quickstart schema
+        run: |
+          python -m pip install jsonschema numpy
+          python - <<'PY'
+import json, pathlib, re
+import numpy as np
+import jsonschema
+from latency_vision import add_exemplar, query_frame
+
+add_exemplar("red-mug", np.random.rand(512).astype("float32"))
+frame = np.zeros((640, 640, 3), dtype=np.uint8)
+result = query_frame(frame)
+
+schema_md = pathlib.Path("docs/schema.md").read_text()
+match = re.search(r"```json\n(\{[\s\S]*?\$schema[\s\S]*?\})\n```", schema_md)
+if not match:
+    raise SystemExit("Schema block not found")
+schema = json.loads(match.group(1))
+jsonschema.validate(result, schema)
+print(json.dumps(result))
+PY
+      - name: Build wheel
+        if: runner.os != 'macOS'
+        run: python -m build --wheel
+      - name: Verify manylinux tag
+        if: runner.os == 'Linux'
+        run: |
+          wheel=$(ls dist/*.whl)
+          case "$wheel" in
+            *manylinux*) echo "manylinux wheel: $wheel" ;;
+            *linux*) echo "non-manylinux wheel: $wheel" && exit 1 ;;
+            *) echo "universal wheel: $wheel" ;;
+          esac
+          echo "$wheel"
+      - name: Build wheel (macOS universal2)
+        if: runner.os == 'macOS'
+        env:
+          CIBW_ARCHS_MACOS: universal2
+          CIBW_SKIP: '*-pp*'
+          CIBW_BUILD: cp${{ replace(matrix.python-version, '.', '') }}-*
+        run: cibuildwheel --output-dir wheelhouse
+      - name: Verify universal2 wheel
+        if: runner.os == 'macOS'
+        run: ls wheelhouse/*-universal2*.whl
+      - name: Smoke test
+        shell: bash
+        run: |
+          python -m venv venv
+          if [[ "${RUNNER_OS}" == "Windows" ]]; then
+            BIN=venv/Scripts
+          else
+            BIN=venv/bin
+          fi
+          if [[ "${RUNNER_OS}" == "macOS" ]]; then
+            WHEEL_DIR=wheelhouse
+          else
+            WHEEL_DIR=dist
+          fi
+          wheel=$(ls "$WHEEL_DIR"/*.whl)
+          if [ "$(echo "$wheel" | wc -w)" -ne 1 ]; then
+            echo "expected single wheel, found: $wheel"; exit 1
+          fi
+          "$BIN/pip" install --only-binary :all: "$wheel"
+          "$BIN/python" - <<'PY'
+import latency_vision, vision
+print(latency_vision.__version__)
+PY
+

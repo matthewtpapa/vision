@@ -35,6 +35,59 @@ change to this schema is disallowed in the 0.1.x series.
 
 ---
 
+## JSON Schema
+
+```json
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "MatchResult",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "label",
+    "confidence",
+    "neighbors",
+    "backend",
+    "stride",
+    "budget_hit",
+    "bbox",
+    "sdk_version"
+  ],
+  "properties": {
+    "label": {"type": "string"},
+    "confidence": {"type": "number"},
+    "neighbors": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["label", "score"],
+        "properties": {
+          "label": {"type": "string"},
+          "score": {"type": "number", "minimum": -1.0, "maximum": 1.0}
+        },
+        "additionalProperties": false
+      }
+    },
+    "backend": {"type": "string"},
+    "stride": {"type": "integer", "minimum": 1},
+    "budget_hit": {"type": "boolean"},
+    "bbox": {
+      "anyOf": [
+        {
+          "type": "array",
+          "items": {"type": "number"},
+          "minItems": 4,
+          "maxItems": 4
+        },
+        {"type": "null"}
+      ]
+    },
+    "timestamp_ms": {"type": "integer"},
+    "sdk_version": {"type": "string"}
+  }
+}
+```
+
 ## Example `MatchResult` (valid v0.1)
 
 ```json
