@@ -23,10 +23,10 @@ dependencies = []
 [project.optional-dependencies]
 opencv = ["opencv-python"]
 speed = [
-  "faiss-cpu>=1.7.4; platform_system != 'Windows'"
+  "faiss-cpu>=1.8.0; platform_system != 'Windows'"
 ]
 gpu = [
-  "faiss-gpu>=1.7.4; platform_system != 'Windows'"
+  "faiss-gpu>=1.8.0; platform_system != 'Windows'"
 ]
 
 [project.urls]
