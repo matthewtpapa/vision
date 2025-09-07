@@ -1,6 +1,6 @@
 # Latency Controller & Process Model (v0.1)
 
-> Latest RC artifacts: [metrics.json](https://github.com/latvision/vision/releases/latest/download/metrics.json) · [stage_timings.csv](https://github.com/latvision/vision/releases/latest/download/stage_timings.csv) · [latency.png](https://github.com/latvision/vision/releases/latest/download/latency.png)
+> Latest RC artifacts: [metrics.json](https://github.com/latvision/vision/releases/latest/download/metrics.json) · [stage_times.csv](https://github.com/latvision/vision/releases/latest/download/stage_times.csv) · [latency.png](https://github.com/latvision/vision/releases/latest/download/latency.png)
 > If a release exists, links resolve; otherwise, links resolve after the first RC is published.
 
 This document defines the **official latency behavior** of the SDK for the
@@ -25,7 +25,7 @@ This runs with `--warmup 0` and a wide `--unknown-rate-band 0.0,1.0` to ensure u
 This produces:
 
 - `bench/out/metrics.json`
-- `bench/out/stage_timings.csv`
+- `bench/out/stage_times.csv`
 - `bench/out/latency.png`
 
 ---
@@ -128,7 +128,7 @@ kb_size, backend_selected, sdk_version
 
 Controller block (see above)
 
-Per-stage summary (stage_timings.csv):
+Per-stage summary (stage_times.csv):
 
 Columns: stage,total_ms,mean_ms,count
 
@@ -140,7 +140,7 @@ Plotting notes:
 - Flags:
 
   ```bash
-  python scripts/plot_latency.py --input stage_timings.csv --output latency.png \
+  python scripts/plot_latency.py --input stage_times.csv --output latency.png \
     --window 120 --warmup 100
   ```
 

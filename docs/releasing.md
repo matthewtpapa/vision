@@ -19,6 +19,6 @@ git push origin v0.1.0-rc.2
 When the tag job runs, confirm it produces:
 
 - `bench/out/metrics.json`
-- `bench/out/stage_timings.csv`
+- `bench/out/stage_times.csv`
 - `bench/out/latency.png` (optional)
 - `dist/*.whl`

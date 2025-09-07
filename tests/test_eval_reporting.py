@@ -22,3 +22,4 @@ def test_warmup_exclusion() -> None:
     )
     assert m["p50_ms"] == 10.0
     assert m["slo_within_budget_pct"] == 100.0
+    assert m["error_budget_pct"] == 0.0

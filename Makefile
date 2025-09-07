@@ -123,7 +123,7 @@ hello:
 >fi
 
 bench: bench-deps
->python scripts/build_fixture.py --out bench/fixture --n 400
+>python scripts/build_fixture.py --seed 42 --out bench/fixture --n 400
 >latvision eval --input bench/fixture --output bench/out
 >python scripts/print_summary.py --metrics bench/out/metrics.json
 
@@ -131,11 +131,11 @@ bench-deps:
 >@python scripts/check_bench_deps.py
 
 demo:
->python scripts/build_fixture.py --out bench/fixture --n 400
+>python scripts/build_fixture.py --seed 42 --out bench/fixture --n 400
 >latvision eval --input bench/fixture --output bench/out --warmup 0 --unknown-rate-band 0.0,1.0
 >python scripts/print_summary.py --metrics bench/out/metrics.json
 ># Plot is best-effort locally (CI already warns if missing)
->python scripts/plot_latency.py --input bench/out/stage_timings.csv --output bench/out/latency.png --metrics bench/out/metrics.json || true
+>python scripts/plot_latency.py --input bench/out/stage_times.csv --output bench/out/latency.png --metrics bench/out/metrics.json || true
 
 build:
 >python -m pip install --upgrade build twine

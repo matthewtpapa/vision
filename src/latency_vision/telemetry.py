@@ -12,7 +12,9 @@ from __future__ import annotations
 import time
 from pathlib import Path
 
-now_ns = time.perf_counter_ns
+# ``monotonic_ns`` provides a steady, non-adjustable clock suitable for
+# latency measurements and wall-time deltas.
+now_ns = time.monotonic_ns
 
 
 class StageTimer:

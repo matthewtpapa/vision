@@ -50,6 +50,7 @@ class DetectTrackEmbedPipeline:
         self._eval_stage_ms: dict[str, list[float]] = {}
         self._eval_unknown_flags: list[bool] = []
         self._last_unknown = False
+        self._controller_log: list[tuple[int, bool]] = []
         self._frame_idx = 0
         self._frame_stride = self._cfg.pipeline.frame_stride
         self._start_stride = self._frame_stride
@@ -63,18 +64,23 @@ class DetectTrackEmbedPipeline:
         self._low_water = lat.low_water
         self._durations: deque[float] = deque(maxlen=self._window)
         self._under_budget = 0
+        self._last_window_p50_ms: float | None = None
         self._last_window_p95_ms: float | None = None
+        self._last_window_p99_ms: float | None = None
+        self._last_window_fps: float | None = None
+        self._bootstrap_ms: float | None = None
 
     def process(self, frame) -> list[TrackEmbedding]:
         """Run the detector, tracker, cropper, and embedder on *frame*."""
 
         idx = self._frame_idx
         self._frame_idx += 1
+        stride_used = self._frame_stride
         frame_t0 = now_ns()
         cm = StageTimer(self._tel, "frame") if self._tel else nullcontext()
         results: list[TrackEmbedding] = []
         with cm:
-            run_full = idx % self._frame_stride == 0
+            run_full = idx % stride_used == 0
             if run_full:
                 self._frames_processed += 1
                 t0 = now_ns()
@@ -103,9 +109,11 @@ class DetectTrackEmbedPipeline:
                 for track, emb in zip(tracks, embeddings):
                     if self._matcher is None:
                         dim = emb.dim
+                        t_boot = now_ns()
                         matcher = build_matcher(dim)
                         store = JsonClusterStore(self._cfg.paths.kb_json)
                         added = add_exemplars_to_index(matcher, store.load_all())
+                        self._bootstrap_ms = (now_ns() - t_boot) / 1e6
                         logging.info("[matcher] bootstrap: %s exemplars", added)
                         self._matcher = matcher
                         self._store = store
@@ -136,11 +144,25 @@ class DetectTrackEmbedPipeline:
                     )
                 self._eval_stage_ms.setdefault("match", []).append(match_total)
         frame_ms = (now_ns() - frame_t0) / 1e6
+        budget_hit = frame_ms <= self._budget_ms
         self._eval_per_frame_ms.append(frame_ms)
+        self._controller_log.append((stride_used, budget_hit))
         self._durations.append(frame_ms)
+        if len(self._durations) >= 2:
+            qs = quantiles(self._durations, n=100, method="inclusive")
+            self._last_window_p50_ms = qs[49]
+            self._last_window_p95_ms = qs[94]
+            self._last_window_p99_ms = qs[98]
+        else:
+            self._last_window_p50_ms = None
+            self._last_window_p95_ms = None
+            self._last_window_p99_ms = None
+        avg_ms = sum(self._durations) / len(self._durations)
+        self._last_window_fps = 1000.0 / avg_ms if avg_ms > 0 else None
+
         if self._auto_stride and len(self._durations) >= 30:
-            p95 = quantiles(self._durations, n=100, method="inclusive")[94]
-            self._last_window_p95_ms = p95
+            old_stride = self._frame_stride
+            p95 = self._last_window_p95_ms or 0.0
             if p95 > self._budget_ms:
                 self._frame_stride = min(self._frame_stride + 1, self._max_stride)
                 self._under_budget = 0
@@ -151,8 +173,14 @@ class DetectTrackEmbedPipeline:
                     self._under_budget = 0
             else:
                 self._under_budget = 0
-        else:
-            self._last_window_p95_ms = None
+            if self._frame_stride != old_stride:
+                direction = "↑" if self._frame_stride > old_stride else "↓"
+                logging.info(
+                    "[controller] stride %s -> %s %s",
+                    old_stride,
+                    self._frame_stride,
+                    direction,
+                )
         if run_full:
             frame_unknown = len(results) == 0 or all(
                 cast(MatchResult, r.match)["is_unknown"] for r in results
@@ -185,10 +213,17 @@ class DetectTrackEmbedPipeline:
             "start_stride": self._start_stride,
         }
 
-    def last_window_p95(self) -> float | None:
-        """Return the last computed p95 latency window, if available."""
+    def last_window_p50(self) -> float | None:
+        return self._last_window_p50_ms
 
+    def last_window_p95(self) -> float | None:
         return self._last_window_p95_ms
+
+    def last_window_p99(self) -> float | None:
+        return self._last_window_p99_ms
+
+    def last_window_fps(self) -> float | None:
+        return self._last_window_fps
 
     def flush_telemetry_csv(self, path: str | None = None) -> None:
         """Write accumulated telemetry to ``path`` or config default."""
@@ -211,10 +246,22 @@ class DetectTrackEmbedPipeline:
 
         return len(self._store.load_all()) if self._store else 0
 
-    def get_eval_counters(self) -> tuple[list[float], dict[str, list[float]], list[bool]]:
-        """Return accumulated (per_frame_ms, per_stage_ms, unknown_flags)."""
+    def get_eval_counters(
+        self,
+    ) -> tuple[
+        list[float],
+        dict[str, list[float]],
+        list[bool],
+        list[tuple[int, bool]],
+    ]:
+        """Return accumulated (per_frame_ms, per_stage_ms, unknown_flags, controller_log)."""
 
-        return self._eval_per_frame_ms, self._eval_stage_ms, self._eval_unknown_flags
+        return (
+            self._eval_per_frame_ms,
+            self._eval_stage_ms,
+            self._eval_unknown_flags,
+            self._controller_log,
+        )
 
     def reset_eval_counters(self) -> None:
         """Clear accumulated evaluation counters."""
@@ -222,6 +269,10 @@ class DetectTrackEmbedPipeline:
         self._eval_per_frame_ms.clear()
         self._eval_stage_ms.clear()
         self._eval_unknown_flags.clear()
+        self._controller_log.clear()
+
+    def bootstrap_time_ms(self) -> float | None:
+        return self._bootstrap_ms
 
 
 __all__ = ["DetectTrackEmbedPipeline", "Cropper"]
