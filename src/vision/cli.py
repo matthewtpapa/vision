@@ -28,10 +28,11 @@ def _warn_alias_once() -> None:
 
     argv0 = Path(sys.argv[0]).name
     if argv0 == "vision" or (__package__ == "vision" and argv0 == "__main__.py"):
-        print(
-            "[deprecation] 'vision' is an alias of 'latvision' and will be removed in M1.2. Use 'latvision'.",
-            file=sys.stderr,
+        msg = (
+            "[deprecation] 'vision' is an alias of 'latvision' and will be removed in M1.2. "
+            "Use 'latvision'."
         )
+        print(msg, file=sys.stderr)
         _ALIAS_WARNED = True
 
 
