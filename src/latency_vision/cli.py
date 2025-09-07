@@ -121,11 +121,9 @@ def build_parser() -> argparse.ArgumentParser:
 
 def main(argv: Sequence[str] | None = None) -> int:
     """Run the main program."""
-    t0_process_ns = time.monotonic_ns()
     _warn_alias_once()
     parser = build_parser()
     args = parser.parse_args(argv)
-    args._t0_process = t0_process_ns
 
     if args.version:
         print(f"Latency Vision {__version__}")
@@ -145,6 +143,8 @@ def main(argv: Sequence[str] | None = None) -> int:
                 file=sys.stderr,
             )
             return 3
+        # Start cold-start clock after environment checks
+        t0_process_ns = time.monotonic_ns()
         band_arg: tuple[float, float] | None
         if args.unknown_rate_band.strip():
             low, high = (float(x) for x in args.unknown_rate_band.split(",", 1))
@@ -158,7 +158,7 @@ def main(argv: Sequence[str] | None = None) -> int:
             budget_ms=args.budget_ms,
             duration_min=args.duration_min,
             unknown_rate_band=band_arg,
-            process_start_ns=args._t0_process,
+            process_start_ns=t0_process_ns,
         )
         sys.exit(ret)
     elif args.command == "hello":
