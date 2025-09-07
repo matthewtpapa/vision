@@ -2,6 +2,7 @@
 # Copyright (c) 2025 The Vision Authors
 .RECIPEPREFIX := >
 .PHONY: setup test test-cov cov-html lint fmt format type mdlint mdfix verify readme-smoke hooks help
+.PHONY: plot
 
 # Safer bash in make recipes
 SHELL := bash
@@ -26,6 +27,7 @@ help:
 >echo "make hello     - print environment information"
 >echo "make bench     - run fixture → eval → summary"
 >echo "make demo      - run fixture → eval → plot demo"
+>echo "make plot      - render latency PNG from metrics.json"
 >echo "make eval      - run evaluator on a directory of frames"
 >echo ""
 >echo "Tip: run 'npm ci' once to enable local markdownlint (make mdlint/mdfix)."
@@ -144,6 +146,10 @@ demo:
 >python scripts/print_summary.py --metrics bench/out/metrics.json
 ># Plot is best-effort locally (CI already warns if missing)
 >python scripts/plot_latency.py --input bench/out/stage_times.csv --output bench/out/latency.png --metrics bench/out/metrics.json || true
+
+plot:
+>python scripts/plot_latency.py --metrics bench/out/metrics.json --out bench/out/latency.png
+>@test -f bench/out/latency.png && echo "Wrote bench/out/latency.png"
 
 build:
 >python -m pip install --upgrade build twine

@@ -7,6 +7,7 @@ from __future__ import annotations
 import argparse
 import os
 import sys
+import time
 from collections.abc import Sequence
 from pathlib import Path
 
@@ -93,7 +94,7 @@ def build_parser() -> argparse.ArgumentParser:
         help="Number of warmup frames to skip",
     )
     eval_parser.add_argument(
-        "--sustain-minutes",
+        "--duration-min",
         type=int,
         default=0,
         help="Run for N minutes (wall clock); 0 disables sustained mode",
@@ -105,16 +106,13 @@ def build_parser() -> argparse.ArgumentParser:
         help="Latency budget for SLO tracking",
     )
     eval_parser.add_argument(
-        "--fixture-manifest",
-        type=str,
-        default=None,
-        help="Path to JSON manifest with eval settings (e.g., unknown_band).",
-    )
-    eval_parser.add_argument(
         "--unknown-rate-band",
         type=str,
-        default="0.10,0.40",
-        help="Fallback band for unknown rate as LOW,HIGH (overridden by manifest).",
+        default="",
+        help=(
+            "Unknown rate band as LOW,HIGH. If omitted, uses fixture manifest; "
+            "if no manifest, defaults to 0.10,0.40."
+        ),
     )
 
     subparsers.add_parser("hello", help="Print environment information.")
@@ -145,15 +143,22 @@ def main(argv: Sequence[str] | None = None) -> int:
                 file=sys.stderr,
             )
             return 3
-        low, high = (float(x) for x in args.unknown_rate_band.split(",", 1))
+        # Start cold-start clock after environment checks
+        t0_process_ns = time.monotonic_ns()
+        band_arg: tuple[float, float] | None
+        if args.unknown_rate_band.strip():
+            low, high = (float(x) for x in args.unknown_rate_band.split(",", 1))
+            band_arg = (low, high)
+        else:
+            band_arg = None
         ret = evaluator.run_eval(
             args.input,
             args.output,
             args.warmup,
             budget_ms=args.budget_ms,
-            sustain_minutes=args.sustain_minutes,
-            fixture_manifest=args.fixture_manifest,
-            unknown_band=(low, high),
+            duration_min=args.duration_min,
+            unknown_rate_band=band_arg,
+            process_start_ns=t0_process_ns,
         )
         sys.exit(ret)
     elif args.command == "hello":

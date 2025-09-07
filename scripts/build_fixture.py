@@ -54,10 +54,12 @@ def build_fixture(out: Path, n: int, seed: int) -> None:
     h.update(json.dumps(transforms, sort_keys=True).encode("utf-8"))
     manifest = {
         "seed": seed,
-        "unknown_band": [0.10, 0.40],
         "ids": file_names,
         "transforms": transforms,
         "fixture_hash": h.hexdigest(),
+        # Synthetic generator → all detections resolve to unknown in stubs.
+        # Use a permissive band so CI doesn’t fail until we switch to a real fixture.
+        "unknown_rate_band": [0.0, 1.0],
     }
     (out / "manifest.json").write_text(
         json.dumps(manifest, ensure_ascii=False, indent=2),

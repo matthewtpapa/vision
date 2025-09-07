@@ -69,9 +69,9 @@ def _percentile(values: list[float], q: float) -> float:
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser()
-    parser.add_argument("--input", required=True, type=Path, help="path to stage_times.csv")
-    parser.add_argument("--output", type=Path, help="output PNG path")
+    parser.add_argument("--input", type=Path, help="path to stage_times.csv")
     parser.add_argument("--metrics", type=Path, help="metrics.json for SLO budget", default=None)
+    parser.add_argument("--output", type=Path, help="output PNG path")
     parser.add_argument("--slo-ms", type=float, default=33.0, help="SLO budget in ms")
     parser.add_argument("--window", type=int, default=120, help="rolling window for p95")
     parser.add_argument("--warmup", type=int, default=100, help="warm-up frames to exclude")
@@ -154,7 +154,13 @@ def render_plot(
 
 def main() -> None:
     args = parse_args()
-    latencies = read_latencies(args.input)
+    csv_path = args.input
+    if csv_path is None and args.metrics is not None:
+        csv_path = args.metrics.with_name("stage_times.csv")
+    if csv_path is None:
+        print("--input or --metrics required", file=sys.stderr)
+        sys.exit(2)
+    latencies = read_latencies(csv_path)
     if not latencies:
         print("No latency data found", file=sys.stderr)
         sys.exit(2)
@@ -165,7 +171,12 @@ def main() -> None:
             budget = float(data.get("slo_budget_ms", budget))
         except Exception:
             pass
-    output = args.output or args.input.with_name("latency.png")
+    if args.output:
+        output = args.output
+    elif args.metrics:
+        output = args.metrics.with_name("latency.png")
+    else:
+        output = csv_path.with_name("latency.png")
     render_plot(latencies, budget, output, window=args.window, warmup=args.warmup)
     print(f"Wrote {output}")
 
