@@ -1,6 +1,7 @@
 # Latency Controller & Process Model (v0.1)
 
 > Latest RC artifacts: [metrics.json](https://github.com/latvision/vision/releases/latest/download/metrics.json) · [stage_timings.csv](https://github.com/latvision/vision/releases/latest/download/stage_timings.csv) · [latency.png](https://github.com/latvision/vision/releases/latest/download/latency.png)
+> If a release exists, links resolve; otherwise, links resolve after the first RC is published.
 
 This document defines the **official latency behavior** of the SDK for the
 0.1.x line. It is investor-grade and forms the basis of our SLO claims.

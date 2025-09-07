@@ -32,6 +32,25 @@ jobs:
           latvision eval --input bench/fixture --output bench/out --warmup 0 --unknown-rate-band 0.0,1.0 || true
           python scripts/print_summary.py --metrics bench/out/metrics.json || true
 
+      - name: Check metrics.json shape (best effort)
+        run: |
+          if [ -f bench/out/metrics.json ]; then
+            python - <<'PY'
+import json
+path = "bench/out/metrics.json"
+required = ["sdk_version", "p95_ms", "slo_budget_ms", "slo_within_budget_pct"]
+try:
+    data = json.load(open(path))
+    missing = [k for k in required if k not in data]
+    if missing:
+        print(f"::warning::metrics.json missing keys: {', '.join(missing)}")
+except Exception as e:
+    print(f"::warning::error parsing metrics.json: {e}")
+PY
+          else
+            echo "::warning::bench/out/metrics.json missing"
+          fi
+
       - name: Plot latency (best effort)
         run: |
           python scripts/plot_latency.py --input bench/out/stage_timings.csv || true
