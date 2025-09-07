@@ -1,0 +1,127 @@
+name: publish
+
+on:
+  workflow_dispatch:
+    inputs:
+      target:
+        description: "Publish target"
+        required: true
+        type: choice
+        default: testpypi
+        options:
+          - testpypi
+          - pypi
+      version_suffix:
+        description: "Optional version suffix for RCs"
+        required: false
+  push:
+    tags:
+      - "v*"
+
+jobs:
+  build:
+    name: build (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-13, macos-14, windows-latest]
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: "pip"
+
+      - name: Upgrade pip tooling
+        run: python -m pip install -U pip build twine
+
+      - name: Build sdist
+        if: matrix.os == 'ubuntu-latest'
+        run: python -m build --sdist
+
+      - name: Build wheels
+        uses: pypa/cibuildwheel@v2.20
+        env:
+          CIBW_BUILD: "cp310-* cp311-* cp312-*"
+          CIBW_SKIP: "pp*"
+          CIBW_ARCHS_MACOS: "universal2"
+          CIBW_ARCHS_LINUX: "x86_64"
+          CIBW_MANYLINUX_X86_64_IMAGE: "manylinux2014"
+        with:
+          output-dir: dist
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: dist-${{ matrix.os }}
+          path: dist/*
+          if-no-files-found: error
+
+  publish:
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: dist-*
+          path: dist
+          merge-multiple: true
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Upgrade pip tooling
+        run: python -m pip install -U pip twine
+
+      - name: Determine target
+        id: target
+        run: |
+          target="${{ github.event.inputs.target }}"
+          if [ "${{ github.event_name }}" != "workflow_dispatch" ]; then
+            ref="${GITHUB_REF##*/}"
+            if [[ "$ref" == *rc* ]]; then
+              target="testpypi"
+            else
+              target="pypi"
+            fi
+          fi
+          echo "target=$target" >> "$GITHUB_OUTPUT"
+
+      - name: Upload to TestPyPI
+        if: steps.target.outputs.target == 'testpypi'
+        env:
+          TWINE_USERNAME: __token__
+          TWINE_PASSWORD: ${{ secrets.TEST_PYPI_API_TOKEN }}
+        run: twine upload --repository-url https://test.pypi.org/legacy/ dist/*
+
+      - name: Upload to PyPI
+        if: steps.target.outputs.target == 'pypi'
+        env:
+          TWINE_USERNAME: __token__
+          TWINE_PASSWORD: ${{ secrets.PYPI_API_TOKEN }}
+        run: twine upload dist/*
+
+      - name: Smoke install
+        run: |
+          python -m venv venv
+          source venv/bin/activate
+          python -m pip install -U pip
+          if [ "${{ steps.target.outputs.target }}" = "testpypi" ]; then
+            pip install --index-url https://test.pypi.org/simple --extra-index-url https://pypi.org/simple latency-vision
+          else
+            pip install latency-vision
+          fi
+          python - <<'PY'
+import numpy as np
+from latency_vision import add_exemplar, query_frame
+add_exemplar("red-mug", np.zeros(128, dtype="float32"))
+res = query_frame(np.zeros((64,64,3), dtype=np.uint8))
+need = {"label","confidence","neighbors","backend","stride","budget_hit","bbox","timestamp_ms","sdk_version"}
+assert set(res.keys()) == need, f"bad keys: {set(res.keys())-need}"
+print("Quickstart OK:", res["backend"], res["sdk_version"])
+PY
