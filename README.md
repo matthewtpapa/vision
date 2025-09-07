@@ -40,6 +40,7 @@ Until PyPI publish, run locally with: PYTHONPATH=src latvision …
 ### (M1.1 façade – target)
 
 ```python
+# (Available)
 import numpy as np
 from latency_vision import add_exemplar, query_frame
 
@@ -47,21 +48,6 @@ add_exemplar("red-mug", np.random.rand(512).astype("float32"))
 frame = np.zeros((640, 640, 3), dtype=np.uint8)
 result = query_frame(frame)
 print(result["label"], result["confidence"], result["backend"])
-```
-
-Note: The façade lands in a subsequent PR. Until then, use the current snippet:
-
-(Current repo – today)
-
-```python
-import numpy as np
-from latency_vision import add_exemplar, query_frame  # placeholder; façade arrives in a later PR
-
-# API shape will match the schema v0.1 in docs/schema.md
-add_exemplar(label="red-mug", embedding=np.random.rand(512).astype("float32"))
-frame = np.zeros((640, 640, 3), dtype=np.uint8)
-result = query_frame(frame)
-print(result["label"], result.get("confidence"), result.get("is_unknown"))
 ```
 
 ### Demo: hello → eval → plot
