@@ -15,6 +15,7 @@ Related docs:
 
 - Process model & controller: **docs/latency.md**
 - Result schema (MatchResult v0.1): **docs/schema.md**
+- Schema guide: **docs/schema-guide.md**
 - Milestone spec & gates: **docs/specs/m1.1.md**
 
 ---
@@ -146,6 +147,8 @@ cold-start (ms)    722
 bootstrap (ms)    41
 
 Include a single-line verdict: PASS or FAIL for Gate B conditions.
+
+> In CI (shared runners), cold-start may exceed 1.0s by small margins due to transient CPU contention; the gate uses 1.1s to avoid false negatives. On reference boxes, the SLO stays ≤ 1.0s.
 
 Known Pitfalls
 

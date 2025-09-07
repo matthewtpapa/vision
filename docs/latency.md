@@ -155,7 +155,7 @@ dropping the first 100 frames from SLO and percentile calculations.
 latvision eval --sustain-minutes 10 --budget-ms 33
 ```
 
-cold_start_ms = SDK ready (post-deps, pipeline initialized) → first result.
+Cold-start = SDK ready (post-deps, pipeline initialized) → first MatchResult.
 We anchor cold-start at SDK-ready rather than CLI entry to avoid pre-loop noise;
 see [Benchmarks](benchmarks.md#cold-start-definition) for the formal SLO.
 
@@ -193,5 +193,7 @@ A separate latvision hello banner (PR 8) prints OS/Python, wheel flavor, and SIM
 Milestone spec & gates: docs/specs/m1.1.md
 
 Result schema (frozen): docs/schema.md
+
+Schema guide: docs/schema-guide.md
 
 Benchmarks methodology: docs/benchmarks.md
