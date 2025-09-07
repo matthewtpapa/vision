@@ -24,3 +24,23 @@ def test_plot_contains_slo_line(tmp_path: Path) -> None:
     assert any(all(y == 33.0 for y in line.get_ydata()) for line in ax.lines)
     texts = [t.get_text() for t in fig.texts]
     assert any("warm-up excluded" in t for t in texts)
+
+
+def test_warmup_shaded(tmp_path: Path) -> None:
+    latencies = [10.0] * 200
+    out = tmp_path / "latency.png"
+    fig = render_plot(latencies, 33.0, out, warmup=100)
+    ax = fig.axes[0]
+    patches = [p for p in ax.patches if hasattr(p, "get_xy")]
+    assert any(
+        min(v[0] for v in p.get_xy()) <= 0 and max(v[0] for v in p.get_xy()) >= 100
+        for p in patches
+    )
+
+
+def test_breach_spans_present(tmp_path: Path) -> None:
+    lat = [10.0] * 100 + [60.0] * 60 + [10.0] * 200
+    out = tmp_path / "latency.png"
+    fig = render_plot(lat, 33.0, out, window=30, warmup=50)
+    ax = fig.axes[0]
+    assert len(ax.patches) >= 2

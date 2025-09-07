@@ -73,16 +73,28 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--output", type=Path, help="output PNG path")
     parser.add_argument("--metrics", type=Path, help="metrics.json for SLO budget", default=None)
     parser.add_argument("--slo-ms", type=float, default=33.0, help="SLO budget in ms")
+    parser.add_argument("--window", type=int, default=120, help="rolling window for p95")
+    parser.add_argument(
+        "--warmup", type=int, default=100, help="warm-up frames to exclude"
+    )
     return parser.parse_args()
 
 
-def render_plot(latencies: list[float], budget_ms: float, output: Path):
+def render_plot(
+    latencies: list[float],
+    budget_ms: float,
+    output: Path,
+    *,
+    window: int = 120,
+    warmup: int = 100,
+):
     import matplotlib
 
     matplotlib.use("Agg")
     import matplotlib.pyplot as plt
+    from matplotlib.patches import Patch
 
-    trimmed = latencies[100:] if len(latencies) > 100 else []
+    trimmed = latencies[warmup:] if len(latencies) > warmup else []
     p50 = _percentile(trimmed, 50.0)
     p95 = _percentile(trimmed, 95.0)
     p99 = _percentile(trimmed, 99.0)
@@ -92,16 +104,54 @@ def render_plot(latencies: list[float], budget_ms: float, output: Path):
         else 0.0
     )
 
+    rolling_p95: list[float] = []
+    if trimmed:
+        for i in range(len(trimmed)):
+            start = max(0, i - window + 1)
+            rp95 = _percentile(trimmed[start : i + 1], 95.0)
+            rolling_p95.append(rp95)
+
     fig, ax = plt.subplots()
-    ax.plot(range(len(latencies)), latencies)
-    ax.axhline(budget_ms, color="red", linestyle="--")
+    lat_line = ax.plot(range(len(latencies)), latencies, label="Latency")[0]
+    slo_line = ax.axhline(budget_ms, color="red", linestyle="--", label="SLO")
+
+    warm_patch = ax.axvspan(0, warmup, color="gray", alpha=0.1)
+
+    breach_patch = None
+    breaches: list[tuple[int, int]] = []
+    if rolling_p95:
+        in_breach = False
+        start = 0
+        for i, val in enumerate(rolling_p95):
+            if val > budget_ms and not in_breach:
+                in_breach = True
+                start = i
+            elif val <= budget_ms and in_breach:
+                in_breach = False
+                breaches.append((start, i - 1))
+        if in_breach:
+            breaches.append((start, len(rolling_p95) - 1))
+        for s, e in breaches:
+            breach_patch = ax.axvspan(
+                warmup + s,
+                warmup + e + 1,
+                color="red",
+                alpha=0.1,
+            )
+
     ax.set_xlabel("frame")
     ax.set_ylabel("latency (ms)")
     ax.set_title(f"p50={p50:.1f} p95={p95:.1f} p99={p99:.1f}")
+
+    legend_handles = [lat_line, slo_line, Patch(color="gray", alpha=0.1, label="Warm-up")]
+    if breach_patch is not None:
+        legend_handles.append(Patch(color="red", alpha=0.1, label="p95>budget windows"))
+    ax.legend(handles=legend_handles)
+
     fig.text(
         0.5,
         0.01,
-        f"SLO_in_budget={slo_pct:.1f}% warm-up excluded",
+        f"SLO_in_budget={slo_pct:.1f}% • warm-up excluded • window={window}",
         ha="center",
     )
     fig.tight_layout()
@@ -123,7 +173,7 @@ def main() -> None:
         except Exception:
             pass
     output = args.output or args.input.with_name("latency.png")
-    render_plot(latencies, budget, output)
+    render_plot(latencies, budget, output, window=args.window, warmup=args.warmup)
     print(f"Wrote {output}")
 
 

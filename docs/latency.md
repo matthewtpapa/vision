@@ -113,6 +113,18 @@ Columns: stage,total_ms,mean_ms,count
 
 Only processed frames contribute to count.
 
+Plotting notes:
+
+- Latency plots shade the warm-up region and highlight any rolling-p95-over-budget windows (default window 120 frames).
+- Flags:
+
+  ```bash
+  python scripts/plot_latency.py --input stage_timings.csv --output latency.png \
+    --window 120 --warmup 100
+  ```
+
+  `--metrics` reads the budget from metrics.json; `--slo-ms` provides a fallback.
+
 ## Sustained 10-min run (warm-up excluded)
 
 Sustained mode runs the evaluator for a fixed wall-clock duration while

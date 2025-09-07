@@ -25,7 +25,7 @@ jobs:
       - name: Print summary
         run: python scripts/print_summary.py --metrics bench/out/metrics.json
       - name: Plot latency
-        run: python scripts/plot_latency.py --input bench/out/stage_timings.csv --output bench/out/latency.png --metrics bench/out/metrics.json
+        run: python scripts/plot_latency.py --input bench/out/stage_timings.csv --output bench/out/latency.png --metrics bench/out/metrics.json --window 120 --warmup 100
       - name: Verify artifacts
         run: |
           set -e
