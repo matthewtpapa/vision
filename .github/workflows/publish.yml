@@ -11,9 +11,6 @@ on:
         options:
           - testpypi
           - pypi
-      version_suffix:
-        description: "Optional version suffix for RCs"
-        required: false
   push:
     tags:
       - "v*"
@@ -75,8 +72,26 @@ jobs:
         with:
           python-version: "3.11"
 
-      - name: Upgrade pip tooling
-        run: python -m pip install -U pip twine
+      - name: Install publish tools
+        run: python -m pip install -U pip build twine
+
+      - name: Ensure artifacts exist
+        run: |
+          count=$(ls -1 dist | wc -l)
+          if [ "$count" -eq 0 ]; then
+            echo "No artifacts found to publish"
+            exit 1
+          fi
+
+      - name: Twine check
+        run: python -m twine check dist/*
+
+      - name: Spot-check sdist contents
+        run: |
+          if ! tar -tf dist/*.tar.gz | grep -E '^(docs/|scripts/|src/latency_vision/py\.typed|THIRD_PARTY\.md)'; then
+            echo "sdist missing expected files"
+            exit 1
+          fi
 
       - name: Determine target
         id: target
@@ -97,20 +112,21 @@ jobs:
         env:
           TWINE_USERNAME: __token__
           TWINE_PASSWORD: ${{ secrets.TEST_PYPI_API_TOKEN }}
-        run: twine upload --repository-url https://test.pypi.org/legacy/ dist/*
+        run: twine upload --skip-existing --repository-url https://test.pypi.org/legacy/ dist/*
 
       - name: Upload to PyPI
         if: steps.target.outputs.target == 'pypi'
         env:
           TWINE_USERNAME: __token__
           TWINE_PASSWORD: ${{ secrets.PYPI_API_TOKEN }}
-        run: twine upload dist/*
+        run: twine upload --skip-existing dist/*
 
       - name: Smoke install
         run: |
           python -m venv venv
           source venv/bin/activate
           python -m pip install -U pip
+          pip install numpy
           if [ "${{ steps.target.outputs.target }}" = "testpypi" ]; then
             pip install --index-url https://test.pypi.org/simple --extra-index-url https://pypi.org/simple latency-vision
           else
