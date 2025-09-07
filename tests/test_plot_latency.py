@@ -33,8 +33,7 @@ def test_warmup_shaded(tmp_path: Path) -> None:
     ax = fig.axes[0]
     patches = [p for p in ax.patches if hasattr(p, "get_xy")]
     assert any(
-        min(v[0] for v in p.get_xy()) <= 0 and max(v[0] for v in p.get_xy()) >= 100
-        for p in patches
+        min(v[0] for v in p.get_xy()) <= 0 and max(v[0] for v in p.get_xy()) >= 100 for p in patches
     )
 
 

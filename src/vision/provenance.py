@@ -19,11 +19,13 @@ def _git_commit() -> str:
     """
 
     try:
-        out = subprocess.check_output([
-            "git",
-            "rev-parse",
-            "HEAD",
-        ])
+        out = subprocess.check_output(
+            [
+                "git",
+                "rev-parse",
+                "HEAD",
+            ]
+        )
         return out.decode().strip()
     except Exception:
         return os.getenv("GIT_COMMIT", "unknown")
@@ -32,9 +34,7 @@ def _git_commit() -> str:
 def _hardware_id() -> str:
     """Return a simple hardware identifier string."""
 
-    return "|".join(
-        [platform.system(), platform.machine(), platform.processor()]
-    )
+    return "|".join([platform.system(), platform.machine(), platform.processor()])
 
 
 def _fixture_hash(frames: Iterable[Path]) -> str:

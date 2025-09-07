@@ -75,4 +75,3 @@ Copyright (c) 2025 The Vision Authors
 - `spec` — changes to `docs/specs/*`, schema/gates
 - `charter` — roadmap/north star updates
 - `m1`/`m2`/... — milestone targeting
-

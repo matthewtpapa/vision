@@ -74,9 +74,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--metrics", type=Path, help="metrics.json for SLO budget", default=None)
     parser.add_argument("--slo-ms", type=float, default=33.0, help="SLO budget in ms")
     parser.add_argument("--window", type=int, default=120, help="rolling window for p95")
-    parser.add_argument(
-        "--warmup", type=int, default=100, help="warm-up frames to exclude"
-    )
+    parser.add_argument("--warmup", type=int, default=100, help="warm-up frames to exclude")
     return parser.parse_args()
 
 
@@ -98,11 +96,7 @@ def render_plot(
     p50 = _percentile(trimmed, 50.0)
     p95 = _percentile(trimmed, 95.0)
     p99 = _percentile(trimmed, 99.0)
-    slo_pct = (
-        sum(1 for x in trimmed if x <= budget_ms) / len(trimmed) * 100
-        if trimmed
-        else 0.0
-    )
+    slo_pct = sum(1 for x in trimmed if x <= budget_ms) / len(trimmed) * 100 if trimmed else 0.0
 
     rolling_p95: list[float] = []
     if trimmed:

@@ -73,8 +73,7 @@ def metrics_json(
 
     unknown_rate = (sum(unknown_flags) / len(unknown_flags)) if unknown_flags else 0.0
     slo_within = (
-        sum(1 for ms in per_frame_ms if ms <= slo_budget_ms) / len(per_frame_ms)
-        * 100
+        sum(1 for ms in per_frame_ms if ms <= slo_budget_ms) / len(per_frame_ms) * 100
         if per_frame_ms
         else 0.0
     )
