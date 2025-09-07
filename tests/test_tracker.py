@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: Apache-2.0
 # Copyright (c) 2025 The Vision Authors
-from vision.tracker import Tracker
+from latency_vision.tracker import Tracker
 
 
 def test_tracker_assigns_incremental_ids():

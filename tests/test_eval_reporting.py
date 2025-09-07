@@ -3,7 +3,7 @@
 
 from __future__ import annotations
 
-from vision.eval_reporting import metrics_json
+from latency_vision.eval_reporting import metrics_json
 
 
 def test_warmup_exclusion() -> None:

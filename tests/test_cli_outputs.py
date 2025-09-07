@@ -7,7 +7,7 @@ import subprocess
 import sys
 from pathlib import Path
 
-from vision import __version__
+from latency_vision import __version__
 
 ROOT = Path(__file__).resolve().parent.parent
 PYTHONPATH = os.pathsep.join([str(ROOT / "src"), os.environ.get("PYTHONPATH", "")])

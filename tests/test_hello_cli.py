@@ -3,11 +3,11 @@ import sys
 from contextlib import redirect_stderr, redirect_stdout
 from io import StringIO
 
-from vision import __version__
+from latency_vision import __version__
 
 
 def run_cli(*args: str) -> subprocess.CompletedProcess[str]:
-    from vision.cli import main
+    from latency_vision.cli import main
 
     out = StringIO()
     err = StringIO()

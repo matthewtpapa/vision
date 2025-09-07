@@ -4,11 +4,11 @@ from __future__ import annotations
 
 import pytest
 
-from vision.config import _reset_config_cache, get_config
-from vision.detect_adapter import FakeDetector
-from vision.factory import build_detector, build_tracker
-from vision.pipeline_detect_track import DetectTrackPipeline
-from vision.track_bytetrack_adapter import ByteTrackLikeTracker
+from latency_vision.config import _reset_config_cache, get_config
+from latency_vision.detect_adapter import FakeDetector
+from latency_vision.factory import build_detector, build_tracker
+from latency_vision.pipeline_detect_track import DetectTrackPipeline
+from latency_vision.track_bytetrack_adapter import ByteTrackLikeTracker
 
 
 @pytest.fixture(autouse=True)

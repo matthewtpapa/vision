@@ -4,8 +4,8 @@ from dataclasses import FrozenInstanceError
 
 import pytest
 
-from vision.embedder_adapter import ClipLikeEmbedder
-from vision.embedding_types import Embedding
+from latency_vision.embedder_adapter import ClipLikeEmbedder
+from latency_vision.embedding_types import Embedding
 
 
 def test_cliplike_embedder_wraps_and_normalizes_vectors() -> None:

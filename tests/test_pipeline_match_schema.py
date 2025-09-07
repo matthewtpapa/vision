@@ -6,11 +6,11 @@ import pytest
 
 pytest.importorskip("numpy")
 
-from vision.config import _reset_config_cache
-from vision.detect_adapter import FakeDetector
-from vision.embedder_adapter import ClipLikeEmbedder
-from vision.pipeline_detect_track_embed import DetectTrackEmbedPipeline
-from vision.track_bytetrack_adapter import ByteTrackLikeTracker
+from latency_vision.config import _reset_config_cache
+from latency_vision.detect_adapter import FakeDetector
+from latency_vision.embedder_adapter import ClipLikeEmbedder
+from latency_vision.pipeline_detect_track_embed import DetectTrackEmbedPipeline
+from latency_vision.track_bytetrack_adapter import ByteTrackLikeTracker
 
 
 @pytest.fixture(autouse=True)

@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: Apache-2.0
 # Copyright (c) 2025 The Vision Authors
-from vision.matcher import Matcher
+from latency_vision.matcher import Matcher
 
 
 def test_matcher_finds_exact_match_and_returns_index():

@@ -9,8 +9,8 @@ pytest.importorskip("numpy")
 
 import numpy as np
 
-from vision.matcher.faiss_backend import FaissMatcher
-from vision.matcher.py_fallback import NumpyMatcher
+from latency_vision.matcher.faiss_backend import FaissMatcher
+from latency_vision.matcher.py_fallback import NumpyMatcher
 
 
 def test_faiss_and_numpy_parity() -> None:

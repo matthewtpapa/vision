@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: Apache-2.0
 # Copyright (c) 2025 The Vision Authors
-from vision.fake_detector import FakeDetector
+from latency_vision.fake_detector import FakeDetector
 
 
 def test_fake_detector_returns_fixed_box():

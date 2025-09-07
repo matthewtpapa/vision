@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: Apache-2.0
 # Copyright (c) 2025 The Vision Authors
-from vision import Labeler
+from latency_vision import Labeler
 
 
 def test_labeler_returns_unknown_label():

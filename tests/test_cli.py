@@ -2,8 +2,8 @@
 # Copyright (c) 2025 The Vision Authors
 from __future__ import annotations
 
-from vision import __version__
-from vision.cli import main
+from latency_vision import __version__
+from latency_vision.cli import main
 
 
 def test_version_prints_package_version(capsys):

@@ -1,21 +1,15 @@
-# SPDX-License-Identifier: Apache-2.0
-# Copyright (c) 2025 The Vision Authors
-"""Top-level package for vision."""
+"""Compatibility alias for the latency_vision package."""
 
-from .embedder import Embedder
-from .fake_detector import FakeDetector
-from .labeler import Labeler
-from .matcher import Matcher
-from .ris import ReverseImageSearchStub
-from .telemetry import Telemetry
+import os as _os
+import sys as _sys
+from importlib import import_module as _import_module
 
-__version__ = "0.1.0-rc.1"
-__all__ = [
-    "__version__",
-    "FakeDetector",
-    "Embedder",
-    "Matcher",
-    "Labeler",
-    "ReverseImageSearchStub",
-    "Telemetry",
-]
+if _os.getenv("VISION_SILENCE_DEPRECATION") != "1":
+    print(
+        "[deprecation] 'vision' is an alias of 'latency_vision' and will be removed in M1.2. "
+        "Use 'latency_vision'.",
+        file=_sys.stderr,
+    )
+
+_module = _import_module("latency_vision")
+_sys.modules[__name__] = _module

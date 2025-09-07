@@ -10,5 +10,5 @@
   "budget_hit": false,
   "bbox": [120, 96, 220, 196],
   "timestamp_ms": 1725043200123,
-  "sdk_version": "0.1.0-rc.1"
+  "sdk_version": "0.1.0-rc.2"
 }

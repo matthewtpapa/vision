@@ -11,7 +11,7 @@ pytest.importorskip("numpy")
 pytest.importorskip("PIL")
 from PIL import Image  # noqa: E402
 
-from vision import evaluator  # noqa: E402
+from latency_vision import evaluator  # noqa: E402
 
 
 def _create_frames(path: Path) -> None:

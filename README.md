@@ -55,7 +55,7 @@ Note: The façade lands in a subsequent PR. Until then, use the current snippet:
 
 ```python
 import numpy as np
-from vision import add_exemplar, query_frame  # placeholder; façade arrives in a later PR
+from latency_vision import add_exemplar, query_frame  # placeholder; façade arrives in a later PR
 
 # API shape will match the schema v0.1 in docs/schema.md
 add_exemplar(label="red-mug", embedding=np.random.rand(512).astype("float32"))
@@ -115,7 +115,7 @@ This project ships a **frozen** result schema for the 0.1.x series. See
   "budget_hit": false,
   "bbox": [120, 96, 220, 196],
   "timestamp_ms": 1725043200123,
-  "sdk_version": "0.1.0-rc.1"
+  "sdk_version": "0.1.0-rc.2"
 }
 ```
 
