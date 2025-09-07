@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: Apache-2.0
 # Copyright (c) 2025 The Vision Authors
-name: ci
+name: verify
 permissions:
   contents: read
 concurrency:
@@ -18,13 +18,17 @@ jobs:
         with:
           config: .markdownlint-cli2.yaml
 
-  build:
+  verify:
+    strategy:
+      matrix:
+        python-version: ["3.10", "3.11", "3.12"]
     runs-on: ubuntu-latest
+    name: verify (${{ matrix.python-version }})
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with:
-          python-version: "3.11"
+          python-version: ${{ matrix.python-version }}
           cache: "pip"
           cache-dependency-path: |
             requirements-dev.txt
@@ -63,7 +67,7 @@ PY
       - uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: coverage-report
+          name: coverage-${{ matrix.python-version }}
           path: |
             .coverage
             coverage.xml
@@ -75,7 +79,7 @@ PY
       - run: vision webcam --use-fake-detector --dry-run
 
   package:
-    needs: build
+    needs: verify
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
