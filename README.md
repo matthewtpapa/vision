@@ -147,8 +147,7 @@ Cold-start is defined as SDK ready (post-deps, pipeline initialized) → first M
 
 The evaluator can adaptively skip frames to stay within the latency budget; see the **[Eval Guide](docs/eval.md)** and **[Latency Guide](docs/latency.md)** for controller details.
 
-See [Benchmarks](docs/benchmarks.md)
-for measurement details and artifact fields.
+See [Benchmarks](docs/benchmarks.md#cold-start-definition) for the cold-start definition and [schema](docs/schema.md) for `metrics_schema_version`.
 
 Example with environment overrides:
 

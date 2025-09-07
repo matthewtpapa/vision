@@ -155,7 +155,9 @@ dropping the first 100 frames from SLO and percentile calculations.
 latvision eval --sustain-minutes 10 --budget-ms 33
 ```
 
-cold_start_ms = import/process start → first result
+cold_start_ms = SDK ready (post-deps, pipeline initialized) → first result.
+We anchor cold-start at SDK-ready rather than CLI entry to avoid pre-loop noise;
+see [Benchmarks](benchmarks.md#cold-start-definition) for the formal SLO.
 
 bootstrap_ms = start → frame #1000 processed, or last frame if <1000
 
