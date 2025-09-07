@@ -111,9 +111,7 @@ def test_eval_cli_budget_breach_returns_nonzero(
     seq = (base + i * step for i in itertools.count())
     monkeypatch.setattr("latency_vision.telemetry.Telemetry.now_ns", lambda self: next(seq))
     monkeypatch.setattr("latency_vision.telemetry.now_ns", lambda: next(seq))
-    monkeypatch.setattr(
-        "latency_vision.pipeline_detect_track_embed.now_ns", lambda: next(seq)
-    )
+    monkeypatch.setattr("latency_vision.pipeline_detect_track_embed.now_ns", lambda: next(seq))
     monkeypatch.setenv("VISION__LATENCY__BUDGET_MS", "30")
 
     cp = run_cli(

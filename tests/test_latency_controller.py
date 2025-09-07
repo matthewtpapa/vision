@@ -56,9 +56,7 @@ def _make_pipeline(
         return DummyMatcher()
 
     monkeypatch.setattr("latency_vision.matcher.factory.build_matcher", dummy_builder)
-    monkeypatch.setattr(
-        "latency_vision.pipeline_detect_track_embed.build_matcher", dummy_builder
-    )
+    monkeypatch.setattr("latency_vision.pipeline_detect_track_embed.build_matcher", dummy_builder)
     monkeypatch.setattr(
         "latency_vision.pipeline_detect_track_embed.add_exemplars_to_index",
         lambda matcher, items: 0,

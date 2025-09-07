@@ -30,6 +30,7 @@ def test_latvision_no_warning(monkeypatch, capsys):
 def test_importing_vision_warns(monkeypatch, capsys):
     monkeypatch.delenv("VISION_SILENCE_DEPRECATION", raising=False)
     import importlib
+
     sys.modules.pop("vision", None)
     importlib.import_module("vision")
     err = capsys.readouterr().err
