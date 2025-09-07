@@ -1,0 +1,50 @@
+name: rc-artifacts
+
+on:
+  push:
+    tags:
+      - 'v0.1.0-rc*'
+  workflow_dispatch:
+
+jobs:
+  artifacts:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e . -r requirements-dev.txt
+      - name: Build fixture
+        run: python scripts/build_fixture.py --out bench/fixture --n 20 || true
+      - name: Run eval
+        run: latvision eval --input bench/fixture --output bench/out --budget-ms 33 || true
+      - name: Print summary
+        run: python scripts/print_summary.py --metrics bench/out/metrics.json || true
+      - name: Plot latency
+        run: python scripts/plot_latency.py --input bench/out/stage_timings.csv --output bench/out/latency.png || true
+      - name: Verify artifacts
+        run: |
+          for f in metrics.json stage_timings.csv latency.png; do
+            if [ -f "bench/out/$f" ]; then
+              echo "found bench/out/$f"
+            else
+              echo "missing bench/out/$f"
+            fi
+          done
+      - name: Build wheel
+        run: python -m build --wheel
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: rc-artifacts
+          path: |
+            bench/out/metrics.json
+            bench/out/stage_timings.csv
+            bench/out/latency.png
+            dist/*.whl
+          if-no-files-found: warn
+

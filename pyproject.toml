@@ -29,6 +29,7 @@ Repository = "https://github.com/matthewtpapa/vision"
 Issues = "https://github.com/matthewtpapa/vision/issues"
 
 [project.scripts]
+latvision = "vision.cli:main"
 vision = "vision.cli:main"
 
 [tool.setuptools]
