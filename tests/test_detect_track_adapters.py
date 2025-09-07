@@ -6,9 +6,9 @@ import dataclasses
 
 import pytest
 
-from vision.detect_adapter import FakeDetector
-from vision.track_adapter import SimpleIdTracker
-from vision.types import Detection
+from latency_vision.detect_adapter import FakeDetector
+from latency_vision.track_adapter import SimpleIdTracker
+from latency_vision.types import Detection
 
 
 def test_fake_detector_returns_configured_boxes() -> None:

@@ -5,7 +5,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from vision.provenance import collect_provenance
+from latency_vision.provenance import collect_provenance
 
 
 def test_collect_provenance(tmp_path: Path) -> None:

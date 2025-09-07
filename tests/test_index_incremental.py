@@ -6,8 +6,8 @@ import pytest
 
 pytest.importorskip("numpy")
 
-from vision.cluster_store import JsonClusterStore
-from vision.matcher.py_fallback import NumpyMatcher
+from latency_vision.cluster_store import JsonClusterStore
+from latency_vision.matcher.py_fallback import NumpyMatcher
 
 
 def test_listener_updates_matcher(tmp_path):

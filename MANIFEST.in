@@ -2,3 +2,5 @@
 # Copyright (c) 2025 The Vision Authors
 include LICENSE
 include NOTICE
+recursive-include src/latency_vision py.typed
+recursive-include src/vision py.typed

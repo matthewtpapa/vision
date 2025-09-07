@@ -6,7 +6,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
-from vision.matcher.types import MatchResult
+from latency_vision.matcher.types import MatchResult
 
 from .embedding_types import Embedding
 from .types import Track

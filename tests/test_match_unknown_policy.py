@@ -4,7 +4,7 @@ import pytest
 
 pytest.importorskip("numpy")
 
-from vision.matcher.py_fallback import NumpyMatcher
+from latency_vision.matcher.py_fallback import NumpyMatcher
 
 
 def test_unknown_policy_threshold_and_min_neighbors():

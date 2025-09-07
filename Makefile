@@ -58,7 +58,7 @@ format:
 >ruff format .
 
 type:
->mypy src/vision
+>mypy src/latency_vision
 
 mdlint:
 >if [ -x "$(MDLINT_BIN)" ]; then \
@@ -83,7 +83,7 @@ verify:
 >@echo "==> Format check"
 >@if command -v ruff >/dev/null 2>&1; then ruff format --check .; else echo "⚠️ ruff not installed; skipping format check"; fi
 >@echo "==> Types"
->@if command -v mypy >/dev/null 2>&1; then mypy src/vision; else echo "⚠️ mypy not installed; skipping type check"; fi
+>@if command -v mypy >/dev/null 2>&1; then mypy src/latency_vision; else echo "⚠️ mypy not installed; skipping type check"; fi
 >@echo "==> Tests"
 >@if [ -n "$${CI:-}" ]; then \
 >  echo "(CI) tests run in separate coverage step"; \

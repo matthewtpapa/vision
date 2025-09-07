@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: Apache-2.0
 # Copyright (c) 2025 The Vision Authors
-"""Command-line interface for vision."""
+"""Command-line interface for latency_vision."""
 
 from __future__ import annotations
 

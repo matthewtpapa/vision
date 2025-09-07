@@ -3,8 +3,8 @@ requires = ["setuptools>=61"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "vision"
-version = "0.1.0-rc.1"
+name = "latency-vision"
+version = "0.1.0-rc.2"
 description = "Minimal vision pipeline stubs with CLI (M0)"
 readme = "README.md"
 requires-python = ">=3.10"
@@ -35,8 +35,8 @@ Repository = "https://github.com/matthewtpapa/vision"
 Issues = "https://github.com/matthewtpapa/vision/issues"
 
 [project.scripts]
-latvision = "vision.cli:main"
-vision = "vision.cli:main"
+latvision = "latency_vision.cli:main"
+vision = "latency_vision.cli:main"
 
 [tool.setuptools]
 license-files = ["LICENSE", "NOTICE"]

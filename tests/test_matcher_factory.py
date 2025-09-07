@@ -8,8 +8,8 @@ import pytest
 
 pytest.importorskip("numpy")
 
-from vision.matcher.factory import build_matcher
-from vision.matcher.py_fallback import NumpyMatcher
+from latency_vision.matcher.factory import build_matcher
+from latency_vision.matcher.py_fallback import NumpyMatcher
 
 
 def test_factory_uses_numpy_when_faiss_missing(monkeypatch) -> None:

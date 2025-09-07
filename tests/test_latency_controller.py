@@ -1,12 +1,12 @@
 # SPDX-License-Identifier: Apache-2.0
 import pytest
 
-from vision.config import _reset_config_cache
-from vision.detect_adapter import FakeDetector
-from vision.embedder_adapter import ClipLikeEmbedder
-from vision.matcher.matcher_protocol import MatcherProtocol
-from vision.pipeline_detect_track_embed import DetectTrackEmbedPipeline
-from vision.track_bytetrack_adapter import ByteTrackLikeTracker
+from latency_vision.config import _reset_config_cache
+from latency_vision.detect_adapter import FakeDetector
+from latency_vision.embedder_adapter import ClipLikeEmbedder
+from latency_vision.matcher.matcher_protocol import MatcherProtocol
+from latency_vision.pipeline_detect_track_embed import DetectTrackEmbedPipeline
+from latency_vision.track_bytetrack_adapter import ByteTrackLikeTracker
 
 
 def _make_now():
@@ -39,9 +39,11 @@ def _make_pipeline(
     known: bool = False,
 ):
     now, set_step = _make_now()
-    monkeypatch.setattr("vision.telemetry.now_ns", now)
-    monkeypatch.setattr("vision.telemetry.Telemetry.now_ns", lambda self: now(), raising=False)
-    monkeypatch.setattr("vision.pipeline_detect_track_embed.now_ns", now)
+    monkeypatch.setattr("latency_vision.telemetry.now_ns", now)
+    monkeypatch.setattr(
+        "latency_vision.telemetry.Telemetry.now_ns", lambda self: now(), raising=False
+    )
+    monkeypatch.setattr("latency_vision.pipeline_detect_track_embed.now_ns", now)
 
     class DummyMatcher(MatcherProtocol):
         def add(self, vec, lab):
@@ -53,10 +55,12 @@ def _make_pipeline(
     def dummy_builder(dim):
         return DummyMatcher()
 
-    monkeypatch.setattr("vision.matcher.factory.build_matcher", dummy_builder)
-    monkeypatch.setattr("vision.pipeline_detect_track_embed.build_matcher", dummy_builder)
+    monkeypatch.setattr("latency_vision.matcher.factory.build_matcher", dummy_builder)
     monkeypatch.setattr(
-        "vision.pipeline_detect_track_embed.add_exemplars_to_index",
+        "latency_vision.pipeline_detect_track_embed.build_matcher", dummy_builder
+    )
+    monkeypatch.setattr(
+        "latency_vision.pipeline_detect_track_embed.add_exemplars_to_index",
         lambda matcher, items: 0,
     )
     if env:

@@ -13,7 +13,7 @@ from pathlib import Path
 
 import pytest
 
-from vision.config import _reset_config_cache
+from latency_vision.config import _reset_config_cache
 
 pytest.importorskip("PIL")
 pytest.importorskip("numpy")
@@ -24,7 +24,7 @@ sys.path.insert(0, str(ROOT / "src"))
 
 
 def run_cli(*args: str) -> subprocess.CompletedProcess[str]:
-    from vision.cli import main
+    from latency_vision.cli import main
 
     out = StringIO()
     err = StringIO()
@@ -109,9 +109,11 @@ def test_eval_cli_budget_breach_returns_nonzero(
     base = 1_000_000_000
     step = int(5e7)
     seq = (base + i * step for i in itertools.count())
-    monkeypatch.setattr("vision.telemetry.Telemetry.now_ns", lambda self: next(seq))
-    monkeypatch.setattr("vision.telemetry.now_ns", lambda: next(seq))
-    monkeypatch.setattr("vision.pipeline_detect_track_embed.now_ns", lambda: next(seq))
+    monkeypatch.setattr("latency_vision.telemetry.Telemetry.now_ns", lambda self: next(seq))
+    monkeypatch.setattr("latency_vision.telemetry.now_ns", lambda: next(seq))
+    monkeypatch.setattr(
+        "latency_vision.pipeline_detect_track_embed.now_ns", lambda: next(seq)
+    )
     monkeypatch.setenv("VISION__LATENCY__BUDGET_MS", "30")
 
     cp = run_cli(

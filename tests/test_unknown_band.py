@@ -7,7 +7,7 @@ from pathlib import Path
 
 import pytest
 
-from vision.cli import main
+from latency_vision.cli import main
 
 pytest.importorskip("PIL")
 
@@ -24,7 +24,7 @@ def run_cli(*args: str):
 
 def test_unknown_rate_guardrail(tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
     # Force metrics_json unknown_rate high via monkeypatch
-    import vision.evaluator as evaluator
+    import latency_vision.evaluator as evaluator
 
     real_metrics_json = evaluator.metrics_json
 

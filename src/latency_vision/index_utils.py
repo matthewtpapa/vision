@@ -10,7 +10,7 @@ from collections.abc import (
 )
 from typing import Any
 
-from vision.matcher.matcher_protocol import MatcherProtocol
+from latency_vision.matcher.matcher_protocol import MatcherProtocol
 
 
 def add_exemplars_to_index(index: MatcherProtocol, items: Iterable[dict[str, Any]]) -> int:

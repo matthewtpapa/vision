@@ -3,7 +3,7 @@
 import json
 from pathlib import Path
 
-from vision.cluster_store import ClusterStore
+from latency_vision.cluster_store import ClusterStore
 
 
 def test_cluster_store_persists_exemplars(tmp_path):

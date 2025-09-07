@@ -2,7 +2,7 @@
 # Copyright (c) 2025 The Vision Authors
 import pytest
 
-import vision.telemetry as telemetry
+import latency_vision.telemetry as telemetry
 
 
 def test_stage_timer_records_and_summarizes(monkeypatch):

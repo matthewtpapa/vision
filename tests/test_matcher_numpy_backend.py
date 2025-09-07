@@ -8,7 +8,7 @@ import pytest
 
 pytest.importorskip("numpy")
 
-from vision.matcher.py_fallback import NumpyMatcher
+from latency_vision.matcher.py_fallback import NumpyMatcher
 
 
 def test_cosine_math_and_ordering() -> None:

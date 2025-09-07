@@ -6,8 +6,8 @@ import pytest
 
 pytest.importorskip("numpy")
 
-from vision.index_utils import add_exemplars_to_index
-from vision.matcher.py_fallback import NumpyMatcher
+from latency_vision.index_utils import add_exemplars_to_index
+from latency_vision.matcher.py_fallback import NumpyMatcher
 
 
 def test_adds_items_and_allows_query() -> None:

@@ -4,7 +4,7 @@ from dataclasses import FrozenInstanceError
 
 import pytest
 
-from vision.config import _reset_config_cache, get_config
+from latency_vision.config import _reset_config_cache, get_config
 
 
 @pytest.fixture(autouse=True)
