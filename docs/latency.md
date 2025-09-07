@@ -1,11 +1,31 @@
 # Latency Controller & Process Model (v0.1)
 
+> Latest RC artifacts: [metrics.json](https://github.com/latvision/vision/releases/latest/download/metrics.json) · [stage_timings.csv](https://github.com/latvision/vision/releases/latest/download/stage_timings.csv) · [latency.png](https://github.com/latvision/vision/releases/latest/download/latency.png)
+
 This document defines the **official latency behavior** of the SDK for the
 0.1.x line. It is investor-grade and forms the basis of our SLO claims.
 
 - Controller policy: **windowed p95**, **stride/skip only** (no model degrade).
 - Process model: **single-process, single-stream**; reads thread-safe, writes serialized.
 - Skipped-frame semantics are **well-defined** to avoid metric distortion.
+
+---
+
+## Gate D (one-shot demo)
+
+Run a local demo to generate a synthetic fixture, evaluate, and plot latency:
+
+```bash
+make demo
+```
+
+The plot excludes warm-up frames from SLO calculations.
+
+This produces:
+
+- `bench/out/metrics.json`
+- `bench/out/stage_timings.csv`
+- `bench/out/latency.png`
 
 ---
 

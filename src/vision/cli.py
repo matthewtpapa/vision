@@ -36,6 +36,35 @@ def _warn_alias_once() -> None:
         _ALIAS_WARNED = True
 
 
+def _cpu_flags() -> str:
+    """Best-effort detection of CPU SIMD flags."""
+    try:
+        if sys.platform.startswith("linux") and Path("/proc/cpuinfo").exists():
+            text = Path("/proc/cpuinfo").read_text().lower()
+            for flag in ("avx512", "avx2", "avx", "neon", "sse4_2"):
+                if flag in text:
+                    return flag
+            return "unknown"
+    except Exception:
+        pass
+    return "unknown"
+
+
+def _detect_backend() -> str:
+    """Return the available matcher backend."""
+    try:
+        import faiss  # type: ignore  # noqa: F401
+
+        return "faiss"
+    except Exception:
+        try:
+            import numpy  # type: ignore  # noqa: F401
+
+            return "numpy"
+        except Exception:
+            return "none"
+
+
 def build_parser() -> argparse.ArgumentParser:
     """Build the argument parser for the CLI."""
     parser = argparse.ArgumentParser(prog="latvision", description="Latency Vision CLI")
@@ -91,6 +120,8 @@ def build_parser() -> argparse.ArgumentParser:
         default="0.10,0.40",
         help="Fallback band for unknown rate as LOW,HIGH (overridden by manifest).",
     )
+
+    subparsers.add_parser("hello", help="Print environment information.")
     return parser
 
 
@@ -129,6 +160,18 @@ def main(argv: Sequence[str] | None = None) -> int:
             unknown_band=(low, high),
         )
         sys.exit(ret)
+    elif args.command == "hello":
+        import platform
+
+        os_info = platform.platform()
+        py_info = platform.python_version()
+        flags = _cpu_flags()
+        backend = _detect_backend()
+        print(f"Latency Vision {__version__}")
+        print(f"OS: {os_info}")
+        print(f"Python: {py_info}")
+        print(f"CPU: {flags}")
+        print(f"Backend: {backend}")
     else:
         parser.print_help()
     return 0

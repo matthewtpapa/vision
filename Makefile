@@ -22,6 +22,8 @@ help:
 >echo "make mdfix     - auto-fix markdownlint issues (requires npx)"
 >echo "make verify    - run all local checks (lint, fmt-check, type, test, markdownlint)"
 >echo "make hooks     - install and autoupdate pre-commit hooks"
+>echo "make hello     - print environment information"
+>echo "make demo      - run fixture → eval → plot demo"
 >echo "make eval      - run evaluator on a directory of frames"
 >echo ""
 >echo "Tip: run 'npm ci' once to enable local markdownlint (make mdlint/mdfix)."
@@ -111,6 +113,19 @@ eval:
 >else \
 >  PYTHONPATH=src latvision eval --input $(INPUT) --output $(OUTPUT) --warmup $(or $(WARMUP),100); \
 >fi
+
+hello:
+>if command -v latvision >/dev/null 2>&1; then \
+>  latvision hello; \
+>else \
+>  PYTHONPATH=src latvision hello; \
+>fi
+
+demo:
+>python scripts/build_fixture.py --out bench/fixture --n 400
+>latvision eval --input bench/fixture --output bench/out
+>python scripts/print_summary.py --metrics bench/out/metrics.json
+>python scripts/plot_latency.py --input bench/out/stage_timings.csv --output bench/out/latency.png --metrics bench/out/metrics.json
 
 build:
 >python -m pip install --upgrade build twine
