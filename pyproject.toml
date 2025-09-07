@@ -6,7 +6,7 @@ build-backend = "setuptools.build_meta"
 name = "latency-vision"
 version = "0.1.0-rc.2"
 description = "Minimal vision pipeline stubs with CLI (M0)"
-readme = "README.md"
+readme = { file = "README.md", content-type = "text/markdown" }
 requires-python = ">=3.10"
 license = { file = "LICENSE" }
 authors = [{ name = "The Vision Authors", email = "dev@example.com" }]
