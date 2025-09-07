@@ -39,4 +39,4 @@ latvision = "latency_vision.cli:main"
 vision = "latency_vision.cli:main"
 
 [tool.setuptools]
-license-files = ["LICENSE", "NOTICE"]
+license-files = ["LICENSE", "NOTICE", "THIRD_PARTY.md"]
