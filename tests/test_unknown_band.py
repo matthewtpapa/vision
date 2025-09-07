@@ -45,8 +45,9 @@ def test_unknown_rate_guardrail(tmp_path: Path, monkeypatch: pytest.MonkeyPatch)
     Image.new("RGB", (8, 8)).save(in_dir / "f.png")
 
     # Manifest with tight band
-    manifest = tmp_path / "m.json"
-    manifest.write_text(json.dumps({"unknown_band": [0.0, 0.1]}), encoding="utf-8")
+    (in_dir / "manifest.json").write_text(
+        json.dumps({"unknown_rate_band": [0.0, 0.1]}), encoding="utf-8"
+    )
 
     code, _out, err = run_cli(
         "eval",
@@ -56,8 +57,6 @@ def test_unknown_rate_guardrail(tmp_path: Path, monkeypatch: pytest.MonkeyPatch)
         str(out_dir),
         "--warmup",
         "0",
-        "--fixture-manifest",
-        str(manifest),
     )
     assert code == 2
     assert "unknown_rate" in err

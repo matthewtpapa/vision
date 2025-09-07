@@ -100,6 +100,12 @@ def build_parser() -> argparse.ArgumentParser:
         help=("Run N minutes (wall clock); 0 disables sustained mode (replaces 'sustain-minutes')"),
     )
     eval_parser.add_argument(
+        "--sustain-minutes",
+        dest="duration_min",
+        type=int,
+        help=argparse.SUPPRESS,
+    )
+    eval_parser.add_argument(
         "--budget-ms",
         type=int,
         default=33,

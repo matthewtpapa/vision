@@ -152,14 +152,14 @@ Sustained mode runs the evaluator for a fixed wall-clock duration while
 dropping the first 100 frames from SLO and percentile calculations.
 
 ```bash
-latvision eval --sustain-minutes 10 --budget-ms 33
+latvision eval --duration-min 10 --budget-ms 33
 ```
 
 Cold-start = SDK ready (post-deps, pipeline initialized) → first MatchResult.
 We anchor cold-start at SDK-ready rather than CLI entry to avoid pre-loop noise;
 see [Benchmarks](benchmarks.md#cold-start-definition) for the formal SLO.
 
-bootstrap_ms = start → frame #1000 processed, or last frame if <1000
+index_bootstrap_ms = start → frame #1000 processed, or last frame if <1000
 
 During a reference run, background work at ~190s pushed p95 above budget and
 the controller raised stride to 2. The system recovered around ~420s and
