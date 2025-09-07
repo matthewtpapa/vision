@@ -9,6 +9,6 @@ pre-commit>=3.7,<4
 build
 cibuildwheel
 tomli>=2.0.1 ; python_version < "3.11"
-numpy
-pillow
-matplotlib
+numpy>=1.26,<3
+pillow>=10,<11
+matplotlib>=3.8,<3.10

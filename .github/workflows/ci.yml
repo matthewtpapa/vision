@@ -48,6 +48,12 @@ PY
           python -m pip debug --verbose
       - run: make verify
       - run: PYTEST_ADDOPTS="-ra" make test-cov | tee pytest.log
+      - name: Show pytest tail on failure
+        if: failure()
+        run: |
+          echo "::group::pytest tail"
+          tail -n 200 pytest.log || true
+          echo "::endgroup::"
       - uses: actions/upload-artifact@v4
         if: always()
         with:

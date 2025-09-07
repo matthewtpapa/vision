@@ -83,7 +83,15 @@ verify:
 >@echo "==> Types"
 >@if command -v mypy >/dev/null 2>&1; then mypy src/vision; else echo "⚠️ mypy not installed; skipping type check"; fi
 >@echo "==> Tests"
->@if command -v pytest >/dev/null 2>&1; then pytest; else echo "⚠️ pytest not installed; skipping tests"; fi
+>@if [ -n "$${CI:-}" ]; then \
+>  echo "(CI) tests run in separate coverage step"; \
+>else \
+>  if command -v pytest >/dev/null 2>&1; then \
+>    pytest; \
+>  else \
+>    echo "⚠️ pytest not installed; skipping tests"; \
+>  fi; \
+>fi
 >@echo "==> Markdownlint"
 >@if [ -n "$${CI:-}" ]; then \
 >  echo "(CI) markdownlint is advisory"; \
