@@ -7,6 +7,7 @@ from __future__ import annotations
 from collections.abc import Sequence
 
 import numpy as np
+from numpy.typing import NDArray
 
 from .matcher_protocol import Label, MatcherProtocol, Neighbor
 
@@ -18,13 +19,20 @@ except Exception as e:  # pragma: no cover
 _EPS = 1e-12
 
 
-def _ensure_norm_f32(x: Sequence[float] | np.ndarray) -> np.ndarray:
-    """Return row-wise L2-normalised float32 array."""
+def _ensure_norm_f32(x: Sequence[float] | NDArray[np.float32]) -> NDArray[np.float32]:
     arr = np.asarray(x, dtype=np.float32)
-    if arr.ndim == 1:
-        arr = arr[None, :]
+    norm = np.linalg.norm(arr)
+    if norm == 0:
+        return arr
+    return arr / norm
+
+
+def _ensure_norm_f32_batch(
+    X: Sequence[Sequence[float]] | NDArray[np.float32],
+) -> NDArray[np.float32]:
+    arr = np.asarray(X, dtype=np.float32)
     norms = np.linalg.norm(arr, axis=1, keepdims=True)
-    norms = np.maximum(norms, _EPS)
+    norms[norms == 0] = 1.0
     return arr / norms
 
 
@@ -46,7 +54,7 @@ class FaissMatcher(MatcherProtocol):
     def add_many(
         self, vecs: Sequence[Sequence[float]] | np.ndarray, labels: Sequence[Label]
     ) -> None:
-        arr = _ensure_norm_f32(vecs)
+        arr = _ensure_norm_f32_batch(vecs)
         if arr.shape[1] != self._dim:
             raise ValueError(f"dim mismatch: expected {self._dim}, got {arr.shape[1]}")
         label_list = list(labels)

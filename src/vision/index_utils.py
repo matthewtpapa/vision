@@ -4,7 +4,10 @@
 
 from __future__ import annotations
 
-from collections.abc import Iterable
+from collections.abc import (
+    Iterable,
+    Sequence,  # noqa: UP040
+)
 from typing import Any
 
 from vision.matcher.matcher_protocol import MatcherProtocol
@@ -39,6 +42,6 @@ def add_exemplars_to_index(index: MatcherProtocol, items: Iterable[dict[str, Any
     if not labels:
         return 0
 
-    vecs = np.asarray(embeddings, dtype=np.float32)
+    vecs: Sequence[Sequence[float]] = np.asarray(embeddings, dtype=np.float32).tolist()
     index.add_many(vecs, labels)
     return len(labels)
