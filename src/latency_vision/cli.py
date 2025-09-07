@@ -97,7 +97,7 @@ def build_parser() -> argparse.ArgumentParser:
         "--duration-min",
         type=int,
         default=0,
-        help="Run for N minutes (wall clock); 0 disables sustained mode",
+        help=("Run N minutes (wall clock); 0 disables sustained mode (replaces 'sustain-minutes')"),
     )
     eval_parser.add_argument(
         "--budget-ms",
@@ -110,8 +110,8 @@ def build_parser() -> argparse.ArgumentParser:
         type=str,
         default="",
         help=(
-            "Unknown rate band as LOW,HIGH. If omitted, uses fixture manifest; "
-            "if no manifest, defaults to 0.10,0.40."
+            "Unknown rate band LOW,HIGH. Optional; precedence: CLI > "
+            "fixture manifest > default 0.10,0.40."
         ),
     )
 
@@ -121,6 +121,7 @@ def build_parser() -> argparse.ArgumentParser:
 
 def main(argv: Sequence[str] | None = None) -> int:
     """Run the main program."""
+    t0_cli_ns = time.monotonic_ns()
     _warn_alias_once()
     parser = build_parser()
     args = parser.parse_args(argv)
@@ -159,6 +160,7 @@ def main(argv: Sequence[str] | None = None) -> int:
             duration_min=args.duration_min,
             unknown_rate_band=band_arg,
             process_start_ns=t0_process_ns,
+            cli_entry_ns=t0_cli_ns,
         )
         sys.exit(ret)
     elif args.command == "hello":

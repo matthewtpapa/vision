@@ -8,7 +8,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/).
 
 ## [Unreleased]
 
-## [0.1.0-rc.2] - 2025-09-??
+### Added
+
+- New: cold-start definition/measurement anchor.
+- New: `metrics_schema_version` and optional `process_cold_start_ms`.
+- CLI: `--duration-min` wording + `--unknown-rate-band` precedence clarified.
+- Tests: precedence + cold-start startpoint.
+
+## [0.1.0-rc.2] - 2025-09-15
 
 ### Added
 

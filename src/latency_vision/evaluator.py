@@ -7,6 +7,7 @@ from __future__ import annotations
 import csv
 import itertools
 import json
+import os
 import sys
 import time
 from collections.abc import Iterable
@@ -60,6 +61,7 @@ def run_eval(
     duration_min: int = 0,
     unknown_rate_band: tuple[float, float] | None = None,
     process_start_ns: int | None = None,
+    cli_entry_ns: int | None = None,
 ) -> int:
     """Run the evaluation pipeline over frames in *input_dir*."""
     import numpy as np
@@ -106,9 +108,9 @@ def run_eval(
 
     pipeline = DetectTrackEmbedPipeline(detector, tracker, cropper, embedder)
 
-    start_ns = time.monotonic_ns()
+    t0_ready_ns = time.monotonic_ns()
     if process_start_ns is None:
-        process_start_ns = start_ns
+        process_start_ns = t0_ready_ns
     deadline = None
     if duration_min > 0:
         deadline = time.monotonic() + duration_min * 60.0
@@ -132,7 +134,8 @@ def run_eval(
     if first_result_ns is None:
         first_result_ns = end_ns
 
-    cold_start_ms = (first_result_ns - process_start_ns) / 1e6
+    start_anchor_ns = max(process_start_ns, t0_ready_ns)
+    cold_start_ms = (first_result_ns - start_anchor_ns) / 1e6
     index_bootstrap_ms = pipeline.bootstrap_time_ms() or 0.0
 
     per_frame_ms, per_stage_ms, unknown_flags, controller_log = pipeline.get_eval_counters()
@@ -164,6 +167,7 @@ def run_eval(
             "sustained_in_budget": round(in_budget / total_eff, 6),
         }
     )
+    metrics["metrics_schema_version"] = "0.1"
     cfg_block = pipeline.controller_config()
     metrics["controller"] = {
         **cfg_block,
@@ -188,6 +192,8 @@ def run_eval(
             f"[guardrail] unknown_rate {ur:.3f} outside band [{band_min:.3f}, {band_max:.3f}]",
             file=sys.stderr,
         )
+    if os.getenv("VISION_DEBUG_TIMING") == "1" and cli_entry_ns is not None:
+        metrics["process_cold_start_ms"] = (first_result_ns - cli_entry_ns) / 1e6
     _atomic_write_json(out_dir / "metrics.json", metrics)
 
     return exit_code

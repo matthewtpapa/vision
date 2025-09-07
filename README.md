@@ -63,7 +63,7 @@ python scripts/build_fixture.py --seed 42 --out bench/fixture --n 400
 PYTHONPATH=src latvision eval --input bench/fixture --output bench/out
 python scripts/print_summary.py --metrics bench/out/metrics.json
 # Example:
-# fps=... p95=... p99=... frames=... processed=... backend=... sdk=... stride=... window_p95=...
+# fps=... p95=... p99=... cold_start_ms=... index_bootstrap_ms=... unknown_rate=... sustained_in_budget=... metrics_schema_version=... frames=... processed=... backend=... sdk=... stride=... window_p95=...
 
 # 3) Plot (optional)
 python scripts/plot_latency.py --input bench/out/stage_times.csv
@@ -72,13 +72,14 @@ python scripts/plot_latency.py --input bench/out/stage_times.csv
 
 Exit codes: 0 success · 2 user/data error (bad path, empty/invalid files) · 3 missing optional dep (pillow, matplotlib).
 
-See docs/latency.md (process model), docs/benchmarks.md (method: monotonic_ns, NumPy percentile “linear”, warm-up exclusion, GC/BLAS notes, CPU features), and docs/schema.md (v0.1).
+See docs/latency.md (process model), docs/benchmarks.md (method: monotonic_ns, NumPy percentile “linear”, warm-up exclusion, GC/BLAS notes, CPU features), docs/schema.md (v0.1 JSON contract), and docs/schema-guide.md.
 
 ## Docs
 
 - Charter (vision & roadmap): **[docs/charter.md](docs/charter.md)**
 - Milestone M1.1 Spec (Gates A–D): **[docs/specs/m1.1.md](docs/specs/m1.1.md)**
 - Result Schema v0.1 (frozen): **[docs/schema.md](docs/schema.md)**
+- Schema guide: **[docs/schema-guide.md](docs/schema-guide.md)**
 - Latency & process model: **[docs/latency.md](docs/latency.md)**
 - Benchmarks methodology: **[docs/benchmarks.md](docs/benchmarks.md)**
 - Third-party attributions: **[THIRD_PARTY.md](THIRD_PARTY.md)**
@@ -86,7 +87,8 @@ See docs/latency.md (process model), docs/benchmarks.md (method: monotonic_ns, N
 ### Schema v0.1
 
 This project ships a **frozen** result schema for the 0.1.x series. See
-**[docs/schema.md](docs/schema.md)** for the contract and invariants.
+**[docs/schema.md](docs/schema.md)** for the contract and invariants and
+**[docs/schema-guide.md](docs/schema-guide.md)** for metrics field guidance.
 
 **Example `MatchResult` (v0.1):**
 
@@ -137,10 +139,14 @@ Exit codes:
 - `2` — user/data error (bad path, empty/invalid files)
 - `3` — missing optional dependency (`pillow`, `matplotlib`)
 
-The evaluator can adaptively skip frames to stay within the latency budget; see the **[Eval Guide](docs/eval.md)** and **[Latency Guide](docs/latency.md)** for controller details.
+### Flags
 
-See [Benchmarks](docs/benchmarks.md)
-for measurement details and artifact fields.
+- `--duration-min` (replaces any "sustain-minutes" mentions)
+- `--unknown-rate-band LOW,HIGH` is optional; precedence = CLI > fixture manifest > default [0.10,0.40]
+- Cold-start is defined as [SDK ready (post-deps, pipeline initialized) → first MatchResult](docs/benchmarks.md#cold-start-definition)
+- See [schema](docs/schema.md) and [schema guide](docs/schema-guide.md) for `metrics_schema_version`, resolved `unknown_rate_band`, and the debug-only `process_cold_start_ms`
+
+The evaluator can adaptively skip frames to stay within the latency budget; see the **[Eval Guide](docs/eval.md)** and **[Latency Guide](docs/latency.md)** for controller details.
 
 Example with environment overrides:
 

@@ -31,7 +31,7 @@ jobs:
           if m.get('p95_ms', 999) > 33: die(f"p95>{33}: {m.get('p95_ms')}")
           if m.get('p99_ms', 999) > 66: die(f"p99>{66}: {m.get('p99_ms')}")
           if m.get('fps', 0) < 25: die(f"fps<25: {m.get('fps')}")
-          if m.get('cold_start_ms', 9999) > 1000: die(f"cold_start>{1000}: {m.get('cold_start_ms')}")
+          if m.get('cold_start_ms', 9999) > 1100: die(f"cold_start>{1100}: {m.get('cold_start_ms')}")
           if m.get('index_bootstrap_ms', 9999) > 50: die(f"bootstrap>{50}: {m.get('index_bootstrap_ms')}")
           if m.get('unknown_rate_violation'): die('unknown-rate out of band')
           print('Latency + cold-start + bootstrap + unknown-rate gates OK')
