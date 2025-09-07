@@ -37,6 +37,8 @@ Until PyPI publish, run locally with: PYTHONPATH=src latvision …
 
 ## Quickstart
 
+Prereq: `pip install numpy`
+
 ### (M1.1 façade – target)
 
 ```python
