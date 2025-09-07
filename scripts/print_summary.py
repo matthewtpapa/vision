@@ -27,6 +27,7 @@ def main() -> None:
         ("index_bootstrap_ms", "{:.0f}"),
         ("sustained_in_budget", "{:.3f}"),
         ("unknown_rate", "{:.3f}"),
+        ("metrics_schema_version", "{}"),
     ]
     out: list[str] = []
     for key, fmt in fields:

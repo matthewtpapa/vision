@@ -7,6 +7,7 @@ from __future__ import annotations
 import csv
 import itertools
 import json
+import os
 import sys
 import time
 from collections.abc import Iterable
@@ -60,6 +61,7 @@ def run_eval(
     duration_min: int = 0,
     unknown_rate_band: tuple[float, float] | None = None,
     process_start_ns: int | None = None,
+    cli_entry_ns: int | None = None,
 ) -> int:
     """Run the evaluation pipeline over frames in *input_dir*."""
     import numpy as np
@@ -164,6 +166,7 @@ def run_eval(
             "sustained_in_budget": round(in_budget / total_eff, 6),
         }
     )
+    metrics["metrics_schema_version"] = "0.1"
     cfg_block = pipeline.controller_config()
     metrics["controller"] = {
         **cfg_block,
@@ -188,6 +191,8 @@ def run_eval(
             f"[guardrail] unknown_rate {ur:.3f} outside band [{band_min:.3f}, {band_max:.3f}]",
             file=sys.stderr,
         )
+    if os.getenv("VISION_DEBUG_TIMING") == "1" and cli_entry_ns is not None:
+        metrics["process_cold_start_ms"] = (first_result_ns - cli_entry_ns) / 1e6
     _atomic_write_json(out_dir / "metrics.json", metrics)
 
     return exit_code

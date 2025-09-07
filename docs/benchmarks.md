@@ -122,6 +122,7 @@ On reference boxes (see spec for models):
 | FPS                        | ≥ 25                                |
 | p50 / p95 / p99 (ms)       | ≤ 33 / ≤ 33 / ≤ 66                  |
 | Cold-start (ms)            | ≤ 1,000                             |
+| Cold-start definition      | post-deps check → first MatchResult |
 | Index bootstrap @ N=1k (ms)| ≤ 50                                |
 | Sustained in-budget (%)    | ≥ 99.5% within 33 ms (10-min run)   |
 | Unknown-rate (fixture band)| Fixture-defined. Synthetic: [0.0, 1.0]. COCO target: [0.10, 0.40]. |

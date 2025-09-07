@@ -63,7 +63,7 @@ python scripts/build_fixture.py --seed 42 --out bench/fixture --n 400
 PYTHONPATH=src latvision eval --input bench/fixture --output bench/out
 python scripts/print_summary.py --metrics bench/out/metrics.json
 # Example:
-# fps=... p95=... p99=... frames=... processed=... backend=... sdk=... stride=... window_p95=...
+# fps=... p95=... p99=... cold_start_ms=... index_bootstrap_ms=... unknown_rate=... sustained_in_budget=... metrics_schema_version=... frames=... processed=... backend=... sdk=... stride=... window_p95=...
 
 # 3) Plot (optional)
 python scripts/plot_latency.py --input bench/out/stage_times.csv
@@ -136,6 +136,13 @@ Exit codes:
 - `0` — success
 - `2` — user/data error (bad path, empty/invalid files)
 - `3` — missing optional dependency (`pillow`, `matplotlib`)
+### Flags
+
+--duration-min (replaces any "sustain-minutes" mentions)
+
+--unknown-rate-band LOW,HIGH is optional; precedence = CLI > fixture manifest > default [0.10,0.40]
+
+Cold-start is defined as post-deps check → first MatchResult.
 
 The evaluator can adaptively skip frames to stay within the latency budget; see the **[Eval Guide](docs/eval.md)** and **[Latency Guide](docs/latency.md)** for controller details.
 
