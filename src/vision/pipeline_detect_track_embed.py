@@ -6,10 +6,10 @@ from __future__ import annotations
 
 import logging
 from collections import deque
-from collections.abc import Callable
+from collections.abc import Callable, Iterable
 from contextlib import nullcontext
 from statistics import quantiles
-from typing import Literal, cast
+from typing import Any, Literal, cast
 
 from .associations import TrackEmbedding
 from .cluster_store import JsonClusterStore
@@ -22,9 +22,9 @@ from .matcher.matcher_protocol import MatcherProtocol
 from .matcher.types import MatchResult
 from .telemetry import StageTimer, Telemetry, now_ns
 from .track_adapter import Tracker
-from .types import BBox, Track
+from .types import Track
 
-Cropper = Callable[[object, list[BBox]], list[object]]
+Cropper = Callable[[Any, list[tuple[int, int, int, int]]], list[Any]]
 
 
 class DetectTrackEmbedPipeline:
@@ -89,9 +89,9 @@ class DetectTrackEmbedPipeline:
                 track_ms = (now_ns() - t0) / 1e6
                 self._eval_stage_ms.setdefault("track", []).append(track_ms)
 
-                bboxes = [t.bbox for t in tracks]
+                bboxes: Iterable[tuple[int, int, int, int]] = [t.bbox for t in tracks]
                 with StageTimer(self._tel, "crop") if self._tel else nullcontext():
-                    crops = self._cropper(frame, bboxes)
+                    crops = self._cropper(frame, list(bboxes))
 
                 t0 = now_ns()
                 with StageTimer(self._tel, "embed") if self._tel else nullcontext():

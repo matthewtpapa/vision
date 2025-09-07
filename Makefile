@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: Apache-2.0
 # Copyright (c) 2025 The Vision Authors
 .RECIPEPREFIX := >
-.PHONY: setup test test-cov cov-html lint fmt format type mdlint mdfix verify help
+.PHONY: setup test test-cov cov-html lint fmt format type mdlint mdfix verify hooks help
 
 # Safer bash in make recipes
 SHELL := bash
@@ -21,13 +21,19 @@ help:
 >echo "make mdlint    - run markdownlint (same rules as CI)"
 >echo "make mdfix     - auto-fix markdownlint issues (requires npx)"
 >echo "make verify    - run all local checks (lint, fmt-check, type, test, markdownlint)"
+>echo "make hooks     - install and autoupdate pre-commit hooks"
 >echo "make eval      - run evaluator on a directory of frames"
 >echo ""
 >echo "Tip: run 'npm ci' once to enable local markdownlint (make mdlint/mdfix)."
 
 setup:
->pip install -e . || echo "⚠️ Skipped package install (pip blocked)"
->pip install -r requirements-dev.txt || echo "⚠️ Skipped dev deps install (pip blocked)"
+>if [ -n "$${CI:-}" ]; then \
+>  pip install -e .; \
+>  pip install -r requirements-dev.txt; \
+>else \
+>  pip install -e . || echo "⚠️ Skipped package install (pip blocked)"; \
+>  pip install -r requirements-dev.txt || echo "⚠️ Skipped dev deps install (pip blocked)"; \
+>fi
 
 test:
 >pytest
@@ -77,7 +83,15 @@ verify:
 >@echo "==> Types"
 >@if command -v mypy >/dev/null 2>&1; then mypy src/vision; else echo "⚠️ mypy not installed; skipping type check"; fi
 >@echo "==> Tests"
->@if command -v pytest >/dev/null 2>&1; then pytest; else echo "⚠️ pytest not installed; skipping tests"; fi
+>@if [ -n "$${CI:-}" ]; then \
+>  echo "(CI) tests run in separate coverage step"; \
+>else \
+>  if command -v pytest >/dev/null 2>&1; then \
+>    pytest; \
+>  else \
+>    echo "⚠️ pytest not installed; skipping tests"; \
+>  fi; \
+>fi
 >@echo "==> Markdownlint"
 >@if [ -n "$${CI:-}" ]; then \
 >  echo "(CI) markdownlint is advisory"; \
@@ -86,6 +100,10 @@ verify:
 >  $(MAKE) mdlint; \
 >fi
 >$(MAKE) mdpush
+
+hooks:
+>pre-commit install
+>pre-commit autoupdate
 
 eval:
 >if python -c "import vision" >/dev/null 2>&1; then \

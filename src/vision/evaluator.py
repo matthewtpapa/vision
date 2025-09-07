@@ -4,7 +4,9 @@
 
 from __future__ import annotations
 
+import itertools
 import json
+import time
 from collections.abc import Iterable
 from pathlib import Path
 from typing import Literal
@@ -15,6 +17,7 @@ from .detect_adapter import FakeDetector
 from .embedder_adapter import ClipLikeEmbedder
 from .eval_reporting import metrics_json
 from .pipeline_detect_track_embed import DetectTrackEmbedPipeline
+from .provenance import collect_provenance
 from .telemetry import Telemetry
 from .track_bytetrack_adapter import ByteTrackLikeTracker
 
@@ -34,7 +37,14 @@ def _discover_images(directory: Path) -> list[Path]:
     return sorted(p for p in files if p.suffix.lower() in _ALLOWED_EXTS)
 
 
-def run_eval(input_dir: str, output_dir: str, warmup: int) -> int:
+def run_eval(
+    input_dir: str,
+    output_dir: str,
+    warmup: int,
+    *,
+    budget_ms: int = 33,
+    sustain_minutes: int = 0,
+) -> int:
     """Run the evaluation pipeline over frames in *input_dir*."""
     import numpy as np
     from PIL import Image
@@ -61,20 +71,42 @@ def run_eval(input_dir: str, output_dir: str, warmup: int) -> int:
 
     pipeline = DetectTrackEmbedPipeline(detector, tracker, cropper, embedder, telemetry=tel)
 
-    for frame_path in frames:
+    start_ns = time.perf_counter_ns()
+    deadline = None
+    if sustain_minutes > 0:
+        deadline = time.perf_counter() + sustain_minutes * 60.0
+        warmup = 100
+
+    frame_iter = frames if sustain_minutes == 0 else itertools.cycle(frames)
+
+    first_result_ns: int | None = None
+    bootstrap_ns: int | None = None
+    processed = 0
+    for frame_path in frame_iter:
+        if deadline is not None and time.perf_counter() >= deadline:
+            break
         with Image.open(frame_path) as img:
             frame = np.asarray(img.convert("RGB"))
         pipeline.process(frame)
+        processed += 1
+        if first_result_ns is None:
+            first_result_ns = time.perf_counter_ns()
+        if processed == 1000 and bootstrap_ns is None:
+            bootstrap_ns = time.perf_counter_ns()
+
+    end_ns = time.perf_counter_ns()
+    if first_result_ns is None:
+        first_result_ns = end_ns
+    if bootstrap_ns is None:
+        bootstrap_ns = end_ns
+
+    cold_start_ms = (first_result_ns - start_ns) / 1e6
+    bootstrap_ms = (bootstrap_ns - start_ns) / 1e6
 
     pipeline.flush_telemetry_csv(str(out_dir / "stage_timings.csv"))
 
     per_frame_ms, per_stage_ms, unknown_flags = pipeline.get_eval_counters()
     frames_total = len(per_frame_ms)
-    warmup = min(max(0, warmup), frames_total)
-    if warmup:
-        per_frame_ms = per_frame_ms[warmup:]
-        unknown_flags = unknown_flags[warmup:]
-        per_stage_ms = {k: v[warmup:] for k, v in per_stage_ms.items()}
 
     selected = pipeline.backend_selected()
     backend: Literal["faiss", "numpy"] = "faiss" if selected == "faiss" else "numpy"
@@ -86,6 +118,16 @@ def run_eval(input_dir: str, output_dir: str, warmup: int) -> int:
         pipeline.kb_size(),
         backend,
         __version__,
+        warmup=warmup,
+        slo_budget_ms=float(budget_ms),
+    )
+    prov = collect_provenance(frames)
+    metrics.update(prov)
+    metrics.update(
+        {
+            "cold_start_ms": cold_start_ms,
+            "bootstrap_ms": bootstrap_ms,
+        }
     )
     cfg_block = pipeline.controller_config()
     metrics["controller"] = {
@@ -97,8 +139,8 @@ def run_eval(input_dir: str, output_dir: str, warmup: int) -> int:
     }
     _atomic_write_json(out_dir / "metrics.json", metrics)
 
-    budget = cfg.latency.budget_ms
-    exit_code = 2 if metrics["p95"] > float(budget) else 0
+    budget = float(budget_ms)
+    exit_code = 2 if metrics["p95_ms"] > budget else 0
 
     return exit_code
 

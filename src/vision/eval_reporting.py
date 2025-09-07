@@ -1,5 +1,7 @@
 # SPDX-License-Identifier: Apache-2.0
 # Copyright (c) 2025 The Vision Authors
+"""Helpers for summarising evaluation latency metrics."""
+
 from __future__ import annotations
 
 from statistics import fmean
@@ -29,10 +31,26 @@ def metrics_json(
     kb_size: int,
     backend_selected: Literal["faiss", "numpy"],
     sdk_version: str,
+    *,
+    warmup: int = 0,
+    slo_budget_ms: float = 33.0,
 ) -> dict:
+    """Return an aggregated metrics dictionary.
+
+    ``warmup`` specifies the number of initial samples to exclude from the
+    statistics. ``slo_budget_ms`` is used to compute the percentage of frames
+    within the latency SLO budget.
+    """
+
+    if warmup > 0:
+        per_frame_ms = per_frame_ms[warmup:]
+        unknown_flags = unknown_flags[warmup:]
+        per_stage_ms = {k: v[warmup:] for k, v in per_stage_ms.items()}
+
     fps = 1000.0 / fmean(per_frame_ms) if per_frame_ms else 0.0
     p50 = _percentile(per_frame_ms, 50.0)
     p95 = _percentile(per_frame_ms, 95.0)
+    p99 = _percentile(per_frame_ms, 99.0)
 
     stage_means: dict[str, float] = {}
     stages = ("detect", "track", "embed", "match")
@@ -54,12 +72,20 @@ def metrics_json(
     stage_means["overhead"] = fmean(overheads) if overheads else 0.0
 
     unknown_rate = (sum(unknown_flags) / len(unknown_flags)) if unknown_flags else 0.0
+    slo_within = (
+        sum(1 for ms in per_frame_ms if ms <= slo_budget_ms) / len(per_frame_ms) * 100
+        if per_frame_ms
+        else 0.0
+    )
 
     return {
         "stage_ms": stage_means,
         "fps": fps,
-        "p50": p50,
-        "p95": p95,
+        "p50_ms": p50,
+        "p95_ms": p95,
+        "p99_ms": p99,
+        "slo_budget_ms": float(slo_budget_ms),
+        "slo_within_budget_pct": slo_within,
         "unknown_rate": unknown_rate,
         "kb_size": int(kb_size),
         "backend_selected": backend_selected,
