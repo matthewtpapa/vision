@@ -27,9 +27,9 @@
 
 ```bash
 # demo flow must pass on a clean machine (offline/headless)
-python -m vision hello
+latvision hello
 python scripts/build_fixture.py --out bench/fixture --n 400
-PYTHONPATH=src python -m vision eval --input bench/fixture --output bench/out
+PYTHONPATH=src latvision eval --input bench/fixture --output bench/out
 python scripts/print_summary.py --metrics bench/out/metrics.json
 python scripts/plot_latency.py --input bench/out/stage_timings.csv
 ```

@@ -16,7 +16,7 @@ _ = get_config()
 
 def build_parser() -> argparse.ArgumentParser:
     """Build the argument parser for the CLI."""
-    parser = argparse.ArgumentParser(prog="vision", description="Vision CLI")
+    parser = argparse.ArgumentParser(prog="latvision", description="Latency Vision CLI")
     parser.add_argument(
         "--version",
         action="store_true",
@@ -57,6 +57,18 @@ def build_parser() -> argparse.ArgumentParser:
         default=33,
         help="Latency budget for SLO tracking",
     )
+    eval_parser.add_argument(
+        "--fixture-manifest",
+        type=str,
+        default=None,
+        help="Path to JSON manifest with eval settings (e.g., unknown_band).",
+    )
+    eval_parser.add_argument(
+        "--unknown-rate-band",
+        type=str,
+        default="0.10,0.40",
+        help="Fallback band for unknown rate as LOW,HIGH (overridden by manifest).",
+    )
     return parser
 
 
@@ -66,7 +78,7 @@ def main(argv: Sequence[str] | None = None) -> int:
     args = parser.parse_args(argv)
 
     if args.version:
-        print(f"Vision {__version__}")
+        print(f"Latency Vision {__version__}")
     elif args.command == "webcam":
         webcam.loop(dry_run=args.dry_run, use_fake=args.use_fake_detector)
     elif args.command == "eval":
@@ -76,19 +88,22 @@ def main(argv: Sequence[str] | None = None) -> int:
         except Exception:
             print(
                 (
-                    "vision eval requires numpy and pillow. "
+                    "latvision eval requires numpy and pillow. "
                     "Install with: pip install numpy pillow "
                     "(or run pip install -e .)."
                 ),
                 file=sys.stderr,
             )
             return 3
+        low, high = (float(x) for x in args.unknown_rate_band.split(",", 1))
         ret = evaluator.run_eval(
             args.input,
             args.output,
             args.warmup,
             budget_ms=args.budget_ms,
             sustain_minutes=args.sustain_minutes,
+            fixture_manifest=args.fixture_manifest,
+            unknown_band=(low, high),
         )
         sys.exit(ret)
     else:

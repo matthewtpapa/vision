@@ -6,6 +6,7 @@ from __future__ import annotations
 
 import itertools
 import json
+import sys
 import time
 from collections.abc import Iterable
 from pathlib import Path
@@ -44,6 +45,8 @@ def run_eval(
     *,
     budget_ms: int = 33,
     sustain_minutes: int = 0,
+    fixture_manifest: str | None = None,
+    unknown_band: tuple[float, float] = (0.10, 0.40),
 ) -> int:
     """Run the evaluation pipeline over frames in *input_dir*."""
     import numpy as np
@@ -52,6 +55,16 @@ def run_eval(
     in_dir = Path(input_dir)
     out_dir = Path(output_dir)
     out_dir.mkdir(parents=True, exist_ok=True)
+
+    import json as _json
+    if fixture_manifest:
+        try:
+            m = _json.loads(Path(fixture_manifest).read_text(encoding="utf-8"))
+            band = m.get("unknown_band")
+            if isinstance(band, list | tuple) and len(band) == 2:
+                unknown_band = (float(band[0]), float(band[1]))
+        except Exception:
+            pass
 
     frames = _discover_images(in_dir)
 
@@ -137,10 +150,21 @@ def run_eval(
         "frames_processed": pipeline.frames_processed(),
         "p95_window_ms": pipeline.last_window_p95(),
     }
+    low, high = unknown_band
+    metrics["unknown_band_low"] = float(low)
+    metrics["unknown_band_high"] = float(high)
     _atomic_write_json(out_dir / "metrics.json", metrics)
 
     budget = float(budget_ms)
     exit_code = 2 if metrics["p95_ms"] > budget else 0
+
+    ur = float(metrics.get("unknown_rate", 0.0))
+    if not (low <= ur <= high):
+        exit_code = 2
+        print(
+            f"[guardrail] unknown_rate {ur:.3f} outside band [{low:.3f}, {high:.3f}]",
+            file=sys.stderr,
+        )
 
     return exit_code
 

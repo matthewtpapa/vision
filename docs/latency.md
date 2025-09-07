@@ -84,7 +84,7 @@ Increase the budget and disable adaptation:
 ```bash
 VISION__LATENCY__BUDGET_MS=33 \
 VISION__PIPELINE__AUTO_STRIDE=0 \
-python -m vision eval --input frames --output out
+latvision eval --input frames --output out
 ```
 
 Force a bounded stride range:
@@ -92,7 +92,7 @@ Force a bounded stride range:
 ```bash
 VISION__PIPELINE__MIN_STRIDE=1 \
 VISION__PIPELINE__MAX_STRIDE=2 \
-python -m vision eval --input frames --output out
+latvision eval --input frames --output out
 ```
 
 ## What We Report
