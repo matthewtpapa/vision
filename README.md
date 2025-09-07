@@ -2,6 +2,8 @@
 
 Latency-bounded open-set recognition SDK — predictable, measurable, embeddable in AR/robotics pipelines.
 
+Why now: transformer encoders + FAISS + laptop-class CPUs make real-time open-set feasible on commodity hardware.
+
 > **Name mapping**
 >
 > - PyPI: `latency-vision`
@@ -61,7 +63,7 @@ latvision hello
 # 2) Eval — build a tiny fixture, run evaluator, print summary
 python scripts/build_fixture.py --seed 42 --out bench/fixture --n 400
 PYTHONPATH=src latvision eval --input bench/fixture --output bench/out
-python scripts/print_summary.py --metrics bench/out/metrics.json
+python scripts/print_summary.py --metrics bench/out/metrics.json  # prints index_bootstrap_ms (alias sometimes referred to as bootstrap_ms in older notes)
 # Example:
 # fps=... p95=... p99=... cold_start_ms=... index_bootstrap_ms=... unknown_rate=... sustained_in_budget=... metrics_schema_version=... frames=... processed=... backend=... sdk=... stride=... window_p95=...
 
