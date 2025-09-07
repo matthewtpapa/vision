@@ -8,13 +8,31 @@ Latency-bounded open-set recognition SDK — predictable, measurable, embeddable
 > - Import: `latency_vision`
 > - CLI: `latvision` (best-effort alias: `vision`)
 
+`vision` remains a temporary alias of `latvision`.
+
 ## Install
+
+Base (NumPy matcher fallback):
 
 ```bash
 pip install latency-vision
 ```
 
-Until PyPI publish, run locally with: PYTHONPATH=src python -m vision …
+Faster cosine search (CPU FAISS; macOS/Linux):
+
+```bash
+pip install "latency-vision[speed]"
+```
+
+GPU FAISS (Linux/macOS where supported):
+
+```bash
+pip install "latency-vision[gpu]"
+```
+
+Windows defaults to the NumPy backend unless FAISS wheels are available.
+
+Until PyPI publish, run locally with: PYTHONPATH=src latvision …
 
 ## Quickstart
 
@@ -49,11 +67,11 @@ print(result["label"], result.get("confidence"), result.get("is_unknown"))
 
 ```bash
 # 1) Hello — environment snapshot
-python -m vision hello
+latvision hello
 
 # 2) Eval — build a tiny fixture, run evaluator, print summary
 python scripts/build_fixture.py --out bench/fixture --n 400
-PYTHONPATH=src python -m vision eval --input bench/fixture --output bench/out
+PYTHONPATH=src latvision eval --input bench/fixture --output bench/out
 python scripts/print_summary.py --metrics bench/out/metrics.json
 # Example:
 # fps=... p95=... p99=... frames=... processed=... backend=... sdk=... stride=... window_p95=...
@@ -107,13 +125,13 @@ This project ships a **frozen** result schema for the 0.1.x series. See
 Invoke the evaluator to emit latency metrics and telemetry:
 
 ```bash
-python -m vision eval --input <dir> --output <dir> --warmup <int>
+latvision eval --input <dir> --output <dir> --warmup <int>
 ```
 
 Running from a source checkout? Use the local fallback:
 
 ```bash
-PYTHONPATH=src python -m vision eval …
+PYTHONPATH=src latvision eval …
 ```
 
 Dependencies:
@@ -140,7 +158,7 @@ Example with environment overrides:
 ```bash
 VISION__LATENCY__BUDGET_MS=33 \
 VISION__PIPELINE__AUTO_STRIDE=0 \
-python -m vision eval --input <dir> --output <dir>
+latvision eval --input <dir> --output <dir>
 ```
 
 ## Config

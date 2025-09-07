@@ -81,10 +81,10 @@ PY
             htmlcov
             pytest.log
           if-no-files-found: ignore
+      - run: latvision --version
       - run: python -m vision --version
-      - run: vision --version
-      - run: vision webcam --dry-run
-      - run: vision webcam --use-fake-detector --dry-run
+      - run: latvision webcam --dry-run
+      - run: latvision webcam --use-fake-detector --dry-run
 
   package:
     needs: verify

@@ -22,6 +22,9 @@ ORDER = [
     "p99_ms",
     "slo_within_budget_pct",
     "slo_budget_ms",
+    "unknown_rate",
+    "unknown_band_low",
+    "unknown_band_high",
     "frames",
     "processed",
     "backend",
@@ -36,6 +39,9 @@ SYNONYMS = {
     "p95_ms": ["p95", "p95_ms"],
     "p99_ms": ["p99", "p99_ms"],
     "window_p95": ["window_p95", "window_p95_ms"],
+    "unknown_rate": ["unknown_rate"],
+    "unknown_band_low": ["unknown_band_low"],
+    "unknown_band_high": ["unknown_band_high"],
 }
 
 

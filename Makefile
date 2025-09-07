@@ -106,10 +106,10 @@ hooks:
 >pre-commit autoupdate
 
 eval:
->if python -c "import vision" >/dev/null 2>&1; then \
->  python -m vision eval --input $(INPUT) --output $(OUTPUT) --warmup $(or $(WARMUP),100); \
+>if command -v latvision >/dev/null 2>&1; then \
+>  latvision eval --input $(INPUT) --output $(OUTPUT) --warmup $(or $(WARMUP),100); \
 >else \
->  PYTHONPATH=src python -m vision eval --input $(INPUT) --output $(OUTPUT) --warmup $(or $(WARMUP),100); \
+>  PYTHONPATH=src latvision eval --input $(INPUT) --output $(OUTPUT) --warmup $(or $(WARMUP),100); \
 >fi
 
 build:

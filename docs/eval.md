@@ -1,4 +1,4 @@
-# Evaluation & Telemetry (`vision eval`)
+# Evaluation & Telemetry (`latvision eval`)
 
 ## Quickstart
 
@@ -18,7 +18,7 @@ for i in range(8):
 Run the evaluator and inspect the outputs:
 
 ```bash
-python -m vision eval --input in --output out --warmup 0
+latvision eval --input in --output out --warmup 0
 cat out/metrics.json
 cat out/stage_timings.csv
 ```

@@ -204,3 +204,28 @@ def test_budget_flag_propagates(tmp_path: Path) -> None:
     assert cp.returncode == 0
     data = json.loads((out_dir / "metrics.json").read_text())
     assert data["slo_budget_ms"] == 40
+
+
+def test_unknown_band_fields_in_metrics(tmp_path: Path) -> None:
+    in_dir = tmp_path / "in"
+    out_dir = tmp_path / "out"
+    in_dir.mkdir()
+    out_dir.mkdir()
+    from PIL import Image
+
+    Image.new("RGB", (8, 8)).save(in_dir / "0.png")
+    cp = run_cli(
+        "eval",
+        "--input",
+        str(in_dir),
+        "--output",
+        str(out_dir),
+        "--warmup",
+        "0",
+        "--unknown-rate-band",
+        "0.2,0.8",
+    )
+    assert cp.returncode in (0, 2)
+    data = json.loads((out_dir / "metrics.json").read_text())
+    assert data["unknown_band_low"] == 0.2
+    assert data["unknown_band_high"] == 0.8

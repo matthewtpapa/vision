@@ -26,7 +26,7 @@ def run_cli(*args: str) -> subprocess.CompletedProcess[str]:
 
 def test_version_command_reports_version() -> None:
     result = run_cli("--version")
-    assert result.stdout.strip() == f"Vision {__version__}"
+    assert result.stdout.strip() == f"Latency Vision {__version__}"
 
 
 def test_webcam_dry_run_reports_message() -> None:
