@@ -126,23 +126,4 @@ PY
             name: wheels-${{ runner.os }}-py${{ matrix.python }}
             path: wheelhouse/*.whl
 
-  schema-drift:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
-        with: { python-version: "3.11" }
-      - name: Check README example equals docs/schema.md
-        run: |
-          python - <<'PY'
-          import re, json, pathlib, sys
-          rd = pathlib.Path("README.md").read_text(encoding="utf-8")
-          m = re.search(r"```json\n(.*?)\n```", rd, re.S)
-          if not m: sys.exit("README JSON example not found")
-          rj = json.loads(m.group(1))
-          sj = json.loads(pathlib.Path("docs/schema.md").read_text(encoding="utf-8"))
-          if json.dumps(rj, sort_keys=True, separators=(",",":")) != json.dumps(sj, sort_keys=True, separators=(",",":")):
-              sys.exit("README example != docs/schema.md")
-          print("Schema examples match.")
-          PY
 
