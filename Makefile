@@ -23,6 +23,7 @@ help:
 >echo "make verify    - run all local checks (lint, fmt-check, type, test, markdownlint)"
 >echo "make hooks     - install and autoupdate pre-commit hooks"
 >echo "make hello     - print environment information"
+>echo "make bench     - run fixture → eval → summary"
 >echo "make demo      - run fixture → eval → plot demo"
 >echo "make eval      - run evaluator on a directory of frames"
 >echo ""
@@ -120,6 +121,14 @@ hello:
 >else \
 >  PYTHONPATH=src latvision hello; \
 >fi
+
+bench: bench-deps
+>python scripts/build_fixture.py --out bench/fixture --n 400
+>latvision eval --input bench/fixture --output bench/out
+>python scripts/print_summary.py --metrics bench/out/metrics.json
+
+bench-deps:
+>@python scripts/check_bench_deps.py
 
 demo:
 >python scripts/build_fixture.py --out bench/fixture --n 400

@@ -35,6 +35,21 @@ jobs:
           # minimal runtime deps for eval/plot if needed by tests
           pip install pillow numpy
 
+      - name: Quickstart smoke (facade)
+        if: runner.os == 'Linux' && matrix.python == '3.11'
+        run: |
+          python - <<'PY'
+
+
+import numpy as np
+from latency_vision import add_exemplar, query_frame
+add_exemplar("red-mug", np.zeros(128, dtype="float32"))
+res = query_frame(np.zeros((64,64,3), dtype=np.uint8))
+need = {"label","confidence","neighbors","backend","stride","budget_hit","bbox","timestamp_ms","sdk_version"}
+assert set(res.keys()) == need, f"bad keys: {set(res.keys())-need}"
+print("Quickstart OK:", res["backend"], res["sdk_version"])
+PY
+
       - name: Lint
         run: |
           ruff check .
@@ -42,36 +57,92 @@ jobs:
 
       - name: Typecheck
         run: |
-          if command -v mypy >/dev/null 2>&1; then mypy src/vision; else echo "mypy not installed"; fi
+          if command -v mypy >/dev/null 2>&1; then mypy src/latency_vision; else echo "mypy not installed"; fi
 
       - name: Unit tests
         run: |
           pytest -q
 
-      - name: Build wheels with cibuildwheel
-        uses: pypa/cibuildwheel@v2.20
-        env:
-          CIBW_BUILD: "cp310-* cp311-* cp312-*"
-          CIBW_SKIP: "pp*"
-          CIBW_ARCHS_MACOS: "universal2"
-          CIBW_ARCHS_LINUX: "x86_64"
-          CIBW_MANYLINUX_X86_64_IMAGE: "manylinux2014"
-        with:
-          output-dir: wheelhouse
-
-      - name: Fresh venv smoke install (from wheel)
+      - name: Windows demo
+        if: runner.os == 'Windows'
+        shell: bash
         run: |
-          python -m venv .venv
-          . .venv/bin/activate || .\.venv\Scripts\activate
-          python -m pip install wheelhouse/*.whl || python -m pip install -e .
+          python scripts/build_fixture.py --out bench/fixture --n 400
+          latvision eval --input bench/fixture --output bench/out --warmup 0 --unknown-rate-band 0.0,1.0
+          python scripts/print_summary.py --metrics bench/out/metrics.json
+          python scripts/plot_latency.py --input bench/out/stage_timings.csv --output bench/out/latency.png --metrics bench/out/metrics.json || true
+
+      - name: Validate Windows metrics
+        if: runner.os == 'Windows'
+        shell: bash
+        run: |
           python - <<'PY'
-import latency_vision as lv
-print("latency_vision", lv.version)
+import json, sys, pathlib
+p = pathlib.Path("bench/out/metrics.json")
+if not p.exists(): sys.exit("metrics.json missing")
+m = json.loads(p.read_text(encoding="utf-8"))
+assert m.get("backend_selected") == "numpy", f"backend_selected={m.get('backend_selected')}"
+assert isinstance(m.get("sdk_version"), str) and m["sdk_version"], "sdk_version missing/empty"
+print("Windows demo OK:", m["backend_selected"], m["sdk_version"])
 PY
 
-      - name: Upload wheel artifacts
-        uses: actions/upload-artifact@v4
-        with:
-          name: wheels-${{ runner.os }}-py${{ matrix.python }}
-          path: wheelhouse/*.whl
+        - name: Build wheels with cibuildwheel
+          uses: pypa/cibuildwheel@v2.20
+          env:
+            CIBW_BUILD: "cp310-* cp311-* cp312-*"
+            CIBW_SKIP: "pp*"
+            CIBW_ARCHS_MACOS: "universal2"
+            CIBW_ARCHS_LINUX: "x86_64"
+            CIBW_MANYLINUX_X86_64_IMAGE: "manylinux2014"
+          with:
+            output-dir: wheelhouse
+
+        - name: Audit wheel tags
+          run: |
+            python - <<'PY'
+            import glob, sys
+            files = glob.glob("wheelhouse/*.whl")
+            if not files: sys.exit("no wheels built")
+            blob = " ".join(files)
+            if "manylinux2014_x86_64" not in blob: sys.exit("Missing manylinux2014 wheel")
+            if "win_amd64" not in blob: sys.exit("Missing win_amd64 wheel")
+            if "universal2" not in blob: sys.exit("Missing macOS universal2 wheel")
+            print("Wheel tags present.")
+            PY
+
+        - name: Fresh venv smoke install (from wheel)
+          run: |
+            python -m venv .venv
+            . .venv/bin/activate || .\.venv\Scripts\activate
+            python -m pip install wheelhouse/*.whl || python -m pip install -e .
+            python - <<'PY'
+  import latency_vision as lv
+  print("latency_vision", lv.__version__)
+  PY
+
+        - name: Upload wheel artifacts
+          uses: actions/upload-artifact@v4
+          with:
+            name: wheels-${{ runner.os }}-py${{ matrix.python }}
+            path: wheelhouse/*.whl
+
+  schema-drift:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: { python-version: "3.11" }
+      - name: Check README example equals docs/schema.md
+        run: |
+          python - <<'PY'
+          import re, json, pathlib, sys
+          rd = pathlib.Path("README.md").read_text(encoding="utf-8")
+          m = re.search(r"```json\n(.*?)\n```", rd, re.S)
+          if not m: sys.exit("README JSON example not found")
+          rj = json.loads(m.group(1))
+          sj = json.loads(pathlib.Path("docs/schema.md").read_text(encoding="utf-8"))
+          if json.dumps(rj, sort_keys=True, separators=(",",":")) != json.dumps(sj, sort_keys=True, separators=(",",":")):
+              sys.exit("README example != docs/schema.md")
+          print("Schema examples match.")
+          PY
 
