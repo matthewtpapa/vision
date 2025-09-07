@@ -31,7 +31,7 @@ jobs:
         env:
           VISION__LATENCY__BUDGET_MS: "200"
         run: |
-          python -m vision eval --input ci_frames --output ci_out --warmup 2
+          latvision eval --input ci_frames --output ci_out --warmup 2 --unknown-rate-band 0.0,1.0
       - name: Upload artifacts
         if: always()
         uses: actions/upload-artifact@v4

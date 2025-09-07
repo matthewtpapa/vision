@@ -212,6 +212,7 @@ def test_unknown_band_fields_in_metrics(tmp_path: Path) -> None:
     in_dir.mkdir()
     out_dir.mkdir()
     from PIL import Image
+
     Image.new("RGB", (8, 8)).save(in_dir / "0.png")
     cp = run_cli(
         "eval",

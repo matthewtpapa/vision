@@ -57,6 +57,7 @@ def run_eval(
     out_dir.mkdir(parents=True, exist_ok=True)
 
     import json as _json
+
     if fixture_manifest:
         try:
             m = _json.loads(Path(fixture_manifest).read_text(encoding="utf-8"))
