@@ -1,6 +1,8 @@
 #!/usr/bin/env sh
 set -eu
 
+command -v strace >/dev/null 2>&1 || { echo "strace not found; install it" >&2; exit 127; }
+
 mkdir -p artifacts bench/fixture bench/out
 
 # Build a small offline fixture to exercise the hot loop.
