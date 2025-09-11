@@ -11,7 +11,7 @@ from latency_vision.telemetry.repro import metrics_hash
 
 
 def load(path: str) -> Any:
-    with open(path, "r", encoding="utf-8") as fh:
+    with open(path, encoding="utf-8") as fh:
         return json.load(fh)
 
 

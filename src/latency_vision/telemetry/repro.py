@@ -13,7 +13,7 @@ def _normalize(obj: Any) -> Any:
     """Recursively normalize metrics for deterministic serialization."""
     if isinstance(obj, Mapping):
         return {k: _normalize(obj[k]) for k in sorted(obj)}
-    if isinstance(obj, Sequence) and not isinstance(obj, (str, bytes, bytearray)):
+    if isinstance(obj, Sequence) and not isinstance(obj, str | bytes | bytearray):
         return [_normalize(x) for x in obj]
     if isinstance(obj, float):
         return f"{obj:.9f}"
