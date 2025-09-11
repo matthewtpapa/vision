@@ -85,6 +85,8 @@ PY
       - run: python -m vision --version
       - run: latvision webcam --dry-run
       - run: latvision webcam --use-fake-detector --dry-run
+      - name: Ban runtime RIS
+        run: scripts/check_no_runtime_ris.sh
 
   package:
     needs: verify
