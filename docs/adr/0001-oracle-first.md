@@ -1,9 +1,11 @@
 # ADR 0001: Oracle-first
 
 ## Decision
+
 Oracle-first loop = LabelBank ANN → bounded CandidateOracle → curated Verify → KB promotion (capped medoids) with EvidenceLedger.
 
 ## Invariants
+
 - No runtime RIS in hot loop (RIS allowed only in offline ingestion).
 - Thresholds are quantile-calibrated per shard (no global constants).
 - KB medoids are int8, ≤ 3 per class (herding + caps).
@@ -11,6 +13,6 @@ Oracle-first loop = LabelBank ANN → bounded CandidateOracle → curated Verify
 - Hot-loop purity: zero network I/O (validated via strace in CI; syscall_report.txt artifact)
 
 ## Module boundaries & non-goals
+
 Modules: LabelBank, CandidateOracle, Verify, KB promotion, EvidenceLedger, LabelBankProtocol.
 Non-goals: no changes to detect/track/embed/matcher APIs here.
-
