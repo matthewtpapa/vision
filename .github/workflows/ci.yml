@@ -87,6 +87,17 @@ PY
       - run: latvision webcam --use-fake-detector --dry-run
       - name: Ban runtime RIS
         run: scripts/check_no_runtime_ris.sh
+      - name: Install strace
+        run: sudo apt-get update && sudo apt-get install -y strace
+      - name: Hot-loop syscall audit
+        run: scripts/audit_syscalls.sh
+      - name: Upload syscall audit
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: syscall-report
+          path: artifacts/syscall_report.txt
+          if-no-files-found: warn
 
   package:
     needs: verify
