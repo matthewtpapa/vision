@@ -151,6 +151,9 @@ plot:
 >python scripts/plot_latency.py --metrics bench/out/metrics.json --out bench/out/latency.png
 >@test -f bench/out/latency.png && echo "Wrote bench/out/latency.png"
 
+repro:
+>python scripts/repro_check.py bench/out/metrics.json bench/out/metrics.json --pretty
+
 build:
 >python -m pip install --upgrade build twine
 >python -m build
