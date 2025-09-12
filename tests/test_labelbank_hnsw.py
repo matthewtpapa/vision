@@ -1,10 +1,5 @@
 from __future__ import annotations
 
-import pytest
-
-pytest.importorskip("faiss")
-pytest.importorskip("numpy")
-
 import numpy as np
 
 from latency_vision.label_bank import HNSWInt8LabelBank

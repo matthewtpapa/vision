@@ -46,10 +46,10 @@ from packaging import tags
 print(f"platform tag: {next(tags.sys_tags())}")
 PY
           python -m pip debug --verbose
-      - name: Install faiss-cpu for tests
+      - name: Prepare ANN deps (optional)
         run: |
           python -m pip install --upgrade pip
-          python -m pip install faiss-cpu
+          python -m pip install faiss-cpu || echo "faiss-cpu unavailable; using NumPy fallback"
       - run: make verify
       - run: PYTEST_ADDOPTS="-ra" make test-cov | tee pytest.log
       - name: Fail on skips

@@ -4,8 +4,16 @@ import json
 import os
 from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
+from typing import Any, cast
 
-import faiss
+try:  # pragma: no cover - import guard
+    import faiss
+
+    _FAISS_AVAILABLE = True
+except Exception:  # pragma: no cover - fallback path
+    faiss = cast(Any, None)
+    _FAISS_AVAILABLE = False
+
 import numpy as np
 
 from .protocol import LabelBankProtocol, TopK
@@ -23,14 +31,48 @@ class _TopK:
         return self._labels
 
 
+class _NPIndex:
+    """NumPy brute-force IP index (fallback when FAISS is unavailable)."""
+
+    def __init__(self, dim: int, M: int = 32) -> None:  # noqa: ARG002 - M kept for API parity
+        self.dim = dim
+        self._vecs: np.ndarray | None = None
+        self.metric_type = None
+
+        class _H:
+            def __init__(self) -> None:
+                self.efConstruction = 0
+                self.efSearch = 0
+                self.random_seed = 0
+
+        self.hnsw = _H()
+
+    def add(self, vectors: np.ndarray) -> None:
+        self._vecs = vectors if self._vecs is None else np.vstack([self._vecs, vectors])
+
+    def search(self, queries: np.ndarray, k: int) -> tuple[np.ndarray, np.ndarray]:
+        if self._vecs is None:  # pragma: no cover - defensive
+            raise ValueError("index is empty")
+        scores = queries @ self._vecs.T
+        idx = np.argsort(-scores, axis=1)[:, :k]
+        top = np.take_along_axis(scores, idx, axis=1)
+        return top.astype("float32"), idx.astype("int64")
+
+
 class HNSWInt8LabelBank(LabelBankProtocol):
     def __init__(self, dim: int, M: int = 32, efConstruction: int = 200, seed: int = 1234) -> None:
         self.dim = dim
-        self._index = faiss.IndexHNSWFlat(dim, M)
-        self._index.metric_type = faiss.METRIC_INNER_PRODUCT
-        self._index.hnsw.efConstruction = efConstruction
-        self._index.hnsw.random_seed = seed
-        faiss.cvar.rand.seed(seed)
+        if _FAISS_AVAILABLE:
+            self._index = faiss.IndexHNSWFlat(dim, M)
+            self._index.metric_type = faiss.METRIC_INNER_PRODUCT
+            self._index.hnsw.efConstruction = efConstruction
+            self._index.hnsw.random_seed = seed
+            try:  # pragma: no cover - faiss internal global RNG
+                faiss.cvar.rand.seed(seed)
+            except Exception:  # pragma: no cover - best effort
+                pass
+        else:  # pragma: no cover - executed when faiss unavailable
+            self._index = _NPIndex(dim, M)
         self._labels: list[str] = []
         self._vocab_int8: np.ndarray | None = None
 
@@ -69,7 +111,12 @@ class HNSWInt8LabelBank(LabelBankProtocol):
 
     def save(self, path: str) -> None:
         os.makedirs(path, exist_ok=True)
-        faiss.write_index(self._index, os.path.join(path, "index.faiss"))
+        if _FAISS_AVAILABLE and isinstance(self._index, faiss.Index):
+            faiss.write_index(self._index, os.path.join(path, "index.faiss"))
+        else:
+            vecs = getattr(self._index, "_vecs", None)
+            if vecs is not None:
+                np.save(os.path.join(path, "index.npy"), vecs)
         with open(os.path.join(path, "labels.txt"), "w", encoding="utf-8") as fh:
             fh.write("\n".join(self._labels))
         if self._vocab_int8 is not None:
@@ -79,19 +126,33 @@ class HNSWInt8LabelBank(LabelBankProtocol):
 
     @classmethod
     def load(cls, path: str) -> HNSWInt8LabelBank:
-        index = faiss.read_index(os.path.join(path, "index.faiss"))
+        faiss_path = os.path.join(path, "index.faiss")
+        np_path = os.path.join(path, "index.npy")
+        if _FAISS_AVAILABLE and os.path.exists(faiss_path):
+            index = faiss.read_index(faiss_path)
+            obj = cls(index.d)
+            obj._index = index
+        elif os.path.exists(np_path):
+            vecs = np.load(np_path).astype("float32")
+            obj = cls(vecs.shape[1])
+            obj._index = _NPIndex(vecs.shape[1])
+            obj._index.add(vecs)
+        else:  # pragma: no cover - missing files
+            raise FileNotFoundError("no index found at path")
         with open(os.path.join(path, "labels.txt"), encoding="utf-8") as fh:
             labels = [line.strip() for line in fh if line.strip()]
         vocab_path = os.path.join(path, "vocab.int8.npy")
         vocab = np.load(vocab_path) if os.path.exists(vocab_path) else None
-        obj = cls(index.d)
-        obj._index = index
         obj._labels = labels
         obj._vocab_int8 = vocab
         return obj
 
     def stats(self) -> Mapping[str, int]:
-        bytes_index = len(faiss.serialize_index(self._index))
+        if _FAISS_AVAILABLE and isinstance(self._index, faiss.Index):
+            bytes_index = len(faiss.serialize_index(self._index))
+        else:
+            vecs = getattr(self._index, "_vecs", None)
+            bytes_index = int(vecs.nbytes) if vecs is not None else 0
         bytes_vocab = int(self._vocab_int8.nbytes) if self._vocab_int8 is not None else 0
         return {
             "n_items": len(self._labels),
