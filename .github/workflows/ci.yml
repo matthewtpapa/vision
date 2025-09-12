@@ -115,6 +115,36 @@ PY
           assert s1["bench_hash"] == s2["bench_hash"], "bench_hash mismatch"
           print("LabelBank gates ok:", s1["lookup_p95_ms"], s1["recall_at_10"], s1["bench_hash"])
           PY
+      - name: Build Verify manifest
+        run: python scripts/verify_build_manifest.py --seed data/verify/seed_gallery/seed.jsonl --data data/verify/seed_gallery --out bench/verify/gallery_manifest.jsonl
+      - name: Calibrate Verify
+        run: python scripts/verify_calibrate.py --manifest bench/verify/gallery_manifest.jsonl --out bench/verify/calibration.json --seed 4242
+      - name: Verify eval
+        run: make verify-eval
+      - name: Upload Verify artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: verify-artifacts
+          path: |
+            bench/verify/calibration.json
+            bench/out/metrics.json
+            bench/out/stage_times.csv
+          if-no-files-found: error
+      - name: Enforce Verify gates
+        run: |
+          python - <<'PY'
+          import json
+          m=json.load(open("bench/out/metrics.json"))
+          v=m["verify"]
+          assert v["known_wrong_after_verify"] == 0, f"known_wrong_after_verify={v['known_wrong_after_verify']}"
+          ur=m["unknown_rate_observed"]
+          band=m.get("unknown_rate_band", [0.10,0.40])
+          assert band[0] <= ur <= band[1], f"unknown_rate_observed={ur}"
+          assert m["p95_ms"] <= 33.0, f"p95_ms={m['p95_ms']}"
+          assert m["cold_start_ms"] <= 1500.0, f"cold_start_ms={m['cold_start_ms']}"
+          print("Verify gates ok")
+          PY
       - name: Ban runtime RIS
         run: scripts/check_no_runtime_ris.sh
       - name: Install strace

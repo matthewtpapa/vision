@@ -161,6 +161,14 @@ labelbank-bench: labelbank-shard
 >python scripts/bench_labelbank.py --shard bench/labelbank/shard --out bench/labelbank_stats.json --seed 999 --queries $${LB_Q:-500} --k 10
 >@echo "LabelBank stats written to bench/labelbank_stats.json"
 
+verify-calibrate:
+>python scripts/verify_calibrate.py --manifest bench/verify/gallery_manifest.jsonl --out bench/verify/calibration.json --seed 4242
+
+verify-eval:
+>python scripts/build_fixture.py --seed 42 --out bench/fixture --n 200
+>latvision eval --input bench/fixture --output bench/out --warmup 0 --unknown-rate-band 0.10,0.40
+>python scripts/print_summary.py --metrics bench/out/metrics.json
+
 build:
 >python -m pip install --upgrade build twine
 >python -m build
