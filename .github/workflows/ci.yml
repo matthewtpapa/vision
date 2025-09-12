@@ -89,6 +89,26 @@ PY
       - run: python -m vision --version
       - run: latvision webcam --dry-run
       - run: latvision webcam --use-fake-detector --dry-run
+      - name: Build LabelBank shard (CI scale)
+        run: LB_N=5000 python scripts/build_labelbank_shard.py --in data/labelbank/seed.jsonl --out bench/labelbank/shard --seed 1234 --dim 256
+      - name: Bench LabelBank (CI scale)
+        run: LB_Q=500 python scripts/bench_labelbank.py --shard bench/labelbank/shard --out bench/labelbank_stats.json --seed 999 --k 10
+      - name: Upload LabelBank stats
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: labelbank-stats
+          path: bench/labelbank_stats.json
+          if-no-files-found: error
+      - name: Enforce LabelBank gates
+        run: |
+          python - <<'PY'
+          import json, sys
+          d=json.load(open("bench/labelbank_stats.json"))
+          assert d["lookup_p95_ms"] <= 10.0, f"lookup_p95_ms={d['lookup_p95_ms']}"
+          assert d["recall_at_10"] >= 0.99, f"recall_at_10={d['recall_at_10']}"
+          print("LabelBank gates ok:", d["lookup_p95_ms"], d["recall_at_10"])
+          PY
       - name: Ban runtime RIS
         run: scripts/check_no_runtime_ris.sh
       - name: Install strace

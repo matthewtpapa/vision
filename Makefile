@@ -154,6 +154,13 @@ plot:
 repro:
 >python scripts/repro_check.py bench/out/metrics.json bench/out/metrics.json --pretty
 
+labelbank-shard:
+>python scripts/build_labelbank_shard.py --seed 1234 --in data/labelbank/seed.jsonl --out bench/labelbank/shard --dim 256 --max-n $${LB_N:-10000}
+
+labelbank-bench: labelbank-shard
+>python scripts/bench_labelbank.py --shard bench/labelbank/shard --out bench/labelbank_stats.json --seed 999 --queries $${LB_Q:-500} --k 10
+>@echo "LabelBank stats written to bench/labelbank_stats.json"
+
 build:
 >python -m pip install --upgrade build twine
 >python -m build
