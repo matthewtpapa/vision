@@ -92,22 +92,28 @@ PY
       - name: Build LabelBank shard (CI scale)
         run: LB_N=5000 python scripts/build_labelbank_shard.py --in data/labelbank/seed.jsonl --out bench/labelbank/shard --seed 1234 --dim 256
       - name: Bench LabelBank (CI scale)
-        run: LB_Q=500 python scripts/bench_labelbank.py --shard bench/labelbank/shard --out bench/labelbank_stats.json --seed 999 --k 10
+        run: |
+          LB_Q=500 python scripts/bench_labelbank.py --shard bench/labelbank/shard --out bench/labelbank_stats.json --seed 999 --k 10
+          LB_Q=500 python scripts/bench_labelbank.py --shard bench/labelbank/shard --out bench/labelbank_stats_2.json --seed 999 --k 10
       - name: Upload LabelBank stats
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: labelbank-stats
-          path: bench/labelbank_stats.json
+          path: |
+            bench/labelbank_stats.json
+            bench/labelbank_stats_2.json
           if-no-files-found: error
       - name: Enforce LabelBank gates
         run: |
           python - <<'PY'
-          import json, sys
-          d=json.load(open("bench/labelbank_stats.json"))
-          assert d["lookup_p95_ms"] <= 10.0, f"lookup_p95_ms={d['lookup_p95_ms']}"
-          assert d["recall_at_10"] >= 0.99, f"recall_at_10={d['recall_at_10']}"
-          print("LabelBank gates ok:", d["lookup_p95_ms"], d["recall_at_10"])
+          import json
+          s1=json.load(open("bench/labelbank_stats.json"))
+          s2=json.load(open("bench/labelbank_stats_2.json"))
+          assert s1["lookup_p95_ms"] <= 10.0, f"lookup_p95_ms={s1['lookup_p95_ms']}"
+          assert s1["recall_at_10"] >= 0.99, f"recall_at_10={s1['recall_at_10']}"
+          assert s1["bench_hash"] == s2["bench_hash"], "bench_hash mismatch"
+          print("LabelBank gates ok:", s1["lookup_p95_ms"], s1["recall_at_10"], s1["bench_hash"])
           PY
       - name: Ban runtime RIS
         run: scripts/check_no_runtime_ris.sh

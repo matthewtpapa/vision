@@ -14,6 +14,7 @@ import time
 from collections.abc import Sequence
 
 from latency_vision.label_bank import HNSWInt8LabelBank
+from latency_vision.telemetry.repro import metrics_hash
 
 SEED_FILE = "data/labelbank/seed.jsonl"
 
@@ -97,6 +98,19 @@ def main(argv: Sequence[str] | None = None) -> int:
         "seed": args.seed,
         "created_utc": dt.datetime.utcnow().isoformat() + "Z",
     }
+    hash_keys = [
+        "n_total",
+        "queries",
+        "k",
+        "lookup_p95_ms",
+        "recall_at_10",
+        "bytes_index",
+        "bytes_vocab",
+        "bytes_per_1k_phrases",
+        "seed",
+    ]
+    bench_hash = metrics_hash({k: out[k] for k in hash_keys})
+    out["bench_hash"] = bench_hash
     with open(args.out, "w", encoding="utf-8") as fh:
         json.dump(out, fh, ensure_ascii=False, separators=(",", ":"))
     return 0
