@@ -178,6 +178,18 @@ budget_ms = 33
 frame_stride = 1
 ```
 
+## Make targets
+
+Helpful development targets:
+
+| Target | Description |
+|--------|-------------|
+| `make labelbank-shard` | build the offline P31 shard |
+| `make labelbank-bench` | run the LabelBank micro-benchmark |
+| `make verify-calibrate` | derive VerifyWorker calibration thresholds |
+| `make verify-eval` | run evaluation with verification metrics |
+| `make repro` | compare metrics JSONs for reproducibility |
+
 ## Architecture (M1 vertical slice)
 
 Webcam → Detect (YOLO) → Track (ByteTrack) → Embed (CLIP-B32) → Match (FAISS/NumPy) → Label/Unknown → Persist Exemplar → Telemetry

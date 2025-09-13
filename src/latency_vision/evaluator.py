@@ -165,6 +165,7 @@ def run_eval(
     r_vals: list[float] = []
     diversities: list[int] = []
     accepted = rejected = 0
+    verify_called = 0
     verify_manifest = "bench/verify/gallery_manifest.jsonl"
     calib_path = "bench/verify/calibration.json"
     if os.path.exists(verify_manifest) and os.path.exists(calib_path):
@@ -173,8 +174,9 @@ def run_eval(
         for flag in unknown_flags:
             if not flag:
                 continue
+            verify_called += 1
             t0 = time.monotonic_ns()
-            res = vw.verify([0.0], "alpha")
+            res = vw.verify([0.0], "__unknown__")
             verify_times_ms.append((time.monotonic_ns() - t0) / 1e6)
             if isinstance(res, VerifyOutcome):
                 E_vals.append(res.E)
@@ -198,15 +200,14 @@ def run_eval(
         return float(s[f] * (c - k) + s[c] * (k - f))
 
     metrics["verify"] = {
+        "called": verify_called,
         "accepted": accepted,
         "rejected": rejected,
-        "known_wrong_after_verify": 0,
         "E_p95": _percentile(E_vals, 95.0),
         "Δ_p95": _percentile(D_vals, 95.0),
         "r_p95": _percentile(r_vals, 95.0),
         "diversity_min": min(diversities) if diversities else 0,
     }
-    metrics["unknown_rate_observed"] = metrics.get("unknown_rate", 0.0)
 
     if verify_times_ms:
         total_ns = int(sum(verify_times_ms) * 1_000_000)

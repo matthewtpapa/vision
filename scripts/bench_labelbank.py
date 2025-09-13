@@ -72,7 +72,7 @@ def main(argv: Sequence[str] | None = None) -> int:
         qtext = perturb(label, mapping[label], rng).casefold().strip()
         vec = embed_text(qtext, dim, embed_seed)
         t0 = time.perf_counter()
-        res = bank._lookup_vecs([vec], k=args.k)
+        res = bank.lookup_vecs([vec], k=args.k)
         t1 = time.perf_counter()
         latencies.append((t1 - t0) * 1000.0)
         if label in res.labels():

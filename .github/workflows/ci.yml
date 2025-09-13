@@ -86,7 +86,7 @@ PY
             pytest.log
           if-no-files-found: ignore
       - run: latvision --version
-      - run: python -m vision --version
+      - run: python -m latency_vision --version
       - run: latvision webcam --dry-run
       - run: latvision webcam --use-fake-detector --dry-run
       - name: Build LabelBank shard (CI scale)
@@ -134,17 +134,18 @@ PY
       - name: Enforce Verify gates
         run: |
           python - <<'PY'
-          import json
-          m=json.load(open("bench/out/metrics.json"))
-          v=m["verify"]
-          assert v["known_wrong_after_verify"] == 0, f"known_wrong_after_verify={v['known_wrong_after_verify']}"
-          ur=m["unknown_rate_observed"]
-          band=m.get("unknown_rate_band", [0.10,0.40])
-          assert band[0] <= ur <= band[1], f"unknown_rate_observed={ur}"
-          assert m["p95_ms"] <= 33.0, f"p95_ms={m['p95_ms']}"
-          assert m["cold_start_ms"] <= 1500.0, f"cold_start_ms={m['cold_start_ms']}"
-          print("Verify gates ok")
-          PY
+import json
+m=json.load(open("bench/out/metrics.json"))
+v=m["verify"]
+assert v["accepted"] + v["rejected"] == v["called"], "verify accounting mismatch"
+band=m.get("unknown_rate_band", [0.10,0.40])
+assert band[0] <= m.get("unknown_rate", 0.0) <= band[1], "unknown_rate band"
+assert m["p95_ms"] <= 33.0, f"p95_ms={m['p95_ms']}"
+assert m["p99_ms"] <= 66.0, f"p99_ms={m['p99_ms']}"
+assert m["cold_start_ms"] <= 1100.0, f"cold_start_ms={m['cold_start_ms']}"
+assert m["index_bootstrap_ms"] <= 50.0, f"index_bootstrap_ms={m['index_bootstrap_ms']}"
+print("Gates ok")
+PY
       - name: Ban runtime RIS
         run: scripts/check_no_runtime_ris.sh
       - name: Install strace

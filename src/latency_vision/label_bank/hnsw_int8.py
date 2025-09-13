@@ -119,7 +119,7 @@ class HNSWInt8LabelBank(LabelBankProtocol):
 
         self._labels.extend(labels)
 
-    def _lookup_vecs(self, vectors: Sequence[Sequence[float]], k: int = 10) -> TopK:
+    def lookup_vecs(self, vectors: Sequence[Sequence[float]], k: int = 10) -> TopK:
         vectors = [_normalize_vec(v) for v in vectors]
         if any(len(v) != self.dim for v in vectors):
             raise ValueError("dimension mismatch")
@@ -138,6 +138,8 @@ class HNSWInt8LabelBank(LabelBankProtocol):
         sorted_scores = [p[0] for p in pairs]
         sorted_labels = [p[1] for p in pairs]
         return _TopK(sorted_scores, sorted_labels)
+
+    _lookup_vecs = lookup_vecs
 
     def lookup(
         self, items: Sequence[str] | Sequence[int], k: int = 10
