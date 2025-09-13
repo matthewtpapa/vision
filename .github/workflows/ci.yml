@@ -112,8 +112,8 @@ PY
           s2=json.load(open("bench/labelbank_stats_2.json"))
           assert s1["lookup_p95_ms"] <= 10.0, f"lookup_p95_ms={s1['lookup_p95_ms']}"
           assert s1["recall_at_10"] >= 0.99, f"recall_at_10={s1['recall_at_10']}"
-          assert s1["bench_hash"] == s2["bench_hash"], "bench_hash mismatch"
-          print("LabelBank gates ok:", s1["lookup_p95_ms"], s1["recall_at_10"], s1["bench_hash"])
+          assert s1["bench_struct_hash"] == s2["bench_struct_hash"], "bench_struct_hash mismatch"
+          print("LabelBank gates ok:", s1["lookup_p95_ms"], s1["recall_at_10"], s1["bench_struct_hash"])
           PY
       - name: Build Verify manifest
         run: python scripts/verify_build_manifest.py --seed data/verify/seed_gallery/seed.jsonl --data data/verify/seed_gallery --out bench/verify/gallery_manifest.jsonl
@@ -121,6 +121,14 @@ PY
         run: python scripts/verify_calibrate.py --manifest bench/verify/gallery_manifest.jsonl --out bench/verify/calibration.json --seed 4242
       - name: Verify eval
         run: make verify-eval
+      - name: Print metrics hash
+        run: |
+          python - <<'PY'
+          import json
+          from latency_vision.telemetry.repro import metrics_hash
+          m=json.load(open("bench/out/metrics.json"))
+          print("metrics_hash=", metrics_hash(m))
+          PY
       - name: Upload Verify artifacts
         if: always()
         uses: actions/upload-artifact@v4

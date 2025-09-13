@@ -212,7 +212,7 @@ def run_eval(
     if verify_times_ms:
         total_ns = int(sum(verify_times_ms) * 1_000_000)
         with (out_dir / "stage_times.csv").open("a") as fh:
-            fh.write(f"verify,{total_ns},,\n")
+            fh.write(f"verify,{total_ns},{verify_called},\n")
     prov = collect_provenance(frames)
     metrics.update(prov)
     latencies_effective = per_frame_ms[warmup:]

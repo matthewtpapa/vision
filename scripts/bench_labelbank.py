@@ -98,19 +98,17 @@ def main(argv: Sequence[str] | None = None) -> int:
         "seed": args.seed,
         "created_utc": dt.datetime.utcnow().isoformat() + "Z",
     }
-    hash_keys = [
+    struct_keys = [
         "n_total",
         "queries",
         "k",
-        "lookup_p95_ms",
         "recall_at_10",
         "bytes_index",
         "bytes_vocab",
         "bytes_per_1k_phrases",
         "seed",
     ]
-    bench_hash = metrics_hash({k: out[k] for k in hash_keys})
-    out["bench_hash"] = bench_hash
+    out["bench_struct_hash"] = metrics_hash({k: out[k] for k in struct_keys})
     with open(args.out, "w", encoding="utf-8") as fh:
         json.dump(out, fh, ensure_ascii=False, separators=(",", ":"))
     return 0

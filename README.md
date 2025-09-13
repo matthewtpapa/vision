@@ -72,6 +72,18 @@ python scripts/plot_latency.py --input bench/out/stage_times.csv
 # Writes bench/out/latency.png
 ```
 
+## M2 — Oracle-first
+
+| Metric | Target |
+| --- | --- |
+| p95_ms | ≤33 |
+| p99_ms | ≤66 |
+| cold_start_ms | ≤1100 |
+| index_bootstrap_ms | ≤50 |
+| unknown_rate | 0.10–0.40 |
+| LabelBank lookup_p95_ms | ≤10 |
+| LabelBank recall@10 | ≥0.99 |
+
 Exit codes: 0 success · 2 user/data error (bad path, empty/invalid files) · 3 missing optional dep (pillow, matplotlib).
 
 See docs/latency.md (process model), docs/benchmarks.md (method: monotonic_ns, NumPy percentile “linear”, warm-up exclusion, GC/BLAS notes, CPU features), docs/schema.md (v0.1 JSON contract), and docs/schema-guide.md.
