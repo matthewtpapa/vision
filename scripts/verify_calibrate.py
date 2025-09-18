@@ -10,6 +10,8 @@ from collections import defaultdict
 from collections.abc import Sequence
 from datetime import UTC, datetime
 
+from latency_vision.telemetry.repro import metrics_hash
+
 
 def _quantile(values: Sequence[float], q: float) -> float:
     if not values:
@@ -65,6 +67,16 @@ def calibrate(manifest_path: str, out_path: str, seed: int) -> None:
         "seed": seed,
         "created_utc": datetime.now(UTC).isoformat().replace("+00:00", "Z"),
     }
+
+    core = {
+        "E_q": out["E_q"],
+        "Δ_q": out["Δ_q"],
+        "r_q": out["r_q"],
+        "diversity_min": out["diversity_min"],
+        "sprt": out["sprt"],
+        "seed": seed,
+    }
+    out["calibration_hash"] = metrics_hash(core)
 
     os.makedirs(os.path.dirname(out_path), exist_ok=True)
     with open(out_path, "w", encoding="utf-8") as fh:

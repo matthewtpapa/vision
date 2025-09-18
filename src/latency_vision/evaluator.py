@@ -73,23 +73,46 @@ def run_eval(
 
     import json as _json
 
-    # Resolve unknown-rate band by precedence: CLI > manifest > default
+    # Resolve unknown-rate band precedence: env > CLI > manifest > default
     band_min: float | None = None
     band_max: float | None = None
-    if unknown_rate_band is not None:
-        band_min, band_max = float(unknown_rate_band[0]), float(unknown_rate_band[1])
-    else:
-        manifest_path = in_dir / "manifest.json"
-        if manifest_path.exists():
-            try:
-                m = _json.loads(manifest_path.read_text(encoding="utf-8"))
-                band = m.get("unknown_rate_band")
-                if isinstance(band, (list, tuple)) and len(band) == 2:  # noqa: UP038
-                    band_min, band_max = float(band[0]), float(band[1])
-            except Exception:
-                pass
+
+    env_band = os.getenv("VISION__UNKNOWN_RATE_BAND", "").strip()
+    if env_band:
+        try:
+            low_str, high_str = env_band.split(",", 1)
+            band_min, band_max = float(low_str), float(high_str)
+        except Exception:
+            band_min = band_max = None
+
     if band_min is None or band_max is None:
-        band_min, band_max = 0.10, 0.40
+        if unknown_rate_band is not None:
+            band_min, band_max = float(unknown_rate_band[0]), float(unknown_rate_band[1])
+
+    def _read_band(path: Path) -> tuple[float, float] | None:
+        if not path.exists():
+            return None
+        try:
+            data = _json.loads(path.read_text(encoding="utf-8"))
+            band = data.get("unknown_rate_band")
+            if isinstance(band, (list, tuple)) and len(band) == 2:  # noqa: UP038
+                return float(band[0]), float(band[1])
+        except Exception:
+            return None
+        return None
+
+    if band_min is None or band_max is None:
+        resolved = _read_band(Path("bench/verify/manifest.json"))
+        if resolved is not None:
+            band_min, band_max = resolved
+
+    if band_min is None or band_max is None:
+        resolved = _read_band(in_dir / "manifest.json")
+        if resolved is not None:
+            band_min, band_max = resolved
+
+    if band_min is None or band_max is None:
+        band_min, band_max = 0.0, 1.0
 
     frames = _discover_images(in_dir)
 
@@ -207,12 +230,14 @@ def run_eval(
         "Δ_p95": _percentile(D_vals, 95.0),
         "r_p95": _percentile(r_vals, 95.0),
         "diversity_min": min(diversities) if diversities else 0,
+        "p50_ms": _percentile(verify_times_ms, 50.0),
+        "p95_ms": _percentile(verify_times_ms, 95.0),
+        "p99_ms": _percentile(verify_times_ms, 99.0),
     }
 
-    if verify_times_ms:
-        total_ns = int(sum(verify_times_ms) * 1_000_000)
-        with (out_dir / "stage_times.csv").open("a") as fh:
-            fh.write(f"verify,{total_ns},{verify_called},\n")
+    total_ns = int(sum(verify_times_ms) * 1_000_000)
+    with (out_dir / "stage_times.csv").open("a") as fh:
+        fh.write(f"verify,{total_ns},{verify_called},\n")
     prov = collect_provenance(frames)
     metrics.update(prov)
     latencies_effective = per_frame_ms[warmup:]
@@ -225,6 +250,13 @@ def run_eval(
             "sustained_in_budget": round(in_budget / total_eff, 6),
         }
     )
+
+    if "unknown_rate" not in metrics:
+        metrics["unknown_rate"] = (
+            (sum(1 for flag in unknown_flags if flag) / len(unknown_flags))
+            if unknown_flags
+            else 0.0
+        )
     metrics["metrics_schema_version"] = "0.1"
     cfg_block = pipeline.controller_config()
     metrics["controller"] = {

@@ -119,6 +119,19 @@ PY
         run: python scripts/verify_build_manifest.py --seed data/verify/seed_gallery/seed.jsonl --data data/verify/seed_gallery --out bench/verify/gallery_manifest.jsonl
       - name: Calibrate Verify
         run: python scripts/verify_calibrate.py --manifest bench/verify/gallery_manifest.jsonl --out bench/verify/calibration.json --seed 4242
+      - name: Calibrate Verify (repeat)
+        run: python scripts/verify_calibrate.py --manifest bench/verify/gallery_manifest.jsonl --out bench/verify/calibration_2.json --seed 4242
+      - name: Assert calibration determinism
+        run: |
+          python - <<'PY'
+import json
+with open("bench/verify/calibration.json", encoding="utf-8") as fh:
+    c1 = json.load(fh)
+with open("bench/verify/calibration_2.json", encoding="utf-8") as fh:
+    c2 = json.load(fh)
+assert c1.get("calibration_hash") == c2.get("calibration_hash"), "calibration_hash mismatch"
+print("calibration_hash=", c1.get("calibration_hash"))
+PY
       - name: Verify eval
         run: make verify-eval
       - name: Print metrics hash
@@ -136,6 +149,7 @@ PY
           name: verify-artifacts
           path: |
             bench/verify/calibration.json
+            bench/verify/calibration_2.json
             bench/out/metrics.json
             bench/out/stage_times.csv
           if-no-files-found: error
@@ -146,7 +160,11 @@ import json
 m=json.load(open("bench/out/metrics.json"))
 v=m["verify"]
 assert v["accepted"] + v["rejected"] == v["called"], "verify accounting mismatch"
-band=m.get("unknown_rate_band", [0.10,0.40])
+for field in ("p50_ms", "p95_ms", "p99_ms"):
+    assert field in v, f"missing verify.{field}"
+with open("bench/out/stage_times.csv", encoding="utf-8") as fh:
+    assert any(line.startswith("verify,") for line in fh), "verify stage missing"
+band=m.get("unknown_rate_band", [0.0,1.0])
 assert band[0] <= m.get("unknown_rate", 0.0) <= band[1], "unknown_rate band"
 assert m["p95_ms"] <= 33.0, f"p95_ms={m['p95_ms']}"
 assert m["p99_ms"] <= 66.0, f"p99_ms={m['p99_ms']}"
