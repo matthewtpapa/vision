@@ -252,9 +252,10 @@ def run_eval(
     )
 
     if "unknown_rate" not in metrics:
+        effective_flags = unknown_flags[warmup:] if warmup < len(unknown_flags) else []
         metrics["unknown_rate"] = (
-            (sum(1 for flag in unknown_flags if flag) / len(unknown_flags))
-            if unknown_flags
+            (sum(1 for flag in effective_flags if flag) / len(effective_flags))
+            if effective_flags
             else 0.0
         )
     metrics["metrics_schema_version"] = "0.1"

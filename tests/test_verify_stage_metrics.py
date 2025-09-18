@@ -97,6 +97,9 @@ def test_verify_stage_metrics(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -
     assert "p50_ms" in verify_block
     assert "p95_ms" in verify_block
     assert "p99_ms" in verify_block
+    assert "unknown_rate" in metrics
+    band = metrics.get("unknown_rate_band", [0.0, 1.0])
+    assert band[0] <= metrics["unknown_rate"] <= band[1]
 
     with stage_csv.open(encoding="utf-8") as fh:
         lines = fh.read().splitlines()
