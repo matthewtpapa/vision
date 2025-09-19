@@ -64,6 +64,8 @@ class VerifyWorker:
         self._ensure_loaded()
         assert self._counts is not None and self._sources is not None and self._calib is not None
 
+        # NOTE: embeddings are currently unused in this stub; evidence scoring will
+        # incorporate them in M2-06.
         r = self._counts.get(candidate_label, 0)
         diversity = len(self._sources.get(candidate_label, set()))
         max_other = max(

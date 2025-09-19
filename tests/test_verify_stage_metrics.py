@@ -89,6 +89,7 @@ def test_verify_stage_metrics(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -
 
     metrics_path = out_dir / "metrics.json"
     stage_csv = out_dir / "stage_times.csv"
+    stage_totals = out_dir / "stage_totals.csv"
 
     with metrics_path.open(encoding="utf-8") as fh:
         metrics = json.load(fh)
@@ -107,7 +108,9 @@ def test_verify_stage_metrics(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -
     assert "p50_ms" in oracle_block
     assert "p95_ms" in oracle_block
 
-    with stage_csv.open(encoding="utf-8") as fh:
-        lines = fh.read().splitlines()
-    assert any(line.startswith("oracle,") for line in lines)
-    assert any(line.startswith("verify,") for line in lines)
+    assert stage_csv.exists()
+
+    with stage_totals.open(encoding="utf-8") as fh:
+        totals = fh.read().splitlines()
+    assert any(line.startswith("oracle,") for line in totals[1:])
+    assert any(line.startswith("verify,") for line in totals[1:])

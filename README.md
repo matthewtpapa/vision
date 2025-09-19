@@ -160,7 +160,7 @@ Exit codes:
 ### Flags
 
 - `--duration-min` (replaces any "sustain-minutes" mentions)
-- `--unknown-rate-band LOW,HIGH` is optional; precedence = env `VISION__UNKNOWN_RATE_BAND` > CLI > `bench/verify/manifest.json` > input manifest > default [0.10,0.40]
+- `--unknown-rate-band LOW,HIGH` is optional; precedence = env `VISION__UNKNOWN_RATE_BAND` > CLI > input manifest > default [0.10,0.40]
 - Cold-start is defined as [SDK ready (post-deps, pipeline initialized) → first MatchResult](docs/benchmarks.md#cold-start-definition)
 - See [schema](docs/schema.md) and [schema guide](docs/schema-guide.md) for `metrics_schema_version`, resolved `unknown_rate_band`, and the debug-only `process_cold_start_ms`
 

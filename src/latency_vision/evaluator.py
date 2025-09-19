@@ -75,7 +75,7 @@ def run_eval(
 
     import json as _json
 
-    # Resolve unknown-rate band precedence: env > CLI > manifest > default
+    # Resolve unknown-rate band precedence: env > CLI > input manifest > default
     band_min: float | None = None
     band_max: float | None = None
 
@@ -104,17 +104,12 @@ def run_eval(
         return None
 
     if band_min is None or band_max is None:
-        resolved = _read_band(Path("bench/verify/manifest.json"))
-        if resolved is not None:
-            band_min, band_max = resolved
-
-    if band_min is None or band_max is None:
         resolved = _read_band(in_dir / "manifest.json")
         if resolved is not None:
             band_min, band_max = resolved
 
     if band_min is None or band_max is None:
-        band_min, band_max = 0.0, 1.0
+        band_min, band_max = 0.10, 0.40
 
     frames = _discover_images(in_dir)
 
@@ -145,7 +140,11 @@ def run_eval(
                 lb_dim = dim_attr
         except FileNotFoundError:
             labelbank = None
-        except Exception:
+        except Exception as exc:  # pragma: no cover - defensive
+            print(
+                f"[warn] LabelBank disabled: failed to load shard '{shard_path}': {exc}",
+                file=sys.stderr,
+            )
             labelbank = None
 
     try:
@@ -313,9 +312,12 @@ def run_eval(
     }
 
     verify_total_ns = int(sum(verify_times_ms) * 1_000_000)
-    with (out_dir / "stage_times.csv").open("a") as fh:
-        fh.write(f"oracle,{oracle_total_ns},{oracle_enqueued},\n")
-        fh.write(f"verify,{verify_total_ns},{verify_called},\n")
+    stage_totals_path = out_dir / "stage_totals.csv"
+    with stage_totals_path.open("w", encoding="utf-8", newline="") as fh:
+        writer = csv.writer(fh)
+        writer.writerow(["stage", "total_ns", "count"])
+        writer.writerow(["oracle", oracle_total_ns, oracle_enqueued])
+        writer.writerow(["verify", verify_total_ns, verify_called])
     prov = collect_provenance(frames)
     metrics.update(prov)
     latencies_effective = per_frame_ms[warmup:]

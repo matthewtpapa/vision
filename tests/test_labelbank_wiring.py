@@ -97,6 +97,7 @@ def test_labelbank_wiring(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> No
 
     metrics_path = out_dir / "metrics.json"
     stage_csv = out_dir / "stage_times.csv"
+    stage_totals = out_dir / "stage_totals.csv"
 
     with metrics_path.open(encoding="utf-8") as fh:
         metrics = json.load(fh)
@@ -110,6 +111,8 @@ def test_labelbank_wiring(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> No
     if metrics.get("unknown_rate", 0.0) > 0:
         assert oracle_block["enqueued"] > 0
 
-    with stage_csv.open(encoding="utf-8") as fh:
-        lines = fh.read().splitlines()
-    assert any(line.startswith("oracle,") for line in lines)
+    assert stage_csv.exists()
+
+    with stage_totals.open(encoding="utf-8") as fh:
+        totals = fh.read().splitlines()
+    assert any(line.startswith("oracle,") for line in totals[1:])
