@@ -17,3 +17,9 @@ Oracle-first loop = LabelBank ANN → bounded CandidateOracle → curated Verify
 
 Modules: LabelBank, CandidateOracle, Verify, KB promotion, EvidenceLedger, LabelBankProtocol.
 Non-goals: no changes to detect/track/embed/matcher APIs here.
+
+## M2-03 scope (default configuration)
+
+- Verify remains in-line for all emissions; the Oracle queue exists but abstains by default so runtime behaviour matches M2-03 guardrails.
+- Evidence derives solely from LabelBank lookups; KB promotion artifacts are generated offline and not enforced during evaluation.
+- Runtime RIS is still prohibited in the hot loop and enforced via CI.

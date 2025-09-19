@@ -286,9 +286,11 @@ def run_eval(
     calib_path = Path("bench/verify/calibration.json")
     verify_worker: VerifyWorker | None = None
     ledger_writer: JsonLedger | None = None
+    enable_ledger = os.getenv("VISION__ENABLE_VERIFY_LEDGER") == "1"
     if verify_manifest_path.exists() and calib_path.exists():
         verify_worker = VerifyWorker(str(verify_manifest_path), str(calib_path))
-        ledger_writer = JsonLedger(str(Path("bench/verify/ledger.jsonl")))
+        if enable_ledger:
+            ledger_writer = JsonLedger(str(Path("bench/verify/ledger.jsonl")))
 
     while True:
         next_item = oracle.next()

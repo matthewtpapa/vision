@@ -98,6 +98,7 @@ def test_oracle_verify_wiring(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -
 
     monkeypatch.setenv("VISION__LABELBANK__SHARD", str(shard_dir))
     monkeypatch.setenv("VISION__ORACLE__MAXLEN", "64")
+    monkeypatch.setenv("VISION__ENABLE_VERIFY_LEDGER", "1")
 
     _install_numpy_stub(monkeypatch)
     _install_pil_stub(monkeypatch)

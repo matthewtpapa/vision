@@ -84,6 +84,8 @@ python scripts/plot_latency.py --input bench/out/stage_times.csv
 | LabelBank lookup_p95_ms | ≤10 |
 | LabelBank recall@10 | ≥0.99 |
 
+> **M2-03 scope:** Verify remains in the live loop and Oracle abstains by default; LabelBank supplies the only runtime evidence while KB promotion stays offline. Ledger writes are disabled unless `VISION__ENABLE_VERIFY_LEDGER=1`. CI feature flags (all default to `0`) expose follow-on gates: `ENABLE_M204` (Oracle queue), `ENABLE_M205` (KB promotion), and `ENABLE_SUPPLY` (supply-chain scans).
+
 Set `VISION__LABELBANK__SHARD=bench/labelbank/shard` to enable offline LabelBank lookups.
 `make verify-eval` constrains the oracle queue via `VISION__ORACLE__MAXLEN=64` so shed-rate gates
 match CI.
