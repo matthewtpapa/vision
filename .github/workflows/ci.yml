@@ -164,7 +164,7 @@ v=m["verify"]
 assert v["accepted"] + v["rejected"] == v["called"], "verify accounting mismatch"
 for field in ("p50_ms", "p95_ms", "p99_ms"):
     assert field in v, f"missing verify.{field}"
-with open("bench/out/stage_times.csv", encoding="utf-8") as fh:
+with open("bench/out/stage_totals.csv", encoding="utf-8") as fh:
     assert any(line.startswith("verify,") for line in fh), "verify stage missing"
 band=m.get("unknown_rate_band", [0.0,1.0])
 assert band[0] <= m.get("unknown_rate", 0.0) <= band[1], "unknown_rate band"
