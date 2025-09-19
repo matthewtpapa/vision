@@ -34,3 +34,8 @@ if [ "$RC" -ne 0 ]; then
 fi
 
 echo "✅ no network syscalls detected"
+
+# Optional (disabled): sanity check file I/O patterns for the hot loop
+# strace -f -qq -tt -e trace=file -o artifacts/syscall_file_report.txt \
+#   bash -lc 'latvision eval --input bench/fixture --output bench/out --warmup 0 --unknown-rate-band 0.0,1.0'
+# grep -E "O_WRONLY|O_RDWR" artifacts/syscall_file_report.txt && { echo "warn: write I/O during eval"; true; } || true

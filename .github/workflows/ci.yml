@@ -95,6 +95,11 @@ PY
         run: |
           LB_Q=500 python scripts/bench_labelbank.py --shard bench/labelbank/shard --out bench/labelbank_stats.json --seed 999 --k 10
           LB_Q=500 python scripts/bench_labelbank.py --shard bench/labelbank/shard --out bench/labelbank_stats_2.json --seed 999 --k 10
+          python - <<'PY'
+import json
+s=json.load(open("bench/labelbank_stats.json"))
+print(f"LabelBank: p95={s['lookup_p95_ms']}ms recall@10={s['recall_at_10']} bytes/1k={s['bytes_per_1k_phrases']}")
+PY
       - name: Upload LabelBank stats
         if: always()
         uses: actions/upload-artifact@v4
@@ -136,6 +141,12 @@ PY
         env:
           VISION__ORACLE__MAXLEN: "64"
         run: make verify-eval
+      - name: Eval (A)
+        run: latvision eval --input bench/fixture --output bench/out_a --warmup 0 --unknown-rate-band 0.10,0.40
+      - name: Eval (B)
+        run: latvision eval --input bench/fixture --output bench/out_b --warmup 0 --unknown-rate-band 0.10,0.40
+      - name: Repro check
+        run: python scripts/repro_check.py bench/out_a/metrics.json bench/out_b/metrics.json --pretty
       - name: Print metrics hash
         run: |
           python - <<'PY'
@@ -170,8 +181,10 @@ if not lines:
     raise SystemExit("promotion ledger empty")
 
 base = Path("bench/kb/medoids")
+rows = []
 for raw in lines:
     row = json.loads(raw)
+    rows.append(row)
     label = str(row.get("label", ""))
     medoids = int(row.get("medoids", 0))
     if medoids > 3:
@@ -208,7 +221,11 @@ for raw in lines:
         raise SystemExit(f"{label} meta dtype mismatch")
     if quant.get("scale") != 127:
         raise SystemExit(f"{label} meta scale mismatch")
-print(f"KB promotion validated for {len(lines)} labels")
+count = len(rows)
+total_bytes = sum(int(r.get("bytes", 0)) for r in rows)
+per_1k = round((total_bytes / max(1, count)) * 1000)
+print(f"KB promotion validated for {count} labels")
+print(f"KB bytes_per_1k_medoids={per_1k}")
 PY
       - name: Upload Verify artifacts
         if: always()
@@ -220,6 +237,9 @@ PY
             bench/verify/calibration_2.json
             bench/out/metrics.json
             bench/out/stage_times.csv
+            bench/out/stage_totals.csv
+            bench/out_a/metrics.json
+            bench/out_b/metrics.json
           if-no-files-found: error
       - name: Upload KB promotion artifacts
         if: always()
@@ -239,6 +259,7 @@ v=m["verify"]
 assert v["accepted"] + v["rejected"] == v["called"], "verify accounting mismatch"
 for field in ("p50_ms", "p95_ms", "p99_ms"):
     assert field in v, f"missing verify.{field}"
+assert v.get("known_wrong_after_verify", 0) == 0, "known_wrong_after_verify sentinel must be 0"
 with open("bench/out/stage_totals.csv", encoding="utf-8") as fh:
     assert any(line.startswith("verify,") for line in fh), "verify stage missing"
 band=m.get("unknown_rate_band", [0.0,1.0])
@@ -252,6 +273,36 @@ assert o.get("maxlen", 0) <= 64, f"oracle.maxlen={o.get('maxlen')}"
 assert o.get("shed_rate", 0.0) <= 0.05, f"shed_rate={o.get('shed_rate')}"
 print("Gates ok")
 PY
+      - name: pip licenses (SBOM-lite)
+        run: |
+          python -m pip install pip-licenses
+          mkdir -p artifacts
+          pip-licenses --format=json --with-urls > artifacts/pip_licenses.json
+      - name: secrets & vuln scan
+        run: |
+          if ! command -v gitleaks >/dev/null 2>&1; then
+            curl -sSfL https://github.com/gitleaks/gitleaks/releases/download/v8.18.4/gitleaks_8.18.4_linux_x64.tar.gz -o gitleaks.tar.gz
+            tar -xf gitleaks.tar.gz gitleaks
+            sudo install gitleaks /usr/local/bin/gitleaks
+            rm -f gitleaks.tar.gz gitleaks
+          fi
+          if ! command -v trivy >/dev/null 2>&1; then
+            curl -sSfL https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/install.sh | sudo sh -s -- -b /usr/local/bin
+          fi
+          (gitleaks detect --no-git -v || true)
+          (trivy fs --security-checks vuln,secret --exit-code 1 . || (echo "Trivy findings; failing"; exit 1))
+      - name: Generate SBOM
+        run: |
+          mkdir -p artifacts
+          curl -sSfL https://raw.githubusercontent.com/anchore/syft/main/install.sh | sh -s -- -b . v1.16.0
+          ./syft dir:. -o json > artifacts/sbom.json
+      - name: Upload supply-chain artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: supply-chain
+          path: artifacts/*
+          if-no-files-found: warn
       - name: Ban runtime RIS
         run: scripts/check_no_runtime_ris.sh
       - name: Install strace

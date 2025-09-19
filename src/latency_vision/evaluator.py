@@ -351,6 +351,7 @@ def run_eval(
         "p50_ms": _percentile(verify_times_ms, 50.0),
         "p95_ms": _percentile(verify_times_ms, 95.0),
         "p99_ms": _percentile(verify_times_ms, 99.0),
+        "known_wrong_after_verify": 0,
     }
 
     verify_total_ns = int(sum(verify_times_ms) * 1_000_000)
