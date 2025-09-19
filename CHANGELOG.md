@@ -19,6 +19,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/).
 - Reproducibility harness for metrics hashing.
 - CI guard banning forbidden RIS tokens and hot-loop syscall audit.
 - Oracle drain into Verify with JSON ledger emission and maxlen/shed-rate gates.
+- KB promotion pipeline with capped int8 medoids, promotion ledger, and CI gates.
 
 ## [0.1.0-rc.2] - 2025-09-15
 

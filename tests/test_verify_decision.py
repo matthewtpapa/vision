@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import os
 import subprocess
 import sys
 from pathlib import Path
@@ -22,6 +23,7 @@ def test_verify_accept_reject(tmp_path: Path) -> None:
             str(manifest),
         ],
         check=True,
+        env={**os.environ, "PYTHONPATH": str(Path(__file__).resolve().parents[1] / "src")},
     )
     subprocess.run(
         [
@@ -35,6 +37,7 @@ def test_verify_accept_reject(tmp_path: Path) -> None:
             "4242",
         ],
         check=True,
+        env={**os.environ, "PYTHONPATH": str(Path(__file__).resolve().parents[1] / "src")},
     )
     worker = VerifyWorker(str(manifest), str(calib))
     pos = worker.verify([0.0], "alpha")

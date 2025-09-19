@@ -144,6 +144,72 @@ PY
           m=json.load(open("bench/out/metrics.json"))
           print("metrics_hash=", metrics_hash(m))
           PY
+      - name: KB Promotion
+        run: make kb-promote
+      - name: KB Promotion gates
+        run: |
+          python - <<'PY'
+import hashlib
+import json
+from pathlib import Path
+
+from latency_vision.kb.promotion_impl import _read_int8_npy, _serialize_int8_matrix
+
+
+def _normalize(label: str) -> str:
+    safe = ''.join(c if c.isalnum() or c in {'-', '_'} else '_' for c in label).strip('_')
+    return safe or 'label'
+
+
+ledger_path = Path("bench/kb/promotion_ledger.jsonl")
+if not ledger_path.exists():
+    raise SystemExit("promotion ledger missing")
+
+lines = [line.strip() for line in ledger_path.read_text(encoding="utf-8").splitlines() if line.strip()]
+if not lines:
+    raise SystemExit("promotion ledger empty")
+
+base = Path("bench/kb/medoids")
+for raw in lines:
+    row = json.loads(raw)
+    label = str(row.get("label", ""))
+    medoids = int(row.get("medoids", 0))
+    if medoids > 3:
+        raise SystemExit(f"{label} medoids={medoids} exceeds cap")
+    safe = _normalize(label)
+    npy_path = base / f"{safe}.int8.npy"
+    meta_path = base / f"{safe}.json"
+    if not npy_path.exists():
+        raise SystemExit(f"missing medoid file for {label}")
+    arr = _read_int8_npy(npy_path)
+    if len(arr) != medoids:
+        raise SystemExit(f"{label} count mismatch: ledger={medoids} actual={len(arr)}")
+    width = len(arr[0]) if arr else 0
+    if any(len(row_vals) != width for row_vals in arr):
+        raise SystemExit(f"{label} medoid dimensionality mismatch")
+    if any(val < -127 or val > 127 for row_vals in arr for val in row_vals):
+        raise SystemExit(f"{label} values out of int8 range")
+    digest = hashlib.sha256(_serialize_int8_matrix(arr)).hexdigest()
+    if digest != row.get("hash"):
+        raise SystemExit(f"{label} hash mismatch")
+    if int(row.get("bytes", 0)) != sum(len(row_vals) for row_vals in arr):
+        raise SystemExit(f"{label} bytes mismatch")
+    if row.get("method") != "herding":
+        raise SystemExit(f"{label} method mismatch")
+    if row.get("quant") != "int8":
+        raise SystemExit(f"{label} quant mismatch")
+    if not meta_path.exists():
+        raise SystemExit(f"missing meta for {label}")
+    meta = json.loads(meta_path.read_text(encoding="utf-8"))
+    if meta.get("hash") != digest:
+        raise SystemExit(f"{label} meta hash mismatch")
+    quant = meta.get("quant", {})
+    if quant.get("dtype") != "int8":
+        raise SystemExit(f"{label} meta dtype mismatch")
+    if quant.get("scale") != 127:
+        raise SystemExit(f"{label} meta scale mismatch")
+print(f"KB promotion validated for {len(lines)} labels")
+PY
       - name: Upload Verify artifacts
         if: always()
         uses: actions/upload-artifact@v4
@@ -155,6 +221,15 @@ PY
             bench/out/metrics.json
             bench/out/stage_times.csv
           if-no-files-found: error
+      - name: Upload KB promotion artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: kb-promotion
+          path: |
+            bench/kb/promotion_ledger.jsonl
+            bench/kb/medoids
+          if-no-files-found: warn
       - name: Enforce Verify gates
         run: |
           python - <<'PY'

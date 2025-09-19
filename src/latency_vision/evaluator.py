@@ -326,6 +326,7 @@ def run_eval(
                 scores = [float(s) for s in raw_scores][:3]
                 ts_val = cast(int | float | str | None, context_map.get("ts_ns"))
                 stride_val = cast(int | float | str | None, context_map.get("stride"))
+                ledger_embedding = list(embedding)
                 ledger_writer.append(
                     {
                         "label": candidate_label,
@@ -333,6 +334,7 @@ def run_eval(
                         "stride": int(stride_val) if stride_val is not None else 0,
                         "scores": scores,
                         "backend": context_map.get("backend"),
+                        "embedding": ledger_embedding,
                     }
                 )
         else:

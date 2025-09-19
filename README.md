@@ -90,6 +90,9 @@ match CI.
 M2-04 wires unknown frames through a read-only LabelBank top-k pass and enqueues results on a bounded
 in-memory `CandidateOracle`; accepted candidates append to `bench/verify/ledger.jsonl` after
 verification.
+`make kb-promote` ingests the accepted ledger, caps medoids at three per class, writes
+`bench/kb/medoids/<label>.int8.npy` + metadata, and records the promotion in
+`bench/kb/promotion_ledger.jsonl` for audits.
 
 Exit codes: 0 success · 2 user/data error (bad path, empty/invalid files) · 3 missing optional dep (pillow, matplotlib).
 

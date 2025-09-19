@@ -130,6 +130,9 @@ def test_oracle_verify_wiring(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -
         with ledger_path.open(encoding="utf-8") as fh:
             lines = [line for line in fh.read().splitlines() if line.strip()]
         assert len(lines) >= 1
+        sample = json.loads(lines[0])
+        assert "embedding" in sample
+        assert isinstance(sample["embedding"], list)
     else:
         if ledger_path.exists():
             assert ledger_path.stat().st_size == 0

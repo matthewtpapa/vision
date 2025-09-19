@@ -28,6 +28,7 @@ help:
 >echo "make bench     - run fixture → eval → summary"
 >echo "make demo      - run fixture → eval → plot demo"
 >echo "make plot      - render latency PNG from metrics.json"
+>echo "make kb-promote - promote accepted verify embeddings into capped int8 medoids"
 >echo "make eval      - run evaluator on a directory of frames"
 >echo ""
 >echo "Tip: run 'npm ci' once to enable local markdownlint (make mdlint/mdfix)."
@@ -168,6 +169,59 @@ verify-eval:
 >python scripts/build_fixture.py --seed 42 --out bench/fixture --n 200
 >VISION__ORACLE__MAXLEN=64 latvision eval --input bench/fixture --output bench/out --warmup 0 --unknown-rate-band 0.10,0.40
 >python scripts/print_summary.py --metrics bench/out/metrics.json
+
+kb-promote:
+>PYTHONPATH=src python - <<'PY'
+>from __future__ import annotations
+>
+>import json
+>from collections import defaultdict
+>from pathlib import Path
+>
+>from latency_vision.kb import KBPromotionImpl
+>
+>ledger_path = Path("bench/verify/ledger.jsonl")
+>if not ledger_path.exists():
+>    print("No verify ledger found; nothing to promote")
+>    raise SystemExit(0)
+>
+>records = []
+>for line in ledger_path.read_text(encoding="utf-8").splitlines():
+>    data = line.strip()
+>    if not data:
+>        continue
+>    try:
+>        rec = json.loads(data)
+>    except json.JSONDecodeError:
+>        continue
+>    embedding = rec.get("embedding")
+>    if not isinstance(embedding, list):
+>        continue
+>    records.append((rec.get("label"), embedding))
+>
+>if not records:
+>    print("No accepted verify embeddings found; nothing to promote")
+>    raise SystemExit(0)
+>
+>by_label: dict[str, list[list[float]]] = defaultdict(list)
+>for raw_label, embedding in records:
+>    if not raw_label:
+>        continue
+>    floats = [float(x) for x in embedding]
+>    by_label[str(raw_label)].append(floats)
+>
+>if not by_label:
+>    print("No embeddings available for promotion")
+>    raise SystemExit(0)
+>
+>promoter = KBPromotionImpl(output_dir="bench/kb")
+>
+>for label in sorted(by_label):
+>    result = promoter.promote(label, by_label[label])
+>    print(
+>        f"promoted {label}: medoids={result['medoids']} bytes={result['bytes']} updated={result['updated']}"
+>    )
+>PY
 
 build:
 >python -m pip install --upgrade build twine
