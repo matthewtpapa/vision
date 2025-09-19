@@ -84,8 +84,17 @@ def run_eval(
     if env_band:
         try:
             low_str, high_str = env_band.split(",", 1)
-            band_min, band_max = float(low_str), float(high_str)
-        except Exception:
+            parsed_min, parsed_max = float(low_str), float(high_str)
+            if parsed_min > parsed_max:
+                raise ValueError("min exceeds max")
+            if not (0.0 <= parsed_min <= 1.0 and 0.0 <= parsed_max <= 1.0):
+                raise ValueError("band values must be between 0.0 and 1.0")
+            band_min, band_max = parsed_min, parsed_max
+        except Exception as exc:
+            print(
+                f"[warn] ignoring malformed VISION__UNKNOWN_RATE_BAND='{env_band}': {exc}",
+                file=sys.stderr,
+            )
             band_min = band_max = None
 
     if band_min is None or band_max is None:
@@ -140,6 +149,10 @@ def run_eval(
                 labelbank = candidate
                 lb_dim = dim_attr
         except FileNotFoundError:
+            print(
+                f"[warn] LabelBank shard not found at '{shard_path}'; continuing without LabelBank",
+                file=sys.stderr,
+            )
             labelbank = None
         except Exception as exc:  # pragma: no cover - defensive
             print(

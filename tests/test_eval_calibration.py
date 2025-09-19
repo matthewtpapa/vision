@@ -7,7 +7,7 @@ import pytest
 
 pytest.importorskip("numpy")
 
-from vision.eval_calibration import evaluate_labelbank_calibration
+from latency_vision.eval_calibration import evaluate_labelbank_calibration
 
 
 def _write_fixture(tmp_path: Path) -> Path:

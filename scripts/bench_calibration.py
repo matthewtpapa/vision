@@ -6,7 +6,7 @@ from __future__ import annotations
 import argparse
 from pathlib import Path
 
-from vision.eval_calibration import evaluate_labelbank_calibration
+from latency_vision.eval_calibration import evaluate_labelbank_calibration
 
 
 def parse_args() -> argparse.Namespace:
