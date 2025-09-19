@@ -226,6 +226,9 @@ total_bytes = sum(int(r.get("bytes", 0)) for r in rows)
 per_1k = round((total_bytes / max(1, count)) * 1000)
 print(f"KB promotion validated for {count} labels")
 print(f"KB bytes_per_1k_medoids={per_1k}")
+# Soft visibility notice (non-fatal) so reviewers see if we drift over the hint ceiling.
+if per_1k > 80000:
+    print(f"::notice title=KB size hint::bytes_per_1k_medoids={per_1k} (>80k; tune later)")
 PY
       - name: Upload Verify artifacts
         if: always()
