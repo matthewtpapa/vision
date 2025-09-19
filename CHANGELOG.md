@@ -14,6 +14,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/).
 - New: `metrics_schema_version` and optional `process_cold_start_ms`.
 - CLI: `--duration-min` wording + `--unknown-rate-band` precedence clarified.
 - Tests: precedence + cold-start startpoint.
+- Offline P31 LabelBank shard builder and deterministic micro-benchmark with stable `bench_struct_hash` (structure-only; latency p95/recall gates still enforced separately).
+- Verification manifest, calibration script, and integration with evaluation metrics.
+- Reproducibility harness for metrics hashing.
+- CI guard banning forbidden RIS tokens and hot-loop syscall audit.
+- Oracle drain into Verify with JSON ledger emission and maxlen/shed-rate gates.
+- KB promotion pipeline with capped int8 medoids, promotion ledger, and CI gates.
+- Calibration utilities with temperature fitting, EMA-based oracle abstention,
+  offline calibration bench + gates, and syscall purity guard targets.
 
 ## [0.1.0-rc.2] - 2025-09-15
 

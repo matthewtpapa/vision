@@ -72,6 +72,30 @@ python scripts/plot_latency.py --input bench/out/stage_times.csv
 # Writes bench/out/latency.png
 ```
 
+## M2 — Oracle-first
+
+| Metric | Target |
+| --- | --- |
+| p95_ms | ≤33 |
+| p99_ms | ≤66 |
+| cold_start_ms | ≤1100 |
+| index_bootstrap_ms | ≤50 |
+| unknown_rate | 0.10–0.40 |
+| LabelBank lookup_p95_ms | ≤10 |
+| LabelBank recall@10 | ≥0.99 |
+
+> **M2-03 scope:** Verify remains in the live loop and Oracle abstains by default; LabelBank supplies the only runtime evidence while KB promotion stays offline. Ledger writes are disabled unless `VISION__ENABLE_VERIFY_LEDGER=1`. CI feature flags (all default to `0`) expose follow-on gates: `ENABLE_M204` (Oracle queue), `ENABLE_M205` (KB promotion), and `ENABLE_SUPPLY` (supply-chain scans).
+
+Set `VISION__LABELBANK__SHARD=bench/labelbank/shard` to enable offline LabelBank lookups.
+`make verify-eval` constrains the oracle queue via `VISION__ORACLE__MAXLEN=64` so shed-rate gates
+match CI.
+M2-04 wires unknown frames through a read-only LabelBank top-k pass and enqueues results on a bounded
+in-memory `CandidateOracle`; accepted candidates append to `bench/verify/ledger.jsonl` after
+verification.
+`make kb-promote` ingests the accepted ledger, caps medoids at three per class, writes
+`bench/kb/medoids/<label>.int8.npy` + metadata, and records the promotion in
+`bench/kb/promotion_ledger.jsonl` for audits.
+
 Exit codes: 0 success · 2 user/data error (bad path, empty/invalid files) · 3 missing optional dep (pillow, matplotlib).
 
 See docs/latency.md (process model), docs/benchmarks.md (method: monotonic_ns, NumPy percentile “linear”, warm-up exclusion, GC/BLAS notes, CPU features), docs/schema.md (v0.1 JSON contract), and docs/schema-guide.md.
@@ -144,7 +168,7 @@ Exit codes:
 ### Flags
 
 - `--duration-min` (replaces any "sustain-minutes" mentions)
-- `--unknown-rate-band LOW,HIGH` is optional; precedence = CLI > fixture manifest > default [0.10,0.40]
+- `--unknown-rate-band LOW,HIGH` is optional; precedence = env `VISION__UNKNOWN_RATE_BAND` > CLI > input manifest > default [0.10,0.40]
 - Cold-start is defined as [SDK ready (post-deps, pipeline initialized) → first MatchResult](docs/benchmarks.md#cold-start-definition)
 - See [schema](docs/schema.md) and [schema guide](docs/schema-guide.md) for `metrics_schema_version`, resolved `unknown_rate_band`, and the debug-only `process_cold_start_ms`
 
@@ -177,6 +201,21 @@ budget_ms = 33
 [pipeline]
 frame_stride = 1
 ```
+
+## Make targets
+
+Helpful development targets:
+
+| Target | Description |
+|--------|-------------|
+| `make labelbank-shard` | build the offline P31 shard |
+| `make labelbank-bench` | run the LabelBank micro-benchmark |
+| `make verify-calibrate` | derive VerifyWorker calibration thresholds |
+| `make verify-eval` | run evaluation with verification metrics |
+| `make calib` | run the calibration bench on the offline shard |
+| `make gate-calib` | enforce calibration thresholds (ECE/AUROC/oracle latency) |
+| `make gate-purity` | run the strace-based hot-loop purity audit |
+| `make repro` | compare metrics JSONs for reproducibility |
 
 ## Architecture (M1 vertical slice)
 

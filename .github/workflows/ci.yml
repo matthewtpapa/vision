@@ -19,6 +19,11 @@ jobs:
           config: .markdownlint-cli2.yaml
 
   verify:
+    env:
+      ENABLE_M204: '0'
+      ENABLE_M205: '0'
+      ENABLE_SUPPLY: '0'
+      VISION__ENABLE_VERIFY_LEDGER: '0'
     strategy:
       fail-fast: false
       matrix:
@@ -46,6 +51,10 @@ from packaging import tags
 print(f"platform tag: {next(tags.sys_tags())}")
 PY
           python -m pip debug --verbose
+      - name: Prepare ANN deps (optional)
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install faiss-cpu || echo "faiss-cpu unavailable; using NumPy fallback"
       - run: make verify
       - run: PYTEST_ADDOPTS="-ra" make test-cov | tee pytest.log
       - name: Fail on skips
@@ -82,9 +91,254 @@ PY
             pytest.log
           if-no-files-found: ignore
       - run: latvision --version
-      - run: python -m vision --version
+      - run: python -m latency_vision --version
       - run: latvision webcam --dry-run
       - run: latvision webcam --use-fake-detector --dry-run
+      - name: Build LabelBank shard (CI scale)
+        run: LB_N=5000 python scripts/build_labelbank_shard.py --in data/labelbank/seed.jsonl --out bench/labelbank/shard --seed 1234 --dim 256
+      - name: Bench LabelBank (CI scale)
+        run: |
+          LB_Q=500 python scripts/bench_labelbank.py --shard bench/labelbank/shard --out bench/labelbank_stats.json --seed 999 --k 10
+          LB_Q=500 python scripts/bench_labelbank.py --shard bench/labelbank/shard --out bench/labelbank_stats_2.json --seed 999 --k 10
+          python - <<'PY'
+import json
+s=json.load(open("bench/labelbank_stats.json"))
+print(f"LabelBank: p95={s['lookup_p95_ms']}ms recall@10={s['recall_at_10']} bytes/1k={s['bytes_per_1k_phrases']}")
+PY
+      - name: Upload LabelBank stats
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: labelbank-stats
+          path: |
+            bench/labelbank_stats.json
+            bench/labelbank_stats_2.json
+          if-no-files-found: error
+      - name: Enforce LabelBank gates
+        run: |
+          python - <<'PY'
+          import json
+          s1=json.load(open("bench/labelbank_stats.json"))
+          s2=json.load(open("bench/labelbank_stats_2.json"))
+          assert s1["lookup_p95_ms"] <= 10.0, f"lookup_p95_ms={s1['lookup_p95_ms']}"
+          assert s1["recall_at_10"] >= 0.99, f"recall_at_10={s1['recall_at_10']}"
+          assert s1["bench_struct_hash"] == s2["bench_struct_hash"], "bench_struct_hash mismatch"
+          print("LabelBank gates ok:", s1["lookup_p95_ms"], s1["recall_at_10"], s1["bench_struct_hash"])
+          PY
+      - name: Build Verify manifest
+        run: python scripts/verify_build_manifest.py --seed data/verify/seed_gallery/seed.jsonl --data data/verify/seed_gallery --out bench/verify/gallery_manifest.jsonl
+      - name: Calibrate Verify
+        run: python scripts/verify_calibrate.py --manifest bench/verify/gallery_manifest.jsonl --out bench/verify/calibration.json --seed 4242
+      - name: Calibrate Verify (repeat)
+        run: python scripts/verify_calibrate.py --manifest bench/verify/gallery_manifest.jsonl --out bench/verify/calibration_2.json --seed 4242
+      - name: Assert calibration determinism
+        run: |
+          python - <<'PY'
+import json
+with open("bench/verify/calibration.json", encoding="utf-8") as fh:
+    c1 = json.load(fh)
+with open("bench/verify/calibration_2.json", encoding="utf-8") as fh:
+    c2 = json.load(fh)
+assert c1.get("calibration_hash") == c2.get("calibration_hash"), "calibration_hash mismatch"
+print("calibration_hash=", c1.get("calibration_hash"))
+PY
+      - name: Verify eval
+        env:
+          VISION__ORACLE__MAXLEN: "64"
+        run: make verify-eval
+      - name: Eval (A)
+        run: latvision eval --input bench/fixture --output bench/out_a --warmup 0 --unknown-rate-band 0.10,0.40
+      - name: Eval (B)
+        run: latvision eval --input bench/fixture --output bench/out_b --warmup 0 --unknown-rate-band 0.10,0.40
+      - name: Repro check
+        run: python scripts/repro_check.py bench/out_a/metrics.json bench/out_b/metrics.json --pretty
+      - name: Print metrics hash
+        run: |
+          python - <<'PY'
+          import json
+          from latency_vision.telemetry.repro import metrics_hash
+          m=json.load(open("bench/out/metrics.json"))
+          print("metrics_hash=", metrics_hash(m))
+          PY
+      - name: Calibration bench
+        run: make calib
+      - name: Calibration gates
+        run: make gate-calib
+      - name: Upload calibration artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: calibration-artifacts
+          path: |
+            bench/calib_stats.json
+            bench/calib_hash.txt
+          if-no-files-found: error
+      - name: Install strace
+        run: sudo apt-get update && sudo apt-get install -y strace
+      - name: Purity gate
+        run: make gate-purity
+      - name: Upload purity syscall audit
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: purity-syscall-report
+          path: artifacts/syscall_report.txt
+          if-no-files-found: warn
+      - name: KB Promotion
+        if: ${{ env.ENABLE_M205 == '1' }}
+        run: make kb-promote
+      - name: KB Promotion gates
+        if: ${{ env.ENABLE_M205 == '1' }}
+        run: |
+          python - <<'PY'
+import hashlib
+import json
+from pathlib import Path
+
+from latency_vision.kb.promotion_impl import _read_int8_npy, _serialize_int8_matrix
+
+
+def _normalize(label: str) -> str:
+    safe = ''.join(c if c.isalnum() or c in {'-', '_'} else '_' for c in label).strip('_')
+    return safe or 'label'
+
+
+ledger_path = Path("bench/kb/promotion_ledger.jsonl")
+if not ledger_path.exists():
+    raise SystemExit("promotion ledger missing")
+
+lines = [line.strip() for line in ledger_path.read_text(encoding="utf-8").splitlines() if line.strip()]
+if not lines:
+    raise SystemExit("promotion ledger empty")
+
+base = Path("bench/kb/medoids")
+rows = []
+for raw in lines:
+    row = json.loads(raw)
+    rows.append(row)
+    label = str(row.get("label", ""))
+    medoids = int(row.get("medoids", 0))
+    if medoids > 3:
+        raise SystemExit(f"{label} medoids={medoids} exceeds cap")
+    safe = _normalize(label)
+    npy_path = base / f"{safe}.int8.npy"
+    meta_path = base / f"{safe}.json"
+    if not npy_path.exists():
+        raise SystemExit(f"missing medoid file for {label}")
+    arr = _read_int8_npy(npy_path)
+    if len(arr) != medoids:
+        raise SystemExit(f"{label} count mismatch: ledger={medoids} actual={len(arr)}")
+    width = len(arr[0]) if arr else 0
+    if any(len(row_vals) != width for row_vals in arr):
+        raise SystemExit(f"{label} medoid dimensionality mismatch")
+    if any(val < -127 or val > 127 for row_vals in arr for val in row_vals):
+        raise SystemExit(f"{label} values out of int8 range")
+    digest = hashlib.sha256(_serialize_int8_matrix(arr)).hexdigest()
+    if digest != row.get("hash"):
+        raise SystemExit(f"{label} hash mismatch")
+    if int(row.get("bytes", 0)) != sum(len(row_vals) for row_vals in arr):
+        raise SystemExit(f"{label} bytes mismatch")
+    if row.get("method") != "herding":
+        raise SystemExit(f"{label} method mismatch")
+    if row.get("quant") != "int8":
+        raise SystemExit(f"{label} quant mismatch")
+    if not meta_path.exists():
+        raise SystemExit(f"missing meta for {label}")
+    meta = json.loads(meta_path.read_text(encoding="utf-8"))
+    if meta.get("hash") != digest:
+        raise SystemExit(f"{label} meta hash mismatch")
+    quant = meta.get("quant", {})
+    if quant.get("dtype") != "int8":
+        raise SystemExit(f"{label} meta dtype mismatch")
+    if quant.get("scale") != 127:
+        raise SystemExit(f"{label} meta scale mismatch")
+count = len(rows)
+total_bytes = sum(int(r.get("bytes", 0)) for r in rows)
+per_1k = round((total_bytes / max(1, count)) * 1000)
+print(f"KB promotion validated for {count} labels")
+print(f"KB bytes_per_1k_medoids={per_1k}")
+# Soft visibility notice (non-fatal) so reviewers see if we drift over the hint ceiling.
+if per_1k > 80000:
+    print(f"::notice title=KB size hint::bytes_per_1k_medoids={per_1k} (>80k; tune later)")
+PY
+      - name: Upload Verify artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: verify-artifacts
+          path: |
+            bench/verify/calibration.json
+            bench/verify/calibration_2.json
+            bench/out/metrics.json
+            bench/out/stage_times.csv
+            bench/out/stage_totals.csv
+            bench/out_a/metrics.json
+            bench/out_b/metrics.json
+          if-no-files-found: error
+      - name: Upload KB promotion artifacts
+        if: ${{ always() && env.ENABLE_M205 == '1' }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: kb-promotion
+          path: |
+            bench/kb/promotion_ledger.jsonl
+            bench/kb/medoids
+          if-no-files-found: warn
+      - name: Enforce Verify gates
+        run: |
+          python - <<'PY'
+import json
+m=json.load(open("bench/out/metrics.json"))
+v=m["verify"]
+assert v["accepted"] + v["rejected"] == v["called"], "verify accounting mismatch"
+for field in ("p50_ms", "p95_ms", "p99_ms"):
+    assert field in v, f"missing verify.{field}"
+assert v.get("known_wrong_after_verify", 0) == 0, "known_wrong_after_verify sentinel must be 0"
+with open("bench/out/stage_totals.csv", encoding="utf-8") as fh:
+    assert any(line.startswith("verify,") for line in fh), "verify stage missing"
+band=m.get("unknown_rate_band", [0.0,1.0])
+assert band[0] <= m.get("unknown_rate", 0.0) <= band[1], "unknown_rate band"
+assert m["p95_ms"] <= 33.0, f"p95_ms={m['p95_ms']}"
+assert m["p99_ms"] <= 66.0, f"p99_ms={m['p99_ms']}"
+assert m["cold_start_ms"] <= 1100.0, f"cold_start_ms={m['cold_start_ms']}"
+assert m["index_bootstrap_ms"] <= 50.0, f"index_bootstrap_ms={m['index_bootstrap_ms']}"
+print("Gates ok")
+PY
+      - name: pip licenses (SBOM-lite)
+        if: ${{ env.ENABLE_SUPPLY == '1' }}
+        run: |
+          python -m pip install pip-licenses
+          mkdir -p artifacts
+          pip-licenses --format=json --with-urls > artifacts/pip_licenses.json
+      - name: secrets & vuln scan
+        if: ${{ env.ENABLE_SUPPLY == '1' }}
+        run: |
+          if ! command -v gitleaks >/dev/null 2>&1; then
+            curl -sSfL https://github.com/gitleaks/gitleaks/releases/download/v8.18.4/gitleaks_8.18.4_linux_x64.tar.gz -o gitleaks.tar.gz
+            tar -xf gitleaks.tar.gz gitleaks
+            sudo install gitleaks /usr/local/bin/gitleaks
+            rm -f gitleaks.tar.gz gitleaks
+          fi
+          if ! command -v trivy >/dev/null 2>&1; then
+            curl -sSfL https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/install.sh | sudo sh -s -- -b /usr/local/bin
+          fi
+          (gitleaks detect --no-git -v || true)
+          (trivy fs --security-checks vuln,secret --exit-code 1 . || (echo "Trivy findings; failing"; exit 1))
+      - name: Generate SBOM
+        if: ${{ env.ENABLE_SUPPLY == '1' }}
+        run: |
+          mkdir -p artifacts
+          curl -sSfL https://raw.githubusercontent.com/anchore/syft/main/install.sh | sh -s -- -b . v1.16.0
+          ./syft dir:. -o json > artifacts/sbom.json
+      - name: Upload supply-chain artifacts
+        if: ${{ always() && env.ENABLE_SUPPLY == '1' }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: supply-chain
+          path: artifacts/*
+          if-no-files-found: warn
+      - name: Ban runtime RIS
+        run: scripts/check_no_runtime_ris.sh
 
   package:
     needs: verify
