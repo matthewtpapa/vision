@@ -58,6 +58,7 @@ class DetectTrackEmbedPipeline:
         self._max_stride = self._cfg.pipeline.max_stride
         self._auto_stride = self._cfg.pipeline.auto_stride
         self._frames_processed = 0
+        self._last_first_crop_embedding: list[float] | None = None
         lat = self._cfg.latency
         self._budget_ms = lat.budget_ms
         self._window = lat.window
@@ -79,6 +80,7 @@ class DetectTrackEmbedPipeline:
         frame_t0 = now_ns()
         cm = StageTimer(self._tel, "frame") if self._tel else nullcontext()
         results: list[TrackEmbedding] = []
+        self._last_first_crop_embedding = None
         with cm:
             run_full = idx % stride_used == 0
             if run_full:
@@ -104,6 +106,9 @@ class DetectTrackEmbedPipeline:
                     embeddings = self._embedder.encode(crops)
                 embed_ms = (now_ns() - t0) / 1e6
                 self._eval_stage_ms.setdefault("embed", []).append(embed_ms)
+
+                if embeddings:
+                    self._last_first_crop_embedding = list(embeddings[0].vec)
 
                 match_total = 0.0
                 for track, emb in zip(tracks, embeddings):
@@ -273,6 +278,13 @@ class DetectTrackEmbedPipeline:
 
     def bootstrap_time_ms(self) -> float | None:
         return self._bootstrap_ms
+
+    def last_first_crop_embedding(self) -> list[float] | None:
+        """Return a copy of the first crop embedding from the last processed frame."""
+
+        if self._last_first_crop_embedding is None:
+            return None
+        return list(self._last_first_crop_embedding)
 
 
 __all__ = ["DetectTrackEmbedPipeline", "Cropper"]

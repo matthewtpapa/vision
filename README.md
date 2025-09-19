@@ -84,6 +84,10 @@ python scripts/plot_latency.py --input bench/out/stage_times.csv
 | LabelBank lookup_p95_ms | ≤10 |
 | LabelBank recall@10 | ≥0.99 |
 
+Set `VISION__LABELBANK__SHARD=bench/labelbank/shard` to enable offline LabelBank lookups.
+M2-04 wires unknown frames through a read-only LabelBank top-k pass and enqueues results on a bounded
+in-memory `CandidateOracle`; recognition decisions remain unchanged.
+
 Exit codes: 0 success · 2 user/data error (bad path, empty/invalid files) · 3 missing optional dep (pillow, matplotlib).
 
 See docs/latency.md (process model), docs/benchmarks.md (method: monotonic_ns, NumPy percentile “linear”, warm-up exclusion, GC/BLAS notes, CPU features), docs/schema.md (v0.1 JSON contract), and docs/schema-guide.md.

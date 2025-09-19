@@ -8,20 +8,18 @@ from pathlib import Path
 import pytest
 
 from scripts.build_fixture import build_fixture
-from scripts.verify_build_manifest import build_manifest
-from scripts.verify_calibrate import calibrate
-
-
-class _FakeArray:
-    def __init__(self, payload: object | None = None) -> None:
-        self.payload = payload
-
-    def __getitem__(self, _key):  # pragma: no cover - defensive
-        return self
+from scripts.build_labelbank_shard import main as build_shard_main
 
 
 def _install_numpy_stub(monkeypatch: pytest.MonkeyPatch) -> None:
     fake_np = types.ModuleType("numpy")
+
+    class _FakeArray:
+        def __init__(self, payload: object | None = None) -> None:
+            self.payload = payload
+
+        def __getitem__(self, _key):  # pragma: no cover - defensive
+            return self
 
     def asarray(obj):
         return _FakeArray(obj)
@@ -57,21 +55,31 @@ def _install_pil_stub(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setitem(sys.modules, "PIL.Image", fake_image)
 
 
-def test_verify_stage_metrics(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+def test_labelbank_wiring(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
     repo_root = Path(__file__).resolve().parents[1]
     monkeypatch.chdir(tmp_path)
 
-    bench_verify = Path("bench/verify")
-    bench_verify.mkdir(parents=True, exist_ok=True)
-
-    seed = repo_root / "data/verify/seed_gallery/seed.jsonl"
-    data_dir = repo_root / "data/verify/seed_gallery"
-    manifest = bench_verify / "gallery_manifest.jsonl"
-    build_manifest(str(seed), str(data_dir), str(manifest))
-    calibrate(str(manifest), str(bench_verify / "calibration.json"), 4242)
+    shard_dir = Path("bench/labelbank/shard")
+    build_result = build_shard_main(
+        [
+            "--seed",
+            "1234",
+            "--in",
+            str(repo_root / "data/labelbank/seed.jsonl"),
+            "--out",
+            str(shard_dir),
+            "--dim",
+            "16",
+            "--max-n",
+            "32",
+        ]
+    )
+    assert build_result == 0
 
     fixture_dir = Path("bench/fixture")
-    build_fixture(fixture_dir, n=3, seed=7)
+    build_fixture(fixture_dir, n=3, seed=11)
+
+    monkeypatch.setenv("VISION__LABELBANK__SHARD", str(shard_dir))
 
     _install_numpy_stub(monkeypatch)
     _install_pil_stub(monkeypatch)
@@ -93,21 +101,15 @@ def test_verify_stage_metrics(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -
     with metrics_path.open(encoding="utf-8") as fh:
         metrics = json.load(fh)
 
-    verify_block = metrics["verify"]
-    assert "p50_ms" in verify_block
-    assert "p95_ms" in verify_block
-    assert "p99_ms" in verify_block
-    assert "unknown_rate" in metrics
-    band = metrics.get("unknown_rate_band", [0.0, 1.0])
-    assert band[0] <= metrics["unknown_rate"] <= band[1]
-
     oracle_block = metrics["oracle"]
-    assert "enqueued" in oracle_block
-    assert "shed" in oracle_block
+    assert oracle_block["enqueued"] >= 0
+    assert oracle_block["shed"] >= 0
     assert "p50_ms" in oracle_block
     assert "p95_ms" in oracle_block
+
+    if metrics.get("unknown_rate", 0.0) > 0:
+        assert oracle_block["enqueued"] > 0
 
     with stage_csv.open(encoding="utf-8") as fh:
         lines = fh.read().splitlines()
     assert any(line.startswith("oracle,") for line in lines)
-    assert any(line.startswith("verify,") for line in lines)

@@ -19,6 +19,8 @@ from .config import get_config
 from .detect_adapter import FakeDetector
 from .embedder_adapter import ClipLikeEmbedder
 from .eval_reporting import metrics_json
+from .label_bank.loader import load_shard, project_embedding
+from .oracle.in_memory_oracle import InMemoryCandidateOracle
 from .pipeline_detect_track_embed import DetectTrackEmbedPipeline
 from .provenance import collect_provenance
 from .track_bytetrack_adapter import ByteTrackLikeTracker
@@ -131,6 +133,30 @@ def run_eval(
 
     pipeline = DetectTrackEmbedPipeline(detector, tracker, cropper, embedder)
 
+    shard_path = os.getenv("VISION__LABELBANK__SHARD", "bench/labelbank/shard").strip()
+    labelbank = None
+    lb_dim = 0
+    if shard_path:
+        try:
+            candidate = load_shard(shard_path)
+            dim_attr = int(getattr(candidate, "dim", 0))
+            if dim_attr > 0:
+                labelbank = candidate
+                lb_dim = dim_attr
+        except FileNotFoundError:
+            labelbank = None
+        except Exception:
+            labelbank = None
+
+    try:
+        oracle_maxlen = int(os.getenv("VISION__ORACLE__MAXLEN", "2048"))
+    except ValueError:
+        oracle_maxlen = 2048
+    oracle = InMemoryCandidateOracle(maxlen=oracle_maxlen)
+
+    frame_embeddings: list[list[float] | None] = []
+    frame_ts_ns: list[int] = []
+
     t0_ready_ns = time.monotonic_ns()
     if process_start_ns is None:
         process_start_ns = t0_ready_ns
@@ -149,6 +175,9 @@ def run_eval(
         with Image.open(frame_path) as img:
             frame = np.asarray(img.convert("RGB"))
         results = pipeline.process(frame)
+        emb = pipeline.last_first_crop_embedding()
+        frame_embeddings.append(list(emb) if emb is not None else None)
+        frame_ts_ns.append(time.monotonic_ns())
         processed += 1
         if results and first_result_ns is None:
             first_result_ns = time.monotonic_ns()
@@ -178,6 +207,65 @@ def run_eval(
         warmup=warmup,
         slo_budget_ms=float(budget_ms),
     )
+
+    def _percentile(vals: list[float], q: float) -> float:
+        if not vals:
+            return 0.0
+        s = sorted(vals)
+        k = (len(s) - 1) * (q / 100.0)
+        f = int(k)
+        c = min(f + 1, len(s) - 1)
+        if f == c:
+            return float(s[f])
+        return float(s[f] * (c - k) + s[c] * (k - f))
+
+    oracle_lookup_ns: list[int] = []
+    oracle_enqueued = 0
+    pipeline_backend = selected
+    if labelbank is not None and lb_dim > 0:
+        for idx, flag in enumerate(unknown_flags):
+            if not flag:
+                continue
+            if idx >= len(frame_embeddings):
+                continue
+            embedding_vals = frame_embeddings[idx]
+            if embedding_vals is None:
+                embedding_vals = [0.0] * lb_dim
+            proj = project_embedding(embedding_vals, lb_dim)
+            lookup_start = time.monotonic_ns()
+            try:
+                topk = labelbank.lookup_vecs([proj], k=10)
+            except Exception:
+                continue
+            elapsed_ns = time.monotonic_ns() - lookup_start
+            oracle_lookup_ns.append(elapsed_ns)
+            top_labels = list(topk.labels())
+            top_scores = [float(s) for s in topk.scores()]
+            if idx < len(controller_log):
+                stride = int(controller_log[idx][0])
+            else:
+                stride = int(pipeline.current_stride())
+            ts_ns = frame_ts_ns[idx] if idx < len(frame_ts_ns) else time.monotonic_ns()
+            context = {
+                "frame_idx": idx,
+                "ts_ns": int(ts_ns),
+                "stride": stride,
+                "topk_labels": top_labels,
+                "topk_scores": top_scores,
+                "lb_dim": lb_dim,
+                "backend": pipeline_backend,
+            }
+            oracle.enqueue_unknown(proj, context)
+            oracle_enqueued += 1
+
+    oracle_times_ms = [ns / 1_000_000 for ns in oracle_lookup_ns]
+    metrics["oracle"] = {
+        "enqueued": oracle_enqueued,
+        "shed": oracle.shed_total(),
+        "p50_ms": _percentile(oracle_times_ms, 50.0),
+        "p95_ms": _percentile(oracle_times_ms, 95.0),
+    }
+    oracle_total_ns = int(sum(oracle_lookup_ns))
 
     # Verification step for unknowns
     from latency_vision.verify.verify_worker import VerifyOutcome, VerifyWorker
@@ -211,17 +299,6 @@ def run_eval(
             else:
                 rejected += 1
 
-    def _percentile(vals: list[float], q: float) -> float:
-        if not vals:
-            return 0.0
-        s = sorted(vals)
-        k = (len(s) - 1) * (q / 100.0)
-        f = int(k)
-        c = min(f + 1, len(s) - 1)
-        if f == c:
-            return float(s[f])
-        return float(s[f] * (c - k) + s[c] * (k - f))
-
     metrics["verify"] = {
         "called": verify_called,
         "accepted": accepted,
@@ -235,9 +312,10 @@ def run_eval(
         "p99_ms": _percentile(verify_times_ms, 99.0),
     }
 
-    total_ns = int(sum(verify_times_ms) * 1_000_000)
+    verify_total_ns = int(sum(verify_times_ms) * 1_000_000)
     with (out_dir / "stage_times.csv").open("a") as fh:
-        fh.write(f"verify,{total_ns},{verify_called},\n")
+        fh.write(f"oracle,{oracle_total_ns},{oracle_enqueued},\n")
+        fh.write(f"verify,{verify_total_ns},{verify_called},\n")
     prov = collect_provenance(frames)
     metrics.update(prov)
     latencies_effective = per_frame_ms[warmup:]
