@@ -47,7 +47,7 @@ test:
 
 test-cov:
 >@python -c "import pytest_cov" >/dev/null 2>&1 || (echo "pytest-cov not installed; run 'pip install -r requirements-dev.txt' or run in CI where it's provided." && exit 1)
->pytest --cov=vision --cov-report=term-missing --cov-report=xml
+>pytest --cov=latency_vision --cov-report=term-missing --cov-report=xml
 
 cov-html:
 >@test -f .coverage || (echo "No .coverage file found. Run 'make test-cov' first (or download from CI artifacts)." && exit 1)
