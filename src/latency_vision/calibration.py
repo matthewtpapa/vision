@@ -6,21 +6,23 @@ from collections.abc import Iterable
 from dataclasses import dataclass
 
 import numpy as np
+from numpy.typing import DTypeLike
 
 _T_MIN = 0.5
 _T_MAX = 5.0
 
 
-def _as_array(values: np.ndarray | Iterable[float], *, dtype: np.dtype | None = None) -> np.ndarray:
+def _as_array(values: object, *, dtype: DTypeLike | None = None) -> np.ndarray:
+    """Coerce arbitrary 1D/2D-like inputs to an ndarray, with optional dtype."""
+
     if isinstance(values, np.ndarray):
         arr = values
     elif isinstance(values, Iterable):
+        # Works for 1D (Iterable[float]) and 2D (Iterable[Iterable[float]])
         arr = np.asarray(list(values))
     else:
         arr = np.asarray(values)
-    if dtype is not None:
-        arr = arr.astype(dtype, copy=False)
-    return arr
+    return arr.astype(dtype, copy=False) if dtype is not None else arr
 
 
 def distances_to_logits(d: np.ndarray | Iterable[float], method: str = "neg") -> np.ndarray:
