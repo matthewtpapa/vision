@@ -18,6 +18,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/).
 - Verification manifest, calibration script, and integration with evaluation metrics.
 - Reproducibility harness for metrics hashing.
 - CI guard banning forbidden RIS tokens and hot-loop syscall audit.
+- Oracle drain into Verify with JSON ledger emission and maxlen/shed-rate gates.
 
 ## [0.1.0-rc.2] - 2025-09-15
 

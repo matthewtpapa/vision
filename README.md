@@ -85,8 +85,11 @@ python scripts/plot_latency.py --input bench/out/stage_times.csv
 | LabelBank recall@10 | ≥0.99 |
 
 Set `VISION__LABELBANK__SHARD=bench/labelbank/shard` to enable offline LabelBank lookups.
+`make verify-eval` constrains the oracle queue via `VISION__ORACLE__MAXLEN=64` so shed-rate gates
+match CI.
 M2-04 wires unknown frames through a read-only LabelBank top-k pass and enqueues results on a bounded
-in-memory `CandidateOracle`; recognition decisions remain unchanged.
+in-memory `CandidateOracle`; accepted candidates append to `bench/verify/ledger.jsonl` after
+verification.
 
 Exit codes: 0 success · 2 user/data error (bad path, empty/invalid files) · 3 missing optional dep (pillow, matplotlib).
 

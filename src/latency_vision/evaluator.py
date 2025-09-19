@@ -10,9 +10,9 @@ import json
 import os
 import sys
 import time
-from collections.abc import Iterable
+from collections.abc import Iterable, Sequence
 from pathlib import Path
-from typing import Literal
+from typing import Any, Literal, cast
 
 from . import __version__
 from .config import get_config
@@ -20,6 +20,7 @@ from .detect_adapter import FakeDetector
 from .embedder_adapter import ClipLikeEmbedder
 from .eval_reporting import metrics_json
 from .label_bank.loader import load_shard, project_embedding
+from .ledger import JsonLedger
 from .oracle.in_memory_oracle import InMemoryCandidateOracle
 from .pipeline_detect_track_embed import DetectTrackEmbedPipeline
 from .provenance import collect_provenance
@@ -258,9 +259,13 @@ def run_eval(
             oracle_enqueued += 1
 
     oracle_times_ms = [ns / 1_000_000 for ns in oracle_lookup_ns]
+    shed_total = oracle.shed_total()
+    shed_denom = max(1, oracle_enqueued + shed_total)
     metrics["oracle"] = {
         "enqueued": oracle_enqueued,
-        "shed": oracle.shed_total(),
+        "shed": shed_total,
+        "maxlen": oracle_maxlen,
+        "shed_rate": shed_total / shed_denom,
         "p50_ms": _percentile(oracle_times_ms, 50.0),
         "p95_ms": _percentile(oracle_times_ms, 95.0),
     }
@@ -274,29 +279,64 @@ def run_eval(
     D_vals: list[float] = []
     r_vals: list[float] = []
     diversities: list[int] = []
-    accepted = rejected = 0
+    accepted = 0
+    rejected = 0
     verify_called = 0
-    verify_manifest = "bench/verify/gallery_manifest.jsonl"
-    calib_path = "bench/verify/calibration.json"
-    if os.path.exists(verify_manifest) and os.path.exists(calib_path):
-        vw = VerifyWorker(verify_manifest, calib_path)
+    verify_manifest_path = Path("bench/verify/gallery_manifest.jsonl")
+    calib_path = Path("bench/verify/calibration.json")
+    verify_worker: VerifyWorker | None = None
+    ledger_writer: JsonLedger | None = None
+    if verify_manifest_path.exists() and calib_path.exists():
+        verify_worker = VerifyWorker(str(verify_manifest_path), str(calib_path))
+        ledger_writer = JsonLedger(str(Path("bench/verify/ledger.jsonl")))
 
-        for flag in unknown_flags:
-            if not flag:
-                continue
-            verify_called += 1
-            t0 = time.monotonic_ns()
-            res = vw.verify([0.0], "__unknown__")
-            verify_times_ms.append((time.monotonic_ns() - t0) / 1e6)
-            if isinstance(res, VerifyOutcome):
-                E_vals.append(res.E)
-                D_vals.append(res.D)
-                r_vals.append(float(res.r))
-                diversities.append(res.diversity)
-            if res.accepted:
-                accepted += 1
-            else:
-                rejected += 1
+    while True:
+        next_item = oracle.next()
+        if next_item is None:
+            break
+        _labels, record_context = next_item
+        context_map = dict(record_context)
+        raw_labels = context_map.get("topk_labels")
+        if not raw_labels:
+            continue
+        labels_seq = cast(Sequence[Any], raw_labels)
+        if not labels_seq:
+            continue
+        candidate_label = str(labels_seq[0])
+        if verify_worker is None:
+            continue
+        embedding_seq = cast(Sequence[Any], context_map.get("embedding") or [])
+        embedding = [float(x) for x in embedding_seq]
+        verify_called += 1
+        t0 = time.monotonic_ns()
+        result = None
+        if verify_worker is not None:
+            result = verify_worker.verify(embedding, candidate_label)
+        elapsed_ms = (time.monotonic_ns() - t0) / 1e6
+        verify_times_ms.append(elapsed_ms)
+        if isinstance(result, VerifyOutcome):
+            E_vals.append(result.E)
+            D_vals.append(result.D)
+            r_vals.append(float(result.r))
+            diversities.append(result.diversity)
+        if result is not None and result.accepted:
+            accepted += 1
+            if ledger_writer is not None:
+                raw_scores = cast(Sequence[Any], context_map.get("topk_scores") or [])
+                scores = [float(s) for s in raw_scores][:3]
+                ts_val = cast(int | float | str | None, context_map.get("ts_ns"))
+                stride_val = cast(int | float | str | None, context_map.get("stride"))
+                ledger_writer.append(
+                    {
+                        "label": candidate_label,
+                        "ts_ns": int(ts_val) if ts_val is not None else 0,
+                        "stride": int(stride_val) if stride_val is not None else 0,
+                        "scores": scores,
+                        "backend": context_map.get("backend"),
+                    }
+                )
+        else:
+            rejected += 1
 
     metrics["verify"] = {
         "called": verify_called,

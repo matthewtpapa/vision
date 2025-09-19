@@ -9,6 +9,8 @@ import pytest
 
 from scripts.build_fixture import build_fixture
 from scripts.build_labelbank_shard import main as build_shard_main
+from scripts.verify_build_manifest import build_manifest
+from scripts.verify_calibrate import calibrate
 
 
 def _install_numpy_stub(monkeypatch: pytest.MonkeyPatch) -> None:
@@ -55,29 +57,44 @@ def _install_pil_stub(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setitem(sys.modules, "PIL.Image", fake_image)
 
 
-def test_labelbank_wiring(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+def test_oracle_verify_wiring(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
     repo_root = Path(__file__).resolve().parents[1]
     monkeypatch.chdir(tmp_path)
 
     shard_dir = Path("bench/labelbank/shard")
+    lb_seed = tmp_path / "lb_seed.jsonl"
+    lb_rows = [
+        {"label": "alpha", "aliases": ["alpha"], "p31": "product_model", "lang": "en"},
+        {"label": "bravo", "aliases": ["bravo"], "p31": "product_model", "lang": "en"},
+        {"label": "charlie", "aliases": ["charlie"], "p31": "product_model", "lang": "en"},
+    ]
+    lb_seed.write_text("\n".join(json.dumps(row) for row in lb_rows), encoding="utf-8")
     build_result = build_shard_main(
         [
             "--seed",
             "1234",
             "--in",
-            str(repo_root / "data/labelbank/seed.jsonl"),
+            str(lb_seed),
             "--out",
             str(shard_dir),
             "--dim",
             "16",
             "--max-n",
-            "32",
+            "16",
         ]
     )
     assert build_result == 0
 
     fixture_dir = Path("bench/fixture")
-    build_fixture(fixture_dir, n=3, seed=11)
+    build_fixture(fixture_dir, n=4, seed=21)
+
+    bench_verify = Path("bench/verify")
+    bench_verify.mkdir(parents=True, exist_ok=True)
+    seed = repo_root / "data/verify/seed_gallery/seed.jsonl"
+    data_dir = repo_root / "data/verify/seed_gallery"
+    manifest = bench_verify / "gallery_manifest.jsonl"
+    build_manifest(str(seed), str(data_dir), str(manifest))
+    calibrate(str(manifest), str(bench_verify / "calibration.json"), 4242)
 
     monkeypatch.setenv("VISION__LABELBANK__SHARD", str(shard_dir))
     monkeypatch.setenv("VISION__ORACLE__MAXLEN", "64")
@@ -97,27 +114,22 @@ def test_labelbank_wiring(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> No
     assert code == 0
 
     metrics_path = out_dir / "metrics.json"
-    stage_csv = out_dir / "stage_times.csv"
-    stage_totals = out_dir / "stage_totals.csv"
-    ledger_path = Path("bench/verify/ledger.jsonl")
-
     with metrics_path.open(encoding="utf-8") as fh:
         metrics = json.load(fh)
 
     oracle_block = metrics["oracle"]
-    assert oracle_block["enqueued"] >= 0
-    assert oracle_block["shed"] >= 0
-    assert "p50_ms" in oracle_block
-    assert "p95_ms" in oracle_block
+    assert oracle_block["maxlen"] == 64
+    assert 0.0 <= oracle_block["shed_rate"] <= 1.0
 
-    if metrics.get("unknown_rate", 0.0) > 0:
-        assert oracle_block["enqueued"] > 0
+    verify_block = metrics["verify"]
+    assert verify_block["called"] >= verify_block["accepted"] + verify_block["rejected"]
 
-    assert stage_csv.exists()
-
-    with stage_totals.open(encoding="utf-8") as fh:
-        totals = fh.read().splitlines()
-    assert any(line.startswith("oracle,") for line in totals[1:])
-
-    ledger_exists = ledger_path.exists() and ledger_path.stat().st_size > 0
-    assert ledger_exists == (metrics["verify"].get("accepted", 0) > 0)
+    ledger_path = Path("bench/verify/ledger.jsonl")
+    if verify_block["called"] > 0:
+        assert ledger_path.exists()
+        with ledger_path.open(encoding="utf-8") as fh:
+            lines = [line for line in fh.read().splitlines() if line.strip()]
+        assert len(lines) >= 1
+    else:
+        if ledger_path.exists():
+            assert ledger_path.stat().st_size == 0

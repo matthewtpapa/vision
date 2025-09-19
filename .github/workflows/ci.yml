@@ -133,6 +133,8 @@ assert c1.get("calibration_hash") == c2.get("calibration_hash"), "calibration_ha
 print("calibration_hash=", c1.get("calibration_hash"))
 PY
       - name: Verify eval
+        env:
+          VISION__ORACLE__MAXLEN: "64"
         run: make verify-eval
       - name: Print metrics hash
         run: |
@@ -170,6 +172,9 @@ assert m["p95_ms"] <= 33.0, f"p95_ms={m['p95_ms']}"
 assert m["p99_ms"] <= 66.0, f"p99_ms={m['p99_ms']}"
 assert m["cold_start_ms"] <= 1100.0, f"cold_start_ms={m['cold_start_ms']}"
 assert m["index_bootstrap_ms"] <= 50.0, f"index_bootstrap_ms={m['index_bootstrap_ms']}"
+o=m.get("oracle", {})
+assert o.get("maxlen", 0) <= 64, f"oracle.maxlen={o.get('maxlen')}"
+assert o.get("shed_rate", 0.0) <= 0.05, f"shed_rate={o.get('shed_rate')}"
 print("Gates ok")
 PY
       - name: Ban runtime RIS

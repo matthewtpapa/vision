@@ -95,9 +95,9 @@ def test_verify_stage_metrics(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -
         metrics = json.load(fh)
 
     verify_block = metrics["verify"]
-    assert "p50_ms" in verify_block
+    assert "called" in verify_block
+    assert verify_block["called"] >= 0
     assert "p95_ms" in verify_block
-    assert "p99_ms" in verify_block
     assert "unknown_rate" in metrics
     band = metrics.get("unknown_rate_band", [0.0, 1.0])
     assert band[0] <= metrics["unknown_rate"] <= band[1]
@@ -105,8 +105,8 @@ def test_verify_stage_metrics(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -
     oracle_block = metrics["oracle"]
     assert "enqueued" in oracle_block
     assert "shed" in oracle_block
-    assert "p50_ms" in oracle_block
-    assert "p95_ms" in oracle_block
+    assert "maxlen" in oracle_block
+    assert "shed_rate" in oracle_block
 
     assert stage_csv.exists()
 

@@ -166,7 +166,7 @@ verify-calibrate:
 
 verify-eval:
 >python scripts/build_fixture.py --seed 42 --out bench/fixture --n 200
->latvision eval --input bench/fixture --output bench/out --warmup 0 --unknown-rate-band 0.10,0.40
+>VISION__ORACLE__MAXLEN=64 latvision eval --input bench/fixture --output bench/out --warmup 0 --unknown-rate-band 0.10,0.40
 >python scripts/print_summary.py --metrics bench/out/metrics.json
 
 build:
