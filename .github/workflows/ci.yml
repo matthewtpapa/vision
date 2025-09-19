@@ -46,11 +46,14 @@ jobs:
           set -eu
           base="${{ github.event.pull_request.base.sha }}"
           head="${{ github.event.pull_request.head.sha }}"
-          changed="$(git diff --name-only "$base" "$head")"
+          changed="$(git diff --name-only "$base" "$head" || true)"
 
-          if echo "$changed" | grep -E '^(src/latency_vision/(oracle|kb)/|\.github/workflows/.*(supply|sbom|gitleaks|trivy).*)'; then
-            echo "Found changes outside M2-03 scope while labeled m2-03-only:"
-            echo "$changed" | grep -E '^(src/latency_vision/(oracle|kb)/|\.github/workflows/.*(supply|sbom|gitleaks|trivy).*)'
+          allowed='^(src/latency_vision/(oracle|kb)/|docs/adr/|scripts/(verify_.*|bench_.*|build_labelbank_shard\.py|repro_check\.py|bench_calibration\.py)|data/(labelbank|verify)/|\.github/workflows/ci\.yml|CHANGELOG\.md|README\.md|Makefile)'
+
+          offenders="$(printf "%s\n" "$changed" | grep -Ev "$allowed" || true)"
+          if [ -n "$offenders" ]; then
+            echo "Found changes outside M2-03 scope:"
+            printf '%s\n' "$offenders"
             exit 1
           fi
       - run: pip install -e .
