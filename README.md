@@ -210,6 +210,9 @@ Helpful development targets:
 | `make labelbank-bench` | run the LabelBank micro-benchmark |
 | `make verify-calibrate` | derive VerifyWorker calibration thresholds |
 | `make verify-eval` | run evaluation with verification metrics |
+| `make calib` | run the calibration bench on the offline shard |
+| `make gate-calib` | enforce calibration thresholds (ECE/AUROC/oracle latency) |
+| `make gate-purity` | run the strace-based hot-loop purity audit |
 | `make repro` | compare metrics JSONs for reproducibility |
 
 ## Architecture (M1 vertical slice)

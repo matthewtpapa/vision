@@ -155,6 +155,28 @@ PY
           m=json.load(open("bench/out/metrics.json"))
           print("metrics_hash=", metrics_hash(m))
           PY
+      - name: Calibration bench
+        run: make calib
+      - name: Calibration gates
+        run: make gate-calib
+      - name: Upload calibration artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: calibration-artifacts
+          path: |
+            bench/calib_stats.json
+            bench/calib_hash.txt
+          if-no-files-found: error
+      - name: Purity gate
+        run: make gate-purity
+      - name: Upload syscall audit
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: syscall-report
+          path: artifacts/syscall_report.txt
+          if-no-files-found: warn
       - name: KB Promotion
         run: make kb-promote
       - name: KB Promotion gates

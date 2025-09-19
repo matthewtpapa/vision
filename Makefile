@@ -158,6 +158,29 @@ repro:
 labelbank-shard:
 >python scripts/build_labelbank_shard.py --seed 1234 --in data/labelbank/seed.jsonl --out bench/labelbank/shard --dim 256 --max-n $${LB_N:-10000}
 
+calib:
+>python scripts/bench_calibration.py --shard bench/labelbank/shard --seed 999 --k 10 --out bench/calib_stats.json --hash-out bench/calib_hash.txt
+
+gate-calib:
+>python - <<'PY'
+>import json
+>stats = json.load(open("bench/calib_stats.json", encoding="utf-8"))
+>assert stats["ece"] <= 0.05, f"ece={stats['ece']}"
+>assert stats["auroc_min"] >= 0.95, f"auroc_min={stats['auroc_min']}"
+>assert stats.get("lookup_p95_delta", 0.0) <= 0.05, "lookup_p95_delta gate"
+>assert stats.get("oracle_p95_ms", 0.0) <= 10.0, "oracle_p95_ms gate"
+>verify = stats.get("verify", {})
+>called = int(verify.get("called", 0))
+>accepted = int(verify.get("accepted", 0))
+>rejected = int(verify.get("rejected", 0))
+>assert called == accepted + rejected, "verify accounting mismatch"
+>assert int(verify.get("known_wrong_after_verify", 0)) == 0, "known_wrong_after_verify must be 0"
+>print("calibration gates ok")
+>PY
+
+gate-purity:
+>scripts/verify_syscalls.sh
+
 labelbank-bench: labelbank-shard
 >python scripts/bench_labelbank.py --shard bench/labelbank/shard --out bench/labelbank_stats.json --seed 999 --queries $${LB_Q:-500} --k 10
 >@echo "LabelBank stats written to bench/labelbank_stats.json"

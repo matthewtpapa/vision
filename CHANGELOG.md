@@ -20,6 +20,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/).
 - CI guard banning forbidden RIS tokens and hot-loop syscall audit.
 - Oracle drain into Verify with JSON ledger emission and maxlen/shed-rate gates.
 - KB promotion pipeline with capped int8 medoids, promotion ledger, and CI gates.
+- Calibration utilities with temperature fitting, EMA-based oracle abstention,
+  offline calibration bench + gates, and syscall purity guard targets.
 
 ## [0.1.0-rc.2] - 2025-09-15
 
