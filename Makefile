@@ -5,6 +5,7 @@
 .PHONY: plot
 .PHONY: bench-oracle
 .PHONY: bench-oracle-e2e
+.PHONY: gallery-dedupe-audit
 
 # Safer bash in make recipes
 SHELL := bash
@@ -198,6 +199,9 @@ gate-purity:
 .PHONY: purity
 purity:
 >bash scripts/purity_guard.sh
+
+gallery-dedupe-audit:
+>python scripts/gallery_dedupe_audit.py
 
 labelbank-bench: labelbank-shard
 >python scripts/bench_labelbank.py --shard bench/labelbank/shard --out bench/labelbank_stats.json --seed 999 --queries $${LB_Q:-500} --k 10
