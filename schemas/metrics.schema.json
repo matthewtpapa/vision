@@ -1,0 +1,58 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://vision.local/schemas/metrics.schema.json",
+  "title": "Vision benchmark metrics schemas",
+  "description": "Reusable schema definitions for benchmark metrics emitted by the oracle drills.",
+  "$defs": {
+    "oracleStats": {
+      "title": "Oracle offline metrics",
+      "type": "object",
+      "required": [
+        "candidate_at_k_recall",
+        "p95_ms"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "candidate_at_k_recall": {
+          "type": "number",
+          "minimum": 0.0,
+          "maximum": 1.0,
+          "description": "Recall of the ground-truth candidate at rank k (0.0-1.0)."
+        },
+        "p95_ms": {
+          "type": "number",
+          "minimum": 0.0,
+          "description": "95th percentile latency in milliseconds."
+        }
+      }
+    },
+    "oracleE2E": {
+      "title": "Oracle end-to-end metrics",
+      "type": "object",
+      "required": [
+        "p@1",
+        "e2e_p95_ms",
+        "e2e_p99_ms"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "p@1": {
+          "type": "number",
+          "minimum": 0.0,
+          "maximum": 1.0,
+          "description": "Precision at 1 for the end-to-end oracle flow."
+        },
+        "e2e_p95_ms": {
+          "type": "number",
+          "minimum": 0.0,
+          "description": "95th percentile end-to-end latency in milliseconds."
+        },
+        "e2e_p99_ms": {
+          "type": "number",
+          "minimum": 0.0,
+          "description": "99th percentile end-to-end latency in milliseconds."
+        }
+      }
+    }
+  }
+}

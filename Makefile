@@ -280,3 +280,7 @@ release-rc:
 .PHONY: metrics-hash
 metrics-hash:
 >python scripts/write_metrics_hash.py
+
+.PHONY: check-metrics-schema
+check-metrics-schema:
+>python scripts/check_metrics_schema.py
