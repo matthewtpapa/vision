@@ -1,19 +1,26 @@
 from __future__ import annotations
 
+from typing import TYPE_CHECKING
+
 import pytest
 
-try:
+if TYPE_CHECKING:
     import numpy as np
-except ModuleNotFoundError:  # pragma: no cover - environment guard
-    pytest.skip("requires numpy", allow_module_level=True)
-
-from vision.calibration import (
-    distances_to_logits,
-    fit_temperature,
-    softmax,
-    temperature_scale,
-    unknown_rate_guard,
-)
+    from vision.calibration import (
+        distances_to_logits,
+        fit_temperature,
+        softmax,
+        temperature_scale,
+        unknown_rate_guard,
+    )
+else:
+    np = pytest.importorskip("numpy")
+    calibration = pytest.importorskip("vision.calibration")
+    distances_to_logits = calibration.distances_to_logits
+    fit_temperature = calibration.fit_temperature
+    softmax = calibration.softmax
+    temperature_scale = calibration.temperature_scale
+    unknown_rate_guard = calibration.unknown_rate_guard
 
 
 def test_softmax_normalises() -> None:

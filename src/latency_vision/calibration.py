@@ -15,6 +15,8 @@ _T_MAX = 5.0
 def _as_array(values: object, *, dtype: DTypeLike | None = None) -> np.ndarray:
     """Coerce arbitrary 1D/2D-like inputs to an ndarray, with optional dtype."""
 
+    if isinstance(values, Iterable) and not isinstance(values, np.ndarray):
+        values = list(values)
     arr = np.asarray(values, dtype=dtype)
     if arr.ndim not in (1, 2):
         raise ValueError("values must be 1-D or 2-D")
