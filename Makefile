@@ -195,6 +195,10 @@ gate-calib:
 gate-purity:
 >scripts/verify_syscalls.sh
 
+.PHONY: purity
+purity:
+>bash scripts/purity_guard.sh
+
 labelbank-bench: labelbank-shard
 >python scripts/bench_labelbank.py --shard bench/labelbank/shard --out bench/labelbank_stats.json --seed 999 --queries $${LB_Q:-500} --k 10
 >@echo "LabelBank stats written to bench/labelbank_stats.json"
@@ -280,6 +284,11 @@ release-rc:
 .PHONY: metrics-hash
 metrics-hash:
 >python scripts/write_metrics_hash.py
+
+.PHONY: config-artifact
+config-artifact:
+>mkdir -p artifacts
+>python -c "import json, pathlib; pathlib.Path('artifacts/config_precedence.json').write_text(json.dumps({'precedence': 'CLI>ENV>MANIFEST'}, indent=2) + '\\n', encoding='utf-8')"
 
 .PHONY: check-metrics-schema
 check-metrics-schema:
