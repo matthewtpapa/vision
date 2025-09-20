@@ -28,7 +28,7 @@ os.makedirs(a.out, exist_ok=True)
 with open(a.bank) as bank_file:
     bank = [json.loads(line) for line in bank_file]
 
-latencies_ms = []
+latencies_ms: list[float] = []
 hits = 0
 total = 0
 
@@ -49,7 +49,9 @@ with open(a.queries) as queries_file:
 
 stats = {
     "candidate_at_k_recall": hits / total if total else 0.0,
-    "p95_ms": statistics.quantiles(latencies_ms, n=100)[94] if latencies_ms else 0.0,
+    "p95_ms": (
+        statistics.quantiles(latencies_ms, n=100, method="inclusive")[94] if latencies_ms else 0.0
+    ),
 }
 
 stats_path = os.path.join(a.out, "oracle_stats.json")
