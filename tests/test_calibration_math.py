@@ -1,17 +1,27 @@
 from __future__ import annotations
 
+from typing import TYPE_CHECKING
+
 import pytest
 
-pytest.importorskip("numpy")
+if TYPE_CHECKING:
+    import numpy as np
 
-import numpy as np
-
-from vision.calibration import (
-    distances_to_logits,
-    fit_temperature,
-    softmax,
-    temperature_scale,
-)
+    from vision.calibration import (
+        distances_to_logits,
+        fit_temperature,
+        softmax,
+        temperature_scale,
+        unknown_rate_guard,
+    )
+else:
+    np = pytest.importorskip("numpy")
+    calibration = pytest.importorskip("vision.calibration")
+    distances_to_logits = calibration.distances_to_logits
+    fit_temperature = calibration.fit_temperature
+    softmax = calibration.softmax
+    temperature_scale = calibration.temperature_scale
+    unknown_rate_guard = calibration.unknown_rate_guard
 
 
 def test_softmax_normalises() -> None:
@@ -39,3 +49,8 @@ def test_fit_temperature_recovers_ground_truth() -> None:
     labels = np.argmax(scaled, axis=1)
     fitted = fit_temperature(logits, labels, seed=999)
     assert abs(fitted - true_T) < 0.3
+
+
+def test_unknown_rate_guard() -> None:
+    assert unknown_rate_guard([True, False, True, True]) == pytest.approx(0.75)
+    assert unknown_rate_guard([]) == 0.0

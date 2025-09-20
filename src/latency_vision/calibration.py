@@ -15,14 +15,28 @@ _T_MAX = 5.0
 def _as_array(values: object, *, dtype: DTypeLike | None = None) -> np.ndarray:
     """Coerce arbitrary 1D/2D-like inputs to an ndarray, with optional dtype."""
 
-    if isinstance(values, np.ndarray):
-        arr = values
-    elif isinstance(values, Iterable):
-        # Works for 1D (Iterable[float]) and 2D (Iterable[Iterable[float]])
-        arr = np.asarray(list(values))
-    else:
-        arr = np.asarray(values)
-    return arr.astype(dtype, copy=False) if dtype is not None else arr
+    if isinstance(values, Iterable) and not isinstance(values, np.ndarray):
+        values = list(values)
+    arr = np.asarray(values, dtype=dtype)
+    if arr.ndim not in (1, 2):
+        raise ValueError("values must be 1-D or 2-D")
+
+    if arr.ndim == 2:
+        if arr.dtype == object:
+            width = arr.shape[1]
+            for row in arr:
+                try:
+                    row_len = len(row)
+                except TypeError as exc:  # pragma: no cover - defensive
+                    msg = "2-D inputs must have consistent row lengths"
+                    raise ValueError(msg) from exc
+                if row_len != width:
+                    raise ValueError("2-D inputs must have consistent row lengths")
+    elif arr.dtype == object and arr.size > 0:
+        if not all(np.isscalar(item) for item in arr):
+            raise ValueError("2-D inputs must have consistent row lengths")
+
+    return arr
 
 
 def distances_to_logits(d: np.ndarray | Iterable[float], method: str = "neg") -> np.ndarray:
@@ -133,10 +147,19 @@ class CalibrationReport:
     ece: float
 
 
+def unknown_rate_guard(flags: list[bool]) -> float:
+    """Return the fraction of truthy *flags*, guarding against empty inputs."""
+
+    if not flags:
+        return 0.0
+    return float(sum(flags)) / len(flags)
+
+
 __all__ = [
     "CalibrationReport",
     "distances_to_logits",
     "fit_temperature",
+    "unknown_rate_guard",
     "softmax",
     "temperature_scale",
 ]
