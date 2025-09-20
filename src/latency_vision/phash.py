@@ -2,12 +2,12 @@
 from __future__ import annotations
 
 import math
-from functools import lru_cache
+from functools import cache
 
 import numpy as np
 
 
-@lru_cache(maxsize=None)
+@cache
 def _dct_mat(n: int) -> np.ndarray:
     """Create an orthonormal DCT-II matrix of size ``n``."""
     k = np.arange(n, dtype=np.float64).reshape(-1, 1)
