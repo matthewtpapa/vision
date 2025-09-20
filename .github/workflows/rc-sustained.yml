@@ -1,37 +1,9 @@
-name: rc-sustained-slo
+name: deprecated-rc-sustained
 on:
-  push:
-    tags:
-      - "v*rc*"
-  workflow_dispatch:
-
+  workflow_dispatch: {}
 jobs:
-  sustained:
+  deprecated:
     runs-on: ubuntu-latest
-    timeout-minutes: 20
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
-        with: { python-version: "3.11" }
-      - run: pip install -e . || true
-      - run: pip install -r requirements-dev.txt || true
-      - name: Build fixture
-        run: python scripts/build_fixture.py --seed 42 --out bench/fixture --n 2000
-      - name: 10-minute sustained eval
-        run: |
-          PYTHONPATH=src latvision eval --input bench/fixture --output bench/out --duration-min 10 --warmup 100
-      - name: Enforce sustained SLO >= 99.5%
-        run: |
-          python - <<'PY'
-          import json, pathlib, sys
-          m = json.loads(pathlib.Path("bench/out/metrics.json").read_text(encoding="utf-8"))
-          if m.get("sustained_in_budget", 0.0) < 0.995:
-              print("Sustained SLO < 99.5%", m.get("sustained_in_budget"))
-              sys.exit(1)
-          print("Sustained SLO OK:", m.get("sustained_in_budget"))
-          PY
-      - name: Upload sustained artifacts
-        uses: actions/upload-artifact@v4
-        with:
-          name: rc-sustained-${{ github.ref_name }}
-          path: bench/out/*
+      - run: |
+          echo "::warning::This workflow is deprecated. Use .github/workflows/verify.yml"

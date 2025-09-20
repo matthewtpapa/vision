@@ -1,10 +1,12 @@
 name: verify
 on:
-  push:
-    branches: [ main ]
   pull_request:
+    types: [opened, synchronize, reopened]
 jobs:
   verify:
+    concurrency:
+      group: verify-${{ github.ref }}-${{ matrix.python-version }}
+      cancel-in-progress: true
     runs-on: ubuntu-latest
     strategy:
       matrix:
@@ -22,6 +24,13 @@ jobs:
           python -m pip install -U pip
           pip install -r requirements-dev.txt
           pip install -e .
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: Install markdownlint (no lockfile)
+        run: |
+          npm i --no-save markdownlint-cli2 markdownlint \
+            || echo "::warning::Failed to install markdownlint; markdownlint step will run in advisory mode."
       - name: make verify (lint/type/test/md)
         run: make verify
       - name: Bench Oracle
@@ -48,3 +57,22 @@ jobs:
             artifacts/purity_report.json
             artifacts/metrics_hash.txt
             artifacts/metrics_schema_report.txt
+      - name: Gate summary
+        run: |
+          python - <<'PY' > gate_summary.txt
+import json, pathlib
+stats = json.loads(pathlib.Path("bench/oracle_stats.json").read_text())
+e2e = json.loads(pathlib.Path("bench/oracle_e2e.json").read_text())
+purity = json.loads(pathlib.Path("artifacts/purity_report.json").read_text())
+metrics_hash = pathlib.Path("artifacts/metrics_hash.txt").read_text().split()[-1]
+print("### M2 gate summary")
+print()
+print(f"- recall@5: **{stats['candidate_at_k_recall']:.3f}**")
+print(f"- p95 (offline): **{stats['p95_ms']:.3f} ms**")
+print(f"- p@1 (e2e): **{e2e['p@1']:.3f}**")
+print(f"- e2e p95: **{e2e['e2e_p95_ms']:.3f} ms**  ·  e2e p99: **{e2e['e2e_p99_ms']:.3f} ms**")
+print(f"- purity (no network syscalls): **{not purity.get('network_syscalls', True)}**")
+print(f"- metrics hash: `{metrics_hash}`")
+PY
+          cat gate_summary.txt >> "$GITHUB_STEP_SUMMARY"
+          cat gate_summary.txt

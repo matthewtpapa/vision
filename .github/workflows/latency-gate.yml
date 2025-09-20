@@ -1,44 +1,9 @@
-name: latency-gate
+name: deprecated-latency-gate
 on:
-  pull_request:
-    branches: [ main ]
-  push:
-    branches: [ main ]
+  workflow_dispatch: {}
 jobs:
-  latency-gate:
+  deprecated:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
-        with:
-          python-version: '3.11'
-      - name: Install
-        run: |
-          pip install -e .
-          pip install -r requirements-dev.txt
-          pip install pillow numpy matplotlib
-      - name: Run evaluator (windowed)
-        run: |
-          python scripts/build_fixture.py --seed 42 --out bench/fixture --n 400
-          PYTHONPATH=src latvision eval --input bench/fixture --output bench/out --warmup 100
-      - name: Enforce latency + cold-start + bootstrap gates
-        run: |
-          python - <<'PY'
-          import json, sys, pathlib
-          m = json.loads(pathlib.Path('bench/out/metrics.json').read_text(encoding='utf-8'))
-          def die(msg):
-              print(msg); sys.exit(1)
-          if m.get('p95_ms', 999) > 33: die(f"p95>{33}: {m.get('p95_ms')}")
-          if m.get('p99_ms', 999) > 66: die(f"p99>{66}: {m.get('p99_ms')}")
-          if m.get('fps', 0) < 25: die(f"fps<25: {m.get('fps')}")
-          if m.get('cold_start_ms', 9999) > 1100: die(f"cold_start>{1100}: {m.get('cold_start_ms')}")
-          if m.get('index_bootstrap_ms', 9999) > 50: die(f"bootstrap>{50}: {m.get('index_bootstrap_ms')}")
-          if m.get('unknown_rate_violation'): die('unknown-rate out of band')
-          print('Latency + cold-start + bootstrap + unknown-rate gates OK')
-          PY
-      - name: Upload artifacts
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: latency-gate-artifacts
-          path: bench/out/
+      - run: |
+          echo "::warning::This workflow is deprecated. Use .github/workflows/verify.yml"

@@ -1,36 +1,9 @@
-name: gate-d
+name: deprecated-gate-d
 on:
-  pull_request:
-    branches: [ main ]
-  push:
-    branches: [ main ]
+  workflow_dispatch: {}
 jobs:
-  demo:
+  deprecated:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
-        with:
-          python-version: '3.11'
-      - name: Install
-        run: |
-          python -m pip install -U pip setuptools wheel
-          pip install -e .
-          pip install numpy pillow matplotlib
-      - name: Run demo
-        env:
-          VISION_SILENCE_DEPRECATION: "1"
-        run: make demo
-      - name: Warn if missing outputs
-        run: |
-          for f in metrics.json stage_times.csv latency.png; do
-            if [ ! -f "bench/out/$f" ]; then
-              echo "::warning ::bench/out/$f missing"
-            fi
-          done
-      - name: Upload artifacts
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: gate-d
-          path: bench/out/
+      - run: |
+          echo "::warning::This workflow is deprecated. Use .github/workflows/verify.yml"
