@@ -8,6 +8,15 @@ jobs:
       group: verify-${{ github.ref }}-${{ matrix.python-version }}
       cancel-in-progress: true
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        shell: bash
+    env:
+      OMP_NUM_THREADS: "1"
+      OPENBLAS_NUM_THREADS: "1"
+      MKL_NUM_THREADS: "1"
+      NUMEXPR_NUM_THREADS: "1"
+      TASKSET: "taskset -c 0-1"
     strategy:
       matrix:
         python-version: [ "3.10", "3.11", "3.12" ]
@@ -19,6 +28,10 @@ jobs:
           cache: pip
           cache-dependency-path: |
             requirements-dev.txt
+      - name: Install CI deps
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y strace
       - name: Install dev deps
         run: |
           python -m pip install -U pip
@@ -76,3 +89,26 @@ print(f"- metrics hash: `{metrics_hash}`")
 PY
           cat gate_summary.txt >> "$GITHUB_STEP_SUMMARY"
           cat gate_summary.txt
+  verify-smoke:
+    runs-on: ${{ matrix.os }}
+    defaults:
+      run:
+        shell: bash
+    strategy:
+      matrix:
+        os: [ubuntu-latest, macos-14, windows-latest]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: "pip"
+          cache-dependency-path: "requirements-dev.txt"
+      - name: Install
+        run: |
+          pip install -r requirements-dev.txt
+          pip install -e .
+      - name: make verify (lint/type/tests only)
+        run: make verify
+      - name: Import smoke
+        run: python -c "import latency_vision as lv; print(getattr(lv,'__version__','unknown'))"
