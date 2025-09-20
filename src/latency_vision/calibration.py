@@ -17,7 +17,7 @@ def _as_array(values: object, *, dtype: DTypeLike | None = None) -> np.ndarray:
 
     if isinstance(values, Iterable) and not isinstance(values, np.ndarray):
         values = list(values)
-    arr = np.asarray(values, dtype=dtype)
+    arr = np.asarray(values)
     if arr.ndim not in (1, 2):
         raise ValueError("values must be 1-D or 2-D")
 
@@ -35,6 +35,9 @@ def _as_array(values: object, *, dtype: DTypeLike | None = None) -> np.ndarray:
     elif arr.dtype == object and arr.size > 0:
         if not all(np.isscalar(item) for item in arr):
             raise ValueError("1-D inputs must be scalar-like")
+
+    if dtype is not None:
+        arr = arr.astype(dtype, copy=False)
 
     return arr
 

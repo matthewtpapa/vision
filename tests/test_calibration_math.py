@@ -53,3 +53,9 @@ def test_fit_temperature_recovers_ground_truth() -> None:
 def test_unknown_rate_guard() -> None:
     assert unknown_rate_guard([True, False, True, True]) == pytest.approx(0.75)
     assert unknown_rate_guard([]) == 0.0
+
+
+def test_softmax_rejects_non_scalar_1d_input() -> None:
+    ragged = [[0.1, 0.2], [0.3, 0.4, 0.5]]
+    with pytest.raises(ValueError, match="1-D inputs must be scalar-like"):
+        softmax(ragged)
