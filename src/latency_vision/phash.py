@@ -18,21 +18,25 @@ def _dct_mat(n: int) -> np.ndarray:
 
 
 def phash_64(gray32: np.ndarray) -> int:
-    """Compute a 64-bit perceptual hash from a 32×32 grayscale image."""
+    """Compute a 64-bit perceptual hash from a 32×32 grayscale image.
+    Spec: DCT→take 8×8 top-left block; exclude DC only; threshold by median;
+    pack row-major, LSB-first.
+    """
     if gray32.shape != (32, 32):
         raise ValueError("expected 32x32 grayscale matrix")
 
     C = _dct_mat(32)
     d = C @ gray32 @ C.T
-    block = d[1:9, 1:9]
-
-    coeffs = block.reshape(-1)
-    med = np.median(coeffs)
-    bits = (coeffs >= med).astype(np.uint8)
-
+    block = d[:8, :8].copy()             # include DC inside the 8×8
+    coeffs = block.ravel()
+    dc = coeffs[0]
+    coeffs[0] = 0.0                       # exclude DC from median calc
+    med = np.median(coeffs[1:])           # median over 63 non-DC coeffs
+    bits = (block >= med).astype(np.uint8).ravel()
+    bits[0] = 1 if dc >= med else 0       # deterministic DC handling
     h = 0
     for i in range(64):
-        h |= int(bits[i]) << i
+        h |= int(bits[i]) << i            # LSB-first, row-major
     return h
 
 
