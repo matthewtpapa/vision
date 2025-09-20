@@ -27,16 +27,16 @@ def phash_64(gray32: np.ndarray) -> int:
 
     C = _dct_mat(32)
     d = C @ gray32 @ C.T
-    block = d[:8, :8].copy()             # include DC inside the 8×8
+    block = d[:8, :8].copy()  # include DC inside the 8×8
     coeffs = block.ravel()
     dc = coeffs[0]
-    coeffs[0] = 0.0                       # exclude DC from median calc
-    med = np.median(coeffs[1:])           # median over 63 non-DC coeffs
+    coeffs[0] = 0.0  # exclude DC from median calc
+    med = np.median(coeffs[1:])  # median over 63 non-DC coeffs
     bits = (block >= med).astype(np.uint8).ravel()
-    bits[0] = 1 if dc >= med else 0       # deterministic DC handling
+    bits[0] = 1 if dc >= med else 0  # deterministic DC handling
     h = 0
     for i in range(64):
-        h |= int(bits[i]) << i            # LSB-first, row-major
+        h |= int(bits[i]) << i  # LSB-first, row-major
     return h
 
 
