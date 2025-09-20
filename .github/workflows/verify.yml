@@ -58,6 +58,27 @@ jobs:
         run: make config-artifact
       - name: Purity guard
         run: make purity
+      - name: Enforce purity
+        run: |
+          python - <<'PY'
+import json
+import pathlib
+import sys
+
+report = pathlib.Path("artifacts/purity_report.json")
+data = json.loads(report.read_text())
+print(json.dumps(data, indent=2))
+if data.get("network_syscalls"):
+    sys.exit("network syscalls detected")
+PY
+      - name: purity
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: purity
+          path: |
+            artifacts/purity_report.json
+            artifacts/syscall_report.txt
       - name: Metrics hash
         run: make metrics-hash
       - name: Upload gate artifacts

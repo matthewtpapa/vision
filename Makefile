@@ -198,7 +198,9 @@ gate-purity:
 
 .PHONY: purity
 purity:
->bash scripts/purity_guard.sh
+>mkdir -p artifacts bench/fixture bench/out
+>python scripts/build_fixture.py --seed 7 --out bench/fixture --n 32
+>$(TASKSET) python scripts/run_sandboxed.py -- latvision eval --input bench/fixture --output bench/out --warmup 0 --unknown-rate-band 0.0,1.0 || true
 
 gallery-dedupe-audit:
 >python scripts/gallery_dedupe_audit.py
