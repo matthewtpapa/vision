@@ -25,9 +25,7 @@ def assert_slo(
     if p95 > g.p95_ms or p99 > g.p99_ms:
         raise AssertionError(f"SLO fail p95={p95:.3f} p99={p99:.3f}")
     if cold is not None and cold > g.cold_start_ms:
-        raise AssertionError(
-            f"SLO fail cold_start={cold:.3f}ms > {g.cold_start_ms:.3f}ms"
-        )
+        raise AssertionError(f"SLO fail cold_start={cold:.3f}ms > {g.cold_start_ms:.3f}ms")
     if boot is not None and boot > g.index_bootstrap_ms:
         raise AssertionError(
             f"SLO fail index_bootstrap={boot:.3f}ms > {g.index_bootstrap_ms:.3f}ms"
