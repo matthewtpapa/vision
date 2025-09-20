@@ -128,4 +128,9 @@ PY
           mypy src
           pytest -q
       - name: Import smoke
+        if: matrix.os != 'windows-latest'
+        run: python -c "import latency_vision as lv; print(getattr(lv,'__version__','unknown'))"
+      - name: Import smoke (Windows)
+        if: matrix.os == 'windows-latest'
+        shell: pwsh
         run: python -c "import latency_vision as lv; print(getattr(lv,'__version__','unknown'))"
