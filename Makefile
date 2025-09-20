@@ -262,3 +262,7 @@ release: clean build check
 release-rc:
 >@echo "git tag -a v0.1.0-rc.2 -m \"M1.1 RC drill\""
 >@echo "git push origin v0.1.0-rc.2"
+
+.PHONY: metrics-hash
+metrics-hash:
+>python scripts/write_metrics_hash.py
