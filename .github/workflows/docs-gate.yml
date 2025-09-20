@@ -11,38 +11,52 @@ jobs:
 
       - name: Fail on banned phrases
         run: |
-          set -e
-          ! grep -RniE 'M1\.1|runtime RIS' README.md docs || (echo "Banned phrase found" >&2; exit 1)
+          set -euo pipefail
+          shopt -s globstar
+          ! grep -RniE 'M1\\.1|runtime RIS' README.md docs || (echo "Banned phrase found" >&2; exit 1)
+
+      - name: Ban legacy spec path
+        run: |
+          set -euo pipefail
+          shopt -s globstar
+          ! grep -Rni 'docs/specs/m1\\.1\\.md' README.md docs || (echo "Legacy spec path found" >&2; exit 1)
 
       - name: Require invariants
         run: |
-          set -e
+          set -euo pipefail
+          shopt -s globstar
           for file in README.md docs/architecture.md docs/adr/0001-oracle-first.md; do
             grep -Rni 'No network in the hot loop' "$file" || (echo "Invariant missing in $file" >&2; exit 1)
           done
 
-      - name: Require RIS warning
+      - name: Require exact RIS warning line
         run: |
-          set -e
-          grep -Rni 'ris.py.*only for tests/offline ingestion.*Never called in the hot loop' docs/architecture.md || (echo "RIS warning missing" >&2; exit 1)
+          set -euo pipefail
+          shopt -s globstar
+          grep -Rnx '> \*\*WARNING:\*\* `ris\.py` exists only for tests/offline ingestion\. Never called in the hot loop\.' docs/architecture.md || (echo "Exact RIS WARNING line missing" >&2; exit 1)
 
       - name: Verify precedence text
         run: |
-          set -e
+          set -euo pipefail
+          shopt -s globstar
           grep -Rni 'CLI > ENV > manifest (TOML) > defaults' docs/schema-guide.md || (echo "Precedence text mismatch" >&2; exit 1)
 
       - name: Verify pHash spec present
         run: |
-          set -e
+          set -euo pipefail
+          shopt -s globstar
           grep -Rni '64-bit DCT perceptual hash' docs/verify/manifest.md || (echo "pHash spec missing" >&2; exit 1)
 
       - name: Ensure placeholder pHash removed
         run: |
-          set -e
+          set -euo pipefail
+          shopt -s globstar
           ! grep -Rni 'placeholder pHash' docs || (echo "placeholder pHash found" >&2; exit 1)
 
       - name: Emit docs alignment summary
         run: |
+          set -euo pipefail
+          shopt -s globstar
           mkdir -p artifacts
           {
             echo "docs-gate summary:"
