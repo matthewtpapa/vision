@@ -9,6 +9,7 @@ import numpy as np
 from vision.calibration import (
     distances_to_logits,
     fit_temperature,
+    unknown_rate_guard,
     softmax,
     temperature_scale,
 )
@@ -39,3 +40,8 @@ def test_fit_temperature_recovers_ground_truth() -> None:
     labels = np.argmax(scaled, axis=1)
     fitted = fit_temperature(logits, labels, seed=999)
     assert abs(fitted - true_T) < 0.3
+
+
+def test_unknown_rate_guard() -> None:
+    assert unknown_rate_guard([True, False, True, True]) == pytest.approx(0.75)
+    assert unknown_rate_guard([]) == 0.0
