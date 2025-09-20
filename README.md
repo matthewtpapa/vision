@@ -63,9 +63,9 @@ latvision hello
 # 2) Eval — build a tiny fixture, run evaluator, print summary
 python scripts/build_fixture.py --seed 42 --out bench/fixture --n 400
 PYTHONPATH=src latvision eval --input bench/fixture --output bench/out
-python scripts/print_summary.py --metrics bench/out/metrics.json  # prints index_bootstrap_ms (alias sometimes referred to as bootstrap_ms in older notes)
+python scripts/print_summary.py --metrics bench/out/metrics.json  # prints index\_bootstrap\_ms alongside other latency metrics
 # Example:
-# fps=... p95=... p99=... cold_start_ms=... index_bootstrap_ms=... unknown_rate=... sustained_in_budget=... metrics_schema_version=... frames=... processed=... backend=... sdk=... stride=... window_p95=...
+# fps=... p95=... p99=... cold_start_ms=... index\_bootstrap\_ms=... unknown_rate=... sustained_in_budget=... metrics_schema_version=... frames=... processed=... backend=... sdk=... stride=... window_p95=...
 
 # 3) Plot (optional)
 python scripts/plot_latency.py --input bench/out/stage_times.csv
@@ -82,7 +82,7 @@ python scripts/plot_latency.py --input bench/out/stage_times.csv
 - M2-06 SLO controller — p95 ≤ 33ms; p99 ≤ 66ms; cold_start ≤ 1100ms; index_bootstrap ≤ 50ms (≤10k labels on 2-vCPU)
 - M2-07 Repro + telemetry schema — stable metrics_hash across A/B runs
 - M2-08 CI & release hygiene — artifacts attached (benches, metrics_hash, precedence)
-- M2-09 Purity & supply-chain — no network in hot loop; purity_report.json = zeros
+- M2-09 Purity & supply-chain — no network in the hot loop; purity_report.json = zeros
 
 > Invariant: No network in the hot loop. Runtime never performs RIS/web requests. Oracle proposes from local sources; Verify uses a curated local gallery.
 
@@ -93,7 +93,7 @@ python scripts/plot_latency.py --input bench/out/stage_times.csv
 | p95_ms | ≤33 |
 | p99_ms | ≤66 |
 | cold_start_ms | ≤1100 |
-| index_bootstrap_ms | ≤50 |
+| index\_bootstrap\_ms | ≤50 |
 | unknown_rate | 0.10–0.40 |
 | LabelBank lookup_p95_ms | ≤10 |
 | LabelBank recall@10 | ≥0.99 |

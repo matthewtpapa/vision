@@ -20,11 +20,11 @@ Deliver a real-time, open-set recognition SDK: detect, track, embed, and match o
 - M2-06 SLO controller — p95 ≤ 33ms; p99 ≤ 66ms; cold_start ≤ 1100ms; index_bootstrap ≤ 50ms (≤10k labels on 2-vCPU)
 - M2-07 Repro + telemetry schema — stable metrics_hash across A/B runs
 - M2-08 CI & release hygiene — artifacts attached (benches, metrics_hash, precedence)
-- M2-09 Purity & supply-chain — no network in hot loop; purity_report.json = zeros
+- M2-09 Purity & supply-chain — no network in the hot loop; purity_report.json = zeros
 
 ## Invariants
 
-- No runtime RIS (offline only).
+- Runtime never invokes RIS (offline only).
 - Deterministic outputs; schema stability.
 - Evidence-first growth: accepts → ledger → capped int8 medoids (≤3/class) in offline promotion.
 

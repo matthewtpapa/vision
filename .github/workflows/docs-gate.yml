@@ -12,13 +12,19 @@ jobs:
       - name: Fail on banned phrases
         run: |
           set -e
-          ! grep -RniE 'M1\.1|runtime RIS' README.md || (echo "Banned phrase found" >&2; exit 1)
+          ! grep -RniE 'M1\.1|runtime RIS' README.md docs || (echo "Banned phrase found" >&2; exit 1)
 
       - name: Require invariants
         run: |
           set -e
-          grep -Rni 'No network in the hot loop' README.md docs/architecture.md || (echo "Invariant missing" >&2; exit 1)
-          grep -Rni 'No network in hot loop' docs/adr/0001-oracle-first.md || (echo "ADR invariant missing" >&2; exit 1)
+          for file in README.md docs/architecture.md docs/adr/0001-oracle-first.md; do
+            grep -Rni 'No network in the hot loop' "$file" || (echo "Invariant missing in $file" >&2; exit 1)
+          done
+
+      - name: Require RIS warning
+        run: |
+          set -e
+          grep -Rni 'ris.py.*only for tests/offline ingestion.*Never called in the hot loop' docs/architecture.md || (echo "RIS warning missing" >&2; exit 1)
 
       - name: Verify precedence text
         run: |
@@ -30,14 +36,22 @@ jobs:
           set -e
           grep -Rni '64-bit DCT perceptual hash' docs/verify/manifest.md || (echo "pHash spec missing" >&2; exit 1)
 
+      - name: Ensure placeholder pHash removed
+        run: |
+          set -e
+          ! grep -Rni 'placeholder pHash' docs || (echo "placeholder pHash found" >&2; exit 1)
+
       - name: Emit docs alignment summary
         run: |
           mkdir -p artifacts
           {
             echo "docs-gate summary:"
-            echo "- README invariant present: $(grep -c 'No network in the hot loop' README.md)"
-            echo "- Architecture invariant present: $(grep -c 'No network in the hot loop' docs/architecture.md)"
-            echo "- ADR invariant present: $(grep -c 'No network in hot loop' docs/adr/0001-oracle-first.md)"
+            echo "- Banned phrases across README/docs: $(grep -RniE 'M1\\.1|runtime RIS' README.md docs | wc -l)"
+            echo "- README invariant count: $(grep -Rni 'No network in the hot loop' README.md | wc -l)"
+            echo "- Architecture invariant count: $(grep -Rni 'No network in the hot loop' docs/architecture.md | wc -l)"
+            echo "- ADR invariant count: $(grep -Rni 'No network in the hot loop' docs/adr/0001-oracle-first.md | wc -l)"
+            echo "- RIS warning matches: $(grep -Rni 'ris.py.*only for tests/offline ingestion.*Never called in the hot loop' docs/architecture.md | wc -l)"
+            echo "- Placeholder pHash mentions: $(grep -Rni 'placeholder pHash' docs | wc -l)"
             echo "- Precedence line present"
             echo "- pHash spec present"
           } > artifacts/docs_alignment.txt
