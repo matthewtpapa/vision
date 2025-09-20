@@ -107,6 +107,13 @@ PY
           cache: "pip"
           cache-dependency-path: requirements-dev.txt
       - name: Install
+        if: matrix.os != 'windows-latest'
+        run: |
+          pip install -r requirements-dev.txt
+          pip install -e .
+      - name: Install (Windows)
+        if: matrix.os == 'windows-latest'
+        shell: pwsh
         run: |
           pip install -r requirements-dev.txt
           pip install -e .
@@ -115,6 +122,7 @@ PY
         run: make verify
       - name: Lint/type/tests (Windows)
         if: matrix.os == 'windows-latest'
+        shell: pwsh
         run: |
           ruff check .
           mypy src
