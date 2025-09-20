@@ -8,6 +8,7 @@ ruff~=0.4
 pre-commit>=3.7,<4
 build
 cibuildwheel
+jsonschema>=4.21
 tomli>=2.0.1 ; python_version < "3.11"
 numpy>=1.26,<3
 pillow>=10,<11
