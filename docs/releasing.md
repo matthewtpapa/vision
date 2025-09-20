@@ -10,7 +10,7 @@ Run the following commands:
 git fetch origin
 git checkout main
 git pull --ff-only
-git tag -a v0.1.0-rc.2 -m "M1.1 RC drill"
+git tag -a v0.1.0-rc.2 -m "M2 RC drill"
 git push origin v0.1.0-rc.2
 ```
 
@@ -22,3 +22,7 @@ When the tag job runs, confirm it produces:
 - `bench/out/stage_times.csv`
 - `bench/out/latency.png` (optional)
 - `dist/*.whl`
+
+## Purity artifact
+
+CI emits `artifacts/purity_report.json` with counts for sockets/DNS. Release gates require zeros.

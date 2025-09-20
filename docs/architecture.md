@@ -2,48 +2,23 @@
 
 ## Module Map
 
-- **video:** `src/vision/webcam.py`
-- **detect:** `src/vision/fake_detector.py`
-- **track:** `src/vision/tracker.py`
-- **embed:** `src/vision/embedder.py`
-- **match:** `src/vision/matcher.py`
-- **label:** `src/vision/labeler.py`
-- **kb:** `src/vision/cluster_store.py`
-- **ris:** `src/vision/ris.py`
-- **telemetry:** `src/vision/telemetry.py`
-- **ui:** overlay drawing in `webcam.py`
+- **detect:** runtime detector wrapper (tests use fake stubs)
+- **track:** association and trajectory management
+- **embed:** frame-to-vector embedding stage
+- **match:** similarity search over the local LabelBank
+- **oracle/** — offline candidate generation
+- **verify/** — gallery check + re-embed
+- **telemetry:** structured metrics and logging hooks
 
-## Pipeline (M0)
+> **WARNING:** `ris.py` exists only for tests/offline ingestion. Never called in the hot loop.
 
-Webcam (or Dry Run)
-→ Detect (FakeDetector)
-→ Track (Tracker)
-→ Embed (Embedder)
-→ Match (Matcher)
-→ Label (Labeler)
-→ Cluster Store (add_exemplar with provenance)
-→ UI Overlay (rectangles, ID, label)
+## Hot loop dataflow
 
-## Exemplar Schema (JSON)
+Detector → Tracker → Embedder → Match → (if unknown) Oracle → Verify → Ledger.
 
-```json
-{
-  "label": "unknown",
-  "bbox": [x1, y1, x2, y2],
-  "embedding": [0.0, "... 128 floats ..."],
-  "provenance": { "source": "fake", "ts": "<ISO8601>", "note": "stub" }
-}
+## Notes
 
-```
-
-Default path: data/kb.json
-
-Persistence is atomic (temp file replace).
-
-Notes
-
-Dry run exercises the full control flow without requiring OpenCV or network access.
-
-RIS and Telemetry are stubs in M0; real integrations come in M1+.
-
-All modules are unit-tested stubs; CI runs tests and markdown lint.
+- LabelBank lookups and candidate generation are offline-first; runtime reads immutable shards.
+- Verify uses a curated local gallery and re-embeds evidence before ledger writes.
+- Ledger outputs feed capped int8 medoids during offline promotion.
+- No network in the hot loop; runtime relies solely on local and cached artifacts.

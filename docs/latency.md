@@ -190,7 +190,7 @@ A separate latvision hello banner (PR 8) prints OS/Python, wheel flavor, and SIM
 
 ## Related Docs
 
-Milestone spec & gates: docs/specs/m1.1.md
+Legacy milestone spec & gates: docs/specs/legacy-milestone.md
 
 Result schema (frozen): docs/schema.md
 

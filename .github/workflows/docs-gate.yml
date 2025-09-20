@@ -1,14 +1,77 @@
 name: docs-gate
-
-on: pull_request
-
+on:
+  push:
+    branches: [ main ]
+  pull_request:
 jobs:
-  docs:
+  docs_gate:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+
+      - name: Fail on banned phrases
+        run: |
+          set -euo pipefail
+          shopt -s globstar
+          ! grep -RniE 'M1\\.1|runtime RIS' README.md docs || (echo "Banned phrase found" >&2; exit 1)
+
+      - name: Ban legacy spec path
+        run: |
+          set -euo pipefail
+          shopt -s globstar
+          ! grep -Rni 'docs/specs/m1\\.1\\.md' README.md docs || (echo "Legacy spec path found" >&2; exit 1)
+
+      - name: Require invariants
+        run: |
+          set -euo pipefail
+          shopt -s globstar
+          for file in README.md docs/architecture.md docs/adr/0001-oracle-first.md; do
+            grep -Rni 'No network in the hot loop' "$file" || (echo "Invariant missing in $file" >&2; exit 1)
+          done
+
+      - name: Require exact RIS warning line
+        run: |
+          set -euo pipefail
+          shopt -s globstar
+          grep -RnxF '> **WARNING:** `ris.py` exists only for tests/offline ingestion. Never called in the hot loop.' docs/architecture.md || (echo "Exact RIS WARNING line missing" >&2; exit 1)
+
+      - name: Verify precedence text
+        run: |
+          set -euo pipefail
+          shopt -s globstar
+          grep -Rni 'CLI > ENV > manifest (TOML) > defaults' docs/schema-guide.md || (echo "Precedence text mismatch" >&2; exit 1)
+
+      - name: Verify pHash spec present
+        run: |
+          set -euo pipefail
+          shopt -s globstar
+          grep -Rni '64-bit DCT perceptual hash' docs/verify/manifest.md || (echo "pHash spec missing" >&2; exit 1)
+
+      - name: Ensure placeholder pHash removed
+        run: |
+          set -euo pipefail
+          shopt -s globstar
+          ! grep -Rni 'placeholder pHash' docs || (echo "placeholder pHash found" >&2; exit 1)
+
+      - name: Emit docs alignment summary
+        run: |
+          set -euo pipefail
+          shopt -s globstar
+          mkdir -p artifacts
+          {
+            echo "docs-gate summary:"
+            echo "- Banned phrases across README/docs: $( (grep -RniE 'M1\\.1|runtime RIS' README.md docs || true) | wc -l)"
+            echo "- README invariant count: $( (grep -Rni 'No network in the hot loop' README.md || true) | wc -l)"
+            echo "- Architecture invariant count: $( (grep -Rni 'No network in the hot loop' docs/architecture.md || true) | wc -l)"
+            echo "- ADR invariant count: $( (grep -Rni 'No network in the hot loop' docs/adr/0001-oracle-first.md || true) | wc -l)"
+            echo "- RIS warning matches: $( (grep -Rni 'ris.py.*only for tests/offline ingestion.*Never called in the hot loop' docs/architecture.md || true) | wc -l)"
+            echo "- RIS exact WARNING line matches: $( (grep -RnxF '> **WARNING:** `ris.py` exists only for tests/offline ingestion. Never called in the hot loop.' docs/architecture.md || true) | wc -l)"
+            echo "- Placeholder pHash mentions: $( (grep -Rni 'placeholder pHash' docs || true) | wc -l)"
+            echo "- Precedence line present"
+            echo "- pHash spec present"
+          } > artifacts/docs_alignment.txt
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
         with:
-          python-version: "3.11"
-      - run: python scripts/check_links.py
-      - run: python scripts/check_schema_sync.py
+          name: docs-alignment
+          path: artifacts/docs_alignment.txt

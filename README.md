@@ -9,9 +9,9 @@ Why now: transformer encoders + FAISS + laptop-class CPUs make real-time open-se
 > - PyPI: `latency-vision`
 > - Import: `latency_vision`
 > - CLI: `latvision`
-> - `vision` (alias; deprecated, removed in M1.2)
+> - `vision` (alias; deprecated)
 
-`vision` remains a temporary alias of `latvision` (deprecated; removed in M1.2).
+`vision` remains a temporary alias of `latvision` (deprecated).
 
 ## Install
 
@@ -41,7 +41,7 @@ Until PyPI publish, run locally with: PYTHONPATH=src latvision …
 
 Prereq: `pip install numpy`
 
-### (M1.1 façade – target)
+### SDK façade
 
 ```python
 # (Available)
@@ -63,7 +63,7 @@ latvision hello
 # 2) Eval — build a tiny fixture, run evaluator, print summary
 python scripts/build_fixture.py --seed 42 --out bench/fixture --n 400
 PYTHONPATH=src latvision eval --input bench/fixture --output bench/out
-python scripts/print_summary.py --metrics bench/out/metrics.json  # prints index_bootstrap_ms (alias sometimes referred to as bootstrap_ms in older notes)
+python scripts/print_summary.py --metrics bench/out/metrics.json  # prints index_bootstrap_ms alongside other latency metrics
 # Example:
 # fps=... p95=... p99=... cold_start_ms=... index_bootstrap_ms=... unknown_rate=... sustained_in_budget=... metrics_schema_version=... frames=... processed=... backend=... sdk=... stride=... window_p95=...
 
@@ -71,6 +71,20 @@ python scripts/print_summary.py --metrics bench/out/metrics.json  # prints index
 python scripts/plot_latency.py --input bench/out/stage_times.csv
 # Writes bench/out/latency.png
 ```
+
+## Roadmap
+
+- M2-01 LabelBank core — deterministic protocol (done)
+- M2-02 LabelBank shard+bench — lookup_p95_ms ≤ 10.0; recall@10 ≥ 0.99 (done)
+- M2-03 Verify calibration + wiring — unknown false-known ≤ 1%; types green
+- M2-04 CandidateOracle — candidate@5_recall ≥ 0.95; topk_p95_ms ≤ 5.0
+- M2-05 Unknown path → Oracle→Verify→Ledger — e2e_p95 ≤ 33.0; p@1 ≥ 0.80
+- M2-06 SLO controller — p95 ≤ 33ms; p99 ≤ 66ms; cold_start ≤ 1100ms; index_bootstrap ≤ 50ms (≤10k labels on 2-vCPU)
+- M2-07 Repro + telemetry schema — stable metrics_hash across A/B runs
+- M2-08 CI & release hygiene — artifacts attached (benches, metrics_hash, precedence)
+- M2-09 Purity & supply-chain — no network in the hot loop; purity_report.json = zeros
+
+> Invariant: No network in the hot loop. Runtime never performs RIS/web requests. Oracle proposes from local sources; Verify uses a curated local gallery.
 
 ## M2 — Oracle-first
 
@@ -103,7 +117,7 @@ See docs/latency.md (process model), docs/benchmarks.md (method: monotonic_ns, N
 ## Docs
 
 - Charter (vision & roadmap): **[docs/charter.md](docs/charter.md)**
-- Milestone M1.1 Spec (Gates A–D): **[docs/specs/m1.1.md](docs/specs/m1.1.md)**
+- Oracle-first ADR: **[docs/adr/0001-oracle-first.md](docs/adr/0001-oracle-first.md)**
 - Result Schema v0.1 (frozen): **[docs/schema.md](docs/schema.md)**
 - Schema guide: **[docs/schema-guide.md](docs/schema-guide.md)**
 - Latency & process model: **[docs/latency.md](docs/latency.md)**
@@ -214,12 +228,12 @@ Helpful development targets:
 | `make verify-eval` | run evaluation with verification metrics |
 | `make calib` | run the calibration bench on the offline shard |
 | `make gate-calib` | enforce calibration thresholds (ECE/AUROC/oracle latency) |
-| `make gate-purity` | run the strace-based hot-loop purity audit |
+| `make gate-purity` | run the hot-loop purity audit (deny shim + strace); emits `artifacts/purity_report.json` |
 | `make repro` | compare metrics JSONs for reproducibility |
 
-## Architecture (M1 vertical slice)
+## Architecture (M2 oracle-first hot loop)
 
-Webcam → Detect (YOLO) → Track (ByteTrack) → Embed (CLIP-B32) → Match (FAISS/NumPy) → Label/Unknown → Persist Exemplar → Telemetry
+Detector → Tracker → Embedder → Match → (if unknown) Oracle → Verify → Ledger
 
 ## Changelog
 

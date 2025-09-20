@@ -1,4 +1,4 @@
-# Milestone M1.1 Spec — SDK Reality & Latency SLO
+# Legacy Milestone Spec — SDK Reality & Latency SLO
 
 **Goal:** Ship a latency-bounded open-set SDK with a 5-line façade, canonical CLI, and a one-command reproducible bench. Positioning: *predictable, measurable, embeddable.*
 
@@ -168,7 +168,7 @@
 
 Acceptance checklist
 
-- docs/specs/m1.1.md created with Gates A–D and all acceptance bullets.
+- docs/specs/legacy-milestone.md created with Gates A–D and all acceptance bullets.
 - Matrix, SLOs (p50/p95/p99, FPS), cold-start, bootstrap, unknown-band documented.
 - Repro steps (make bench, make plot) and artifact requirements captured.
 - Cross-links to charter.md, schema.md, latency.md, benchmarks.md included.
