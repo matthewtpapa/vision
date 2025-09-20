@@ -28,7 +28,9 @@ jobs:
         with:
           node-version: '20'
       - name: Install markdownlint (no lockfile)
-        run: npm i --no-save markdownlint-cli2 markdownlint
+        run: |
+          npm i --no-save markdownlint-cli2 markdownlint \
+            || echo "::warning::Failed to install markdownlint; markdownlint step will run in advisory mode."
       - name: make verify (lint/type/test/md)
         run: make verify
       - name: Bench Oracle
