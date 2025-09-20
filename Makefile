@@ -3,6 +3,7 @@
 .RECIPEPREFIX := >
 .PHONY: setup test test-cov cov-html lint fmt format type mdlint mdfix verify readme-smoke hooks help
 .PHONY: plot
+.PHONY: bench-oracle
 
 # Safer bash in make recipes
 SHELL := bash
@@ -137,6 +138,10 @@ bench: bench-deps
 >python scripts/build_fixture.py --seed 42 --out bench/fixture --n 400
 >latvision eval --input bench/fixture --output bench/out
 >python scripts/print_summary.py --metrics bench/out/metrics.json
+
+bench-oracle:
+>python scripts/build_oracle_fixture.py --out bench/oracle_fixture --n 500 --dim 32 --seed 7
+>python scripts/bench_oracle.py --bank bench/oracle_fixture/bank.jsonl --queries bench/oracle_fixture/queries.jsonl --k 5 --out bench
 
 bench-deps:
 >@python scripts/check_bench_deps.py
