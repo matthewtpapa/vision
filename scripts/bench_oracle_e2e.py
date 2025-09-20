@@ -42,6 +42,7 @@ def main() -> None:
 
     _ensure_src_on_path()
     from latency_vision.ledger.json_ledger import JsonLedger
+    from latency_vision.slo import SLOGates, assert_slo
 
     os.makedirs(args.out, exist_ok=True)
     os.makedirs("logs", exist_ok=True)
@@ -85,9 +86,13 @@ def main() -> None:
                 }
             )
 
-    # inclusive p95 for stability
-    p95 = statistics.quantiles(lat_ms, n=100, method="inclusive")[94] if lat_ms else 0.0
-    out = {"p@1": (correct / max(1, total)), "e2e_p95_ms": p95}
+    # inclusive quantiles for stability
+    q = statistics.quantiles(lat_ms, n=100, method="inclusive") if lat_ms else []
+    p95 = q[94] if lat_ms else 0.0
+    p99 = q[98] if lat_ms else 0.0
+    # Enforce latency SLO thresholds (cold/boot optional elsewhere)
+    assert_slo(p95=p95, p99=p99, g=SLOGates())
+    out = {"p@1": (correct / max(1, total)), "e2e_p95_ms": p95, "e2e_p99_ms": p99}
 
     metrics_path = Path(args.out) / "oracle_e2e.json"
     with metrics_path.open("w") as f:
