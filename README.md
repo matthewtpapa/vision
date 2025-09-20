@@ -228,7 +228,7 @@ Helpful development targets:
 | `make verify-eval` | run evaluation with verification metrics |
 | `make calib` | run the calibration bench on the offline shard |
 | `make gate-calib` | enforce calibration thresholds (ECE/AUROC/oracle latency) |
-| `make gate-purity` | run the strace-based hot-loop purity audit |
+| `make gate-purity` | run the hot-loop purity audit (deny shim + strace); emits `artifacts/purity_report.json` |
 | `make repro` | compare metrics JSONs for reproducibility |
 
 ## Architecture (M2 oracle-first hot loop)
