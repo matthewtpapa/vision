@@ -24,7 +24,6 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '20'
-          cache: 'npm'
       - name: Install markdownlint (no lockfile)
         run: npm i --no-save markdownlint-cli2 markdownlint
       - name: make verify (lint/type/test/md)
