@@ -12,6 +12,7 @@ Fields:
 Rule: `(label, phash)` pairs must be unique.
 
 pHash: 64-bit DCT perceptual hash
+
 - Preprocess: grayscale → resize 32×32
 - DCT: take 8×8 low-frequency block (exclude DC)
 - Threshold by mean of the 8×8 block

@@ -2,16 +2,17 @@ from __future__ import annotations
 
 import pytest
 
-pytest.importorskip("numpy")
-
-import numpy as np
+try:
+    import numpy as np
+except ModuleNotFoundError:  # pragma: no cover - environment guard
+    pytest.skip("requires numpy", allow_module_level=True)
 
 from vision.calibration import (
     distances_to_logits,
     fit_temperature,
-    unknown_rate_guard,
     softmax,
     temperature_scale,
+    unknown_rate_guard,
 )
 
 
