@@ -93,7 +93,7 @@ python scripts/plot_latency.py --input bench/out/stage_times.csv
 | p95_ms | ≤33 |
 | p99_ms | ≤66 |
 | cold_start_ms | ≤1100 |
-| `index_bootstrap_ms` | ≤50 |
+| index_bootstrap_ms | ≤50 |
 | unknown_rate | 0.10–0.40 |
 | LabelBank lookup_p95_ms | ≤10 |
 | LabelBank recall@10 | ≥0.99 |
