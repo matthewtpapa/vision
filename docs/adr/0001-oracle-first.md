@@ -6,6 +6,8 @@ Oracle-first loop = LabelBank ANN → bounded CandidateOracle → curated Verify
 
 ## Invariants
 
+Invariant: No network in hot loop; Oracle and Verify operate on local/cached artifacts only.
+
 - No runtime RIS in hot loop (RIS allowed only in offline ingestion).
 - Thresholds are quantile-calibrated per shard (no global constants).
 - KB medoids are int8, ≤ 3 per class (herding + caps).

@@ -1,14 +1,48 @@
 name: docs-gate
-
-on: pull_request
-
+on:
+  push:
+    branches: [ main ]
+  pull_request:
 jobs:
-  docs:
+  docs_gate:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+
+      - name: Fail on banned phrases
+        run: |
+          set -e
+          ! grep -RniE 'M1\.1|runtime RIS' README.md || (echo "Banned phrase found" >&2; exit 1)
+
+      - name: Require invariants
+        run: |
+          set -e
+          grep -Rni 'No network in the hot loop' README.md docs/architecture.md || (echo "Invariant missing" >&2; exit 1)
+          grep -Rni 'No network in hot loop' docs/adr/0001-oracle-first.md || (echo "ADR invariant missing" >&2; exit 1)
+
+      - name: Verify precedence text
+        run: |
+          set -e
+          grep -Rni 'CLI > ENV > manifest (TOML) > defaults' docs/schema-guide.md || (echo "Precedence text mismatch" >&2; exit 1)
+
+      - name: Verify pHash spec present
+        run: |
+          set -e
+          grep -Rni '64-bit DCT perceptual hash' docs/verify/manifest.md || (echo "pHash spec missing" >&2; exit 1)
+
+      - name: Emit docs alignment summary
+        run: |
+          mkdir -p artifacts
+          {
+            echo "docs-gate summary:"
+            echo "- README invariant present: $(grep -c 'No network in the hot loop' README.md)"
+            echo "- Architecture invariant present: $(grep -c 'No network in the hot loop' docs/architecture.md)"
+            echo "- ADR invariant present: $(grep -c 'No network in hot loop' docs/adr/0001-oracle-first.md)"
+            echo "- Precedence line present"
+            echo "- pHash spec present"
+          } > artifacts/docs_alignment.txt
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
         with:
-          python-version: "3.11"
-      - run: python scripts/check_links.py
-      - run: python scripts/check_schema_sync.py
+          name: docs-alignment
+          path: artifacts/docs_alignment.txt

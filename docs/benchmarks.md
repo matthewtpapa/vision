@@ -16,7 +16,7 @@ Related docs:
 - Process model & controller: **docs/latency.md**
 - Result schema (MatchResult v0.1): **docs/schema.md**
 - Schema guide: **docs/schema-guide.md**
-- Milestone spec & gates: **docs/specs/m1.1.md**
+- Oracle-first ADR: **docs/adr/0001-oracle-first.md**
 
 ---
 
@@ -113,6 +113,10 @@ out/latency.png (time-series)
 README section linking these artifacts
 
 Versions: sdk_version, git_commit, Python, OS, wheel flavor, CPU features
+
+### Purity artifact
+
+CI emits `artifacts/purity_report.json` with counts for sockets/DNS. Release gates require zeros.
 
 Pass / Fail (Gate B Targets)
 
