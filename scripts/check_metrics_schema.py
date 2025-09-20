@@ -12,6 +12,7 @@ from typing import Any
 try:
     from jsonschema import Draft202012Validator
 except Exception:  # pragma: no cover - fallback when dependency unavailable
+
     class Draft202012Validator:  # type: ignore[override]
         """Minimal validator supporting the keywords used in our schema."""
 
@@ -28,16 +29,14 @@ except Exception:  # pragma: no cover - fallback when dependency unavailable
             self.path = path
             self.message = message
 
-
     def _is_number(value: Any) -> bool:
-        return isinstance(value, (int, float)) and not isinstance(value, bool)
-
+        return isinstance(value, int | float) and not isinstance(value, bool)
 
     def _validate_schema(
         schema: dict[str, Any],
         instance: Any,
         path: tuple[Any, ...],
-        errors: list["_SimpleError"],
+        errors: list[_SimpleError],
     ) -> None:
         expected_type = schema.get("type")
         if expected_type == "object":
@@ -61,11 +60,24 @@ except Exception:  # pragma: no cover - fallback when dependency unavailable
                 return
 
         if "minimum" in schema and _is_number(instance):
-            if instance < schema["minimum"]:
-                errors.append(_SimpleError(path, f"{instance} is less than the minimum of {schema['minimum']}"))
+            minimum = schema["minimum"]
+            if instance < minimum:
+                errors.append(
+                    _SimpleError(
+                        path,
+                        f"{instance} is less than the minimum of {minimum}",
+                    )
+                )
         if "maximum" in schema and _is_number(instance):
-            if instance > schema["maximum"]:
-                errors.append(_SimpleError(path, f"{instance} is greater than the maximum of {schema['maximum']}"))
+            maximum = schema["maximum"]
+            if instance > maximum:
+                errors.append(
+                    _SimpleError(
+                        path,
+                        f"{instance} is greater than the maximum of {maximum}",
+                    )
+                )
+
 
 ROOT = Path(__file__).resolve().parents[1]
 SCHEMA_PATH = ROOT / "schemas" / "metrics.schema.json"
