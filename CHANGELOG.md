@@ -23,6 +23,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/).
 - Calibration utilities with temperature fitting, EMA-based oracle abstention,
   offline calibration bench + gates, and syscall purity guard targets.
 
+### Changed
+
+- CI: consolidate to verify.yml; quarantine legacy workflows; gate summary + artifacts.
+
 ## [0.1.0-rc.2] - 2025-09-15
 
 ### Added
