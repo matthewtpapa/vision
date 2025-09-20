@@ -24,12 +24,11 @@ def phash_64(gray32: np.ndarray) -> int:
 
     C = _dct_mat(32)
     d = C @ gray32 @ C.T
-    block = d[:8, :8]
+    block = d[1:9, 1:9]
 
     coeffs = block.reshape(-1)
-    med = np.median(coeffs[1:])
+    med = np.median(coeffs)
     bits = (coeffs >= med).astype(np.uint8)
-    bits[0] = 1 if 0.0 >= med else 0
 
     h = 0
     for i in range(64):
