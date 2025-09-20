@@ -149,6 +149,7 @@ bench-oracle:
 >  --out bench
 
 bench-oracle-e2e:
+>python scripts/build_oracle_fixture.py --out bench/oracle_fixture --n 500 --dim 32 --seed 7
 >python scripts/bench_oracle_e2e.py --bank bench/oracle_fixture/bank.jsonl --queries bench/oracle_fixture/queries.jsonl --k 5 --out bench
 
 bench-deps:
