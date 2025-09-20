@@ -34,7 +34,7 @@ def _as_array(values: object, *, dtype: DTypeLike | None = None) -> np.ndarray:
                     raise ValueError("2-D inputs must have consistent row lengths")
     elif arr.dtype == object and arr.size > 0:
         if not all(np.isscalar(item) for item in arr):
-            raise ValueError("2-D inputs must have consistent row lengths")
+            raise ValueError("1-D inputs must be scalar-like")
 
     return arr
 
