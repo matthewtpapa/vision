@@ -3,26 +3,48 @@ on:
   push:
     branches: [ main ]
   pull_request:
-    branches: [ main ]
 jobs:
   verify:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        python-version: ["3.10", "3.11", "3.12"]
+        python-version: [ "3.10", "3.11", "3.12" ]
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with:
           python-version: ${{ matrix.python-version }}
-      - name: Install
+          cache: pip
+          cache-dependency-path: |
+            requirements-dev.txt
+      - name: Install dev deps
         run: |
-          pip install -e .
+          python -m pip install -U pip
           pip install -r requirements-dev.txt
-      - uses: actions/setup-node@v4
-        with:
-          node-version: '20'
-      - name: Install markdownlint (no lockfile)
-        run: npm i --no-save markdownlint-cli2 markdownlint
-      - name: Verify
+          pip install -e .
+      - name: make verify (lint/type/test/md)
         run: make verify
+      - name: Bench Oracle
+        run: make bench-oracle
+      - name: Bench Oracle E2E
+        run: make bench-oracle-e2e
+      - name: Metrics schema gate
+        run: make check-metrics-schema
+      - name: Config precedence artifact
+        run: make config-artifact
+      - name: Purity guard
+        run: make purity
+      - name: Metrics hash
+        run: make metrics-hash
+      - name: Upload gate artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: m2-artifacts-${{ matrix.python-version }}
+          path: |
+            bench/oracle_stats.json
+            bench/oracle_e2e.json
+            logs/evidence_ledger.jsonl
+            artifacts/config_precedence.json
+            artifacts/purity_report.json
+            artifacts/metrics_hash.txt
+            artifacts/metrics_schema_report.txt
