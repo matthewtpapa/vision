@@ -6,9 +6,9 @@ from latency_vision.calibration import (
     CalibrationReport,
     distances_to_logits,
     fit_temperature,
-    unknown_rate_guard,
     softmax,
     temperature_scale,
+    unknown_rate_guard,
 )
 
 __all__ = [

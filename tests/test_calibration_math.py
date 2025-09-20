@@ -1,18 +1,27 @@
 from __future__ import annotations
 
+from typing import TYPE_CHECKING
+
 import pytest
 
-pytest.importorskip("numpy")
+if TYPE_CHECKING:
+    import numpy as np
 
-import numpy as np
-
-from vision.calibration import (
-    distances_to_logits,
-    fit_temperature,
-    unknown_rate_guard,
-    softmax,
-    temperature_scale,
-)
+    from vision.calibration import (
+        distances_to_logits,
+        fit_temperature,
+        softmax,
+        temperature_scale,
+        unknown_rate_guard,
+    )
+else:
+    np = pytest.importorskip("numpy")
+    calibration = pytest.importorskip("vision.calibration")
+    distances_to_logits = calibration.distances_to_logits
+    fit_temperature = calibration.fit_temperature
+    softmax = calibration.softmax
+    temperature_scale = calibration.temperature_scale
+    unknown_rate_guard = calibration.unknown_rate_guard
 
 
 def test_softmax_normalises() -> None:
