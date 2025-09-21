@@ -11,8 +11,8 @@ from numpy.typing import DTypeLike
 _T_MIN = 0.5
 _T_MAX = 5.0
 _EPS = 1e-8
-_ALPHA_MIN = 1.0 / _T_MAX
-_ALPHA_MAX = 1.0 / _T_MIN
+_LOG_T_MIN = float(np.log(_T_MIN))
+_LOG_T_MAX = float(np.log(_T_MAX))
 
 
 def _as_array(values: object, *, dtype: DTypeLike | None = None) -> np.ndarray:
@@ -93,14 +93,8 @@ def _nll(logits: np.ndarray, labels: np.ndarray, T: float) -> float:
     return float(np.mean(nll))
 
 
-def _temperature_from_alpha(alpha: float) -> float:
-    stable_alpha = max(float(alpha), _EPS)
-    temperature = 1.0 / stable_alpha
-    return float(np.clip(temperature, _T_MIN, _T_MAX))
-
-
-def _nll_alpha(logits: np.ndarray, labels: np.ndarray, alpha: float) -> float:
-    temperature = _temperature_from_alpha(alpha)
+def _nll_log_temperature(logits: np.ndarray, labels: np.ndarray, log_T: float) -> float:
+    temperature = float(np.exp(log_T))
     return _nll(logits, labels, temperature)
 
 
@@ -131,11 +125,11 @@ def fit_temperature(
     labels_arr = labels_arr[perm]
 
     phi = (np.sqrt(5.0) - 1.0) / 2.0
-    a, b = _ALPHA_MIN, _ALPHA_MAX
+    a, b = _LOG_T_MIN, _LOG_T_MAX
     c = b - phi * (b - a)
     d = a + phi * (b - a)
-    fc = _nll_alpha(logits_arr, labels_arr, c)
-    fd = _nll_alpha(logits_arr, labels_arr, d)
+    fc = _nll_log_temperature(logits_arr, labels_arr, c)
+    fd = _nll_log_temperature(logits_arr, labels_arr, d)
 
     for _ in range(max_iter):
         if abs(b - a) < 1e-4:
@@ -143,14 +137,15 @@ def fit_temperature(
         if fc < fd:
             b, d, fd = d, c, fc
             c = b - phi * (b - a)
-            fc = _nll_alpha(logits_arr, labels_arr, c)
+            fc = _nll_log_temperature(logits_arr, labels_arr, c)
         else:
             a, c, fc = c, d, fd
             d = a + phi * (b - a)
-            fd = _nll_alpha(logits_arr, labels_arr, d)
+            fd = _nll_log_temperature(logits_arr, labels_arr, d)
 
-    alpha_opt = (a + b) / 2.0
-    return _temperature_from_alpha(alpha_opt)
+    log_T_opt = (a + b) / 2.0
+    T_opt = float(np.exp(log_T_opt))
+    return float(np.clip(T_opt, _T_MIN, _T_MAX))
 
 
 @dataclass(frozen=True)
