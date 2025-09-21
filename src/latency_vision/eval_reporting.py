@@ -47,7 +47,11 @@ def metrics_json(
         unknown_flags = unknown_flags[warmup:]
         per_stage_ms = {k: v[warmup:] for k, v in per_stage_ms.items()}
 
-    fps = 1000.0 / fmean(per_frame_ms) if per_frame_ms else 0.0
+    fps = 0.0
+    if per_frame_ms:
+        mean_ms = fmean(per_frame_ms)
+        if mean_ms > 0.0:
+            fps = 1000.0 / mean_ms
     p50 = _percentile(per_frame_ms, 50.0)
     p95 = _percentile(per_frame_ms, 95.0)
     p99 = _percentile(per_frame_ms, 99.0)
