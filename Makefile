@@ -193,7 +193,8 @@ gate-calib:
 	PY
 
 gate-purity:
-	scripts/verify_syscalls.sh
+	$(MAKE) purity
+	python -c $$'import json, pathlib, sys\npath = pathlib.Path("artifacts/purity_report.json")\nif not path.exists():\n    sys.exit("missing artifacts/purity_report.json")\ndata = json.loads(path.read_text(encoding="utf-8"))\nif data.get("network syscalls"):\n    sys.exit("network syscalls detected")\nprint("purity gate passed")'
 
 .PHONY: purity
 purity:

@@ -2,17 +2,28 @@
 set -eu
 : "${SYS_AUDIT_REPORT_JSON:=artifacts/purity_report.json}"
 : "${SYS_AUDIT_REPORT_TXT:=artifacts/syscall_report.txt}"
+export SYS_AUDIT_REPORT_JSON
+export SYS_AUDIT_REPORT_TXT
 mkdir -p artifacts
-: > "$SYS_AUDIT_REPORT_TXT"
-# If a syscall verifier exists, run it; otherwise create a clean placeholder.
+
 if [ -x scripts/verify_syscalls.sh ]; then
-  scripts/verify_syscalls.sh || true
+  scripts/verify_syscalls.sh "$@"
 else
-  : > "$SYS_AUDIT_REPORT_TXT"
+  python scripts/run_sandboxed.py -- "$@"
 fi
-if grep -E 'connect|sendto|recvfrom|getaddrinfo|socket' "$SYS_AUDIT_REPORT_TXT" >/dev/null 2>&1; then
-  printf '{"network_syscalls": true}\n' > "$SYS_AUDIT_REPORT_JSON"
+
+if [ ! -f "$SYS_AUDIT_REPORT_JSON" ]; then
+  echo "❌ missing purity report at $SYS_AUDIT_REPORT_JSON" >&2
   exit 1
-else
-  printf '{"network_syscalls": false}\n' > "$SYS_AUDIT_REPORT_JSON"
 fi
+
+python - <<'PY'
+import json
+import os
+import sys
+
+report_path = os.environ["SYS_AUDIT_REPORT_JSON"]
+data = json.loads(open(report_path, encoding="utf-8").read())
+if data.get("network_syscalls"):
+    sys.exit(1)
+PY
