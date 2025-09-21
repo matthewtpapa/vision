@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import os
+import sys
 from collections.abc import Iterable
 from dataclasses import dataclass
 
@@ -15,6 +17,8 @@ _ALPHA_MIN = 1.0 / _T_MAX
 _ALPHA_MAX = 1.0 / _T_MIN
 _LOG_ALPHA_MIN = float(np.log(_ALPHA_MIN))
 _LOG_ALPHA_MAX = float(np.log(_ALPHA_MAX))
+
+_CALIB_ASSERT = os.getenv("VISION__CALIB__LOCK", "0") == "1"
 
 
 def _as_array(values: object, *, dtype: DTypeLike | None = None) -> np.ndarray:
@@ -153,9 +157,14 @@ def fit_temperature(
 
     log_alpha_opt = (a + b) / 2.0
     alpha_hat = float(np.exp(log_alpha_opt))
-    T = 1.0 / max(alpha_hat, 1e-8)
-    assert T > 0.0, "fit_temperature must return positive T"
-    return float(np.clip(T, _T_MIN, _T_MAX))
+    raw_T = 1.0 / max(alpha_hat, _EPS)
+    T = float(np.clip(raw_T, _T_MIN, _T_MAX))
+    assert T > 1.0, "fit_temperature must return T (>1.0 here), not alpha (≈0.5)"
+    if _CALIB_ASSERT:
+        assert T > 1.0, "Convention lock: fit_temperature must return T, not alpha"
+    if os.getenv("VISION__CALIB__DEBUG") == "1":
+        print(f"[calib] alpha_hat={alpha_hat:.6f} -> T={T:.6f}", file=sys.stderr)
+    return T
 
 
 @dataclass(frozen=True)
