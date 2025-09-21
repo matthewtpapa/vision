@@ -7,6 +7,7 @@
 from pathlib import Path
 from collections.abc import Iterable, Sequence
 
+from .calibration import fit_temperature, softmax, temperature_scale
 from .cluster_store import ClusterStore
 from .config import get_config
 from .detect_adapter import FakeDetector
@@ -28,6 +29,9 @@ __all__ = [
     "Labeler",
     "ReverseImageSearchStub",
     "Telemetry",
+    "fit_temperature",
+    "softmax",
+    "temperature_scale",
     "add_exemplar",
     "query_frame",
 ]

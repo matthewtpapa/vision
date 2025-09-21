@@ -16,6 +16,8 @@ _EPS = 1e-8
 _LOG_T_MIN = -3.0
 _LOG_T_MAX = 3.0
 
+_CALIB_ASSERT = os.getenv("VISION__CALIB__LOCK", "0") == "1"
+
 
 def _as_array(values: object, *, dtype: DTypeLike | None = None) -> np.ndarray:
     """Coerce arbitrary 1D/2D-like inputs to an ndarray, with optional dtype."""
@@ -156,6 +158,8 @@ def fit_temperature(
     raw_T = float(np.exp(u_opt))
     T = float(np.clip(raw_T, _T_MIN, _T_MAX))
     assert T > 0.0, "fit_temperature must return a positive temperature"
+    if _CALIB_ASSERT:
+        assert T > 1.0, "Convention lock: fit_temperature must return T, not alpha"
     if os.getenv("VISION__CALIB__DEBUG") == "1":
         print(f"[calib] u_opt={u_opt:.6f} -> T={T:.6f}", file=sys.stderr)
     return T

@@ -115,11 +115,34 @@ jobs:
         if: matrix.os == 'windows-latest'
         shell: pwsh
         run: |
+          echo "PYTHONPATH=$Env:GITHUB_WORKSPACE/src" >> $Env:GITHUB_ENV
+          python -m pip uninstall -y latency-vision || $true
+          Remove-Item -Recurse -Force build, dist, *.egg-info -ErrorAction SilentlyContinue
+          python - <<'PY'
+          import pathlib, shutil
+          for p in pathlib.Path('.').rglob('__pycache__'):
+              shutil.rmtree(p, ignore_errors=True)
+          PY
           pip install -r requirements-dev.txt
           pip install -e .
-      - name: make verify (lint/type/tests only)
+      - name: Lint/type/tests
         if: matrix.os != 'windows-latest'
-        run: make verify
+        run: |
+          ruff check .
+          mypy src
+          pytest -q
+      - name: Verify import paths (Windows)
+        if: matrix.os == 'windows-latest'
+        shell: pwsh
+        run: |
+          python - <<'PY'
+          import inspect, latency_vision as lv
+          from latency_vision.calibration import fit_temperature, temperature_scale
+          import latency_vision.calibration as cal
+          print("latency_vision.__file__ =", lv.__file__)
+          print("calibration module file  =", cal.__file__)
+          print("fit_temperature file     =", inspect.getsourcefile(fit_temperature))
+          PY
       - name: Lint/type/tests (Windows)
         if: matrix.os == 'windows-latest'
         shell: pwsh
