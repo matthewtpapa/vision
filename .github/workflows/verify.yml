@@ -57,11 +57,47 @@ jobs:
           pip install -r requirements-dev.txt
           pip install -e . --no-deps
 
+      - name: Show env / versions
+        run: |
+          python -V
+          pip --version
+          python - <<'PY'
+          import sys, platform, numpy, pytest, mypy
+          print("platform:", platform.platform())
+          print("python:", sys.version.replace("\n"," "))
+          print("numpy:", numpy.__version__)
+          import ruff, importlib.util
+          print("ruff module:", getattr(ruff, "__version__", "unknown"))
+          print("pytest:", pytest.__version__)
+          print("mypy path ok?", importlib.util.find_spec("mypy") is not None)
+          PY
+
       - name: Lint
         run: ruff check .
 
       - name: Type check
         run: mypy src
 
-      - name: Tests
+      # Targeted calibration debug first so failures are loud and clear
+      - name: Calibration smoke (targeted)
+        env:
+          VISION__CALIB__LOCK: "1"
+          VISION__CALIB__DEBUG: "1"
+        run: |
+          python - <<'PY'
+          import numpy as np
+          from latency_vision.calibration import fit_temperature, temperature_scale, softmax, distances_to_logits
+          rng = np.random.default_rng(123)
+          logits = distances_to_logits(-rng.normal(size=(256,3)))
+          true_T = 2.5
+          p = softmax(temperature_scale(logits, true_T))
+          labels = np.array([rng.choice(p.shape[1], p=p[i]) for i in range(p.shape[0])])
+          fitted = fit_temperature(logits, labels, seed=999)
+          print("T_true=", true_T, " T_fit=", fitted)
+          assert 2.2 < fitted < 2.8, f"unexpected T_fit={fitted}"
+          PY
+
+      - name: Tests (full)
+        env:
+          VISION__CALIB__LOCK: "1"
         run: pytest -q

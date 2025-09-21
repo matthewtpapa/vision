@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import os
+import sys
 from collections.abc import Iterable
 from dataclasses import dataclass
 
@@ -10,6 +12,11 @@ from numpy.typing import DTypeLike
 
 _T_MIN = 0.5
 _T_MAX = 5.0
+_EPS = 1e-8
+_LOG_T_MIN = -3.0
+_LOG_T_MAX = 3.0
+
+_CALIB_ASSERT = os.getenv("VISION__CALIB__LOCK", "0") == "1"
 
 
 def _as_array(values: object, *, dtype: DTypeLike | None = None) -> np.ndarray:
@@ -56,13 +63,12 @@ def distances_to_logits(d: np.ndarray | Iterable[float], method: str = "neg") ->
 
 
 def temperature_scale(logits: np.ndarray | Iterable[float], T: float) -> np.ndarray:
-    """Scale logits by temperature *T* (clipped to ``[_T_MIN, _T_MAX]``)."""
+    """Return logits divided by the clipped temperature ``T``."""
 
     clipped_T = float(np.clip(T, _T_MIN, _T_MAX))
     arr = _as_array(logits, dtype=np.float64)
-    if clipped_T == 0.0:  # pragma: no cover - defensive
-        return arr.copy()
-    return arr / clipped_T
+    stable_T = max(clipped_T, _EPS)
+    return arr / stable_T
 
 
 def softmax(logits: np.ndarray | Iterable[float]) -> np.ndarray:
@@ -81,14 +87,15 @@ def softmax(logits: np.ndarray | Iterable[float]) -> np.ndarray:
     return probs
 
 
-def _nll(logits: np.ndarray, labels: np.ndarray, T: float) -> float:
-    scaled = temperature_scale(logits, T)
-    maxes = np.max(scaled, axis=1, keepdims=True)
-    shifted = scaled - maxes
-    logsumexp = maxes + np.log(np.sum(np.exp(shifted), axis=1, keepdims=True))
-    chosen = np.take_along_axis(scaled, labels[:, None], axis=1)
-    nll = -chosen + logsumexp
-    return float(np.mean(nll))
+def _nll_log_T(logits_2d: np.ndarray, labels_1d: np.ndarray, u: float) -> float:
+    """Mean NLL when scaling by ``T = exp(u)``. Optimizes in log-space."""
+
+    T = float(np.exp(u))
+    z = temperature_scale(logits_2d, T)
+    z = z - z.max(axis=1, keepdims=True)
+    p = np.exp(z)
+    p /= p.sum(axis=1, keepdims=True)
+    return float(-np.log(p[np.arange(p.shape[0]), labels_1d]).mean())
 
 
 def fit_temperature(
@@ -98,10 +105,10 @@ def fit_temperature(
     max_iter: int = 50,
     seed: int = 123,
 ) -> float:
-    """Fit a temperature value that minimises negative log-likelihood.
+    """Return a positive temperature ``T`` such that scaled logits = logits / T.
 
-    A simple golden-section search is used over ``[_T_MIN, _T_MAX]`` which keeps
-    the implementation dependency-free while remaining deterministic.
+    Uses golden-section search over log-space ``u = log(T)`` to improve
+    numerical stability while remaining dependency-free and deterministic.
     """
 
     rng = np.random.default_rng(seed)
@@ -118,11 +125,11 @@ def fit_temperature(
     labels_arr = labels_arr[perm]
 
     phi = (np.sqrt(5.0) - 1.0) / 2.0
-    a, b = _T_MIN, _T_MAX
+    a, b = _LOG_T_MIN, _LOG_T_MAX
     c = b - phi * (b - a)
     d = a + phi * (b - a)
-    fc = _nll(logits_arr, labels_arr, c)
-    fd = _nll(logits_arr, labels_arr, d)
+    fc = _nll_log_T(logits_arr, labels_arr, c)
+    fd = _nll_log_T(logits_arr, labels_arr, d)
 
     for _ in range(max_iter):
         if abs(b - a) < 1e-4:
@@ -130,14 +137,21 @@ def fit_temperature(
         if fc < fd:
             b, d, fd = d, c, fc
             c = b - phi * (b - a)
-            fc = _nll(logits_arr, labels_arr, c)
+            fc = _nll_log_T(logits_arr, labels_arr, c)
         else:
             a, c, fc = c, d, fd
             d = a + phi * (b - a)
-            fd = _nll(logits_arr, labels_arr, d)
+            fd = _nll_log_T(logits_arr, labels_arr, d)
 
-    T_opt = (a + b) / 2.0
-    return float(np.clip(T_opt, _T_MIN, _T_MAX))
+    u_opt = (a + b) / 2.0
+    raw_T = float(np.exp(u_opt))
+    T = float(np.clip(raw_T, _T_MIN, _T_MAX))
+    assert T > 0.0, "fit_temperature must return a positive temperature"
+    if _CALIB_ASSERT:
+        assert T > 1.0, "Convention lock: fit_temperature must return T, not alpha"
+    if os.getenv("VISION__CALIB__DEBUG") == "1":
+        print(f"[calib] u_opt={u_opt:.6f} -> T={T:.6f}", file=sys.stderr)
+    return T
 
 
 @dataclass(frozen=True)
