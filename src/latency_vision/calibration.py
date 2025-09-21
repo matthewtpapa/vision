@@ -11,8 +11,10 @@ from numpy.typing import DTypeLike
 _T_MIN = 0.5
 _T_MAX = 5.0
 _EPS = 1e-8
-_LOG_T_MIN = float(np.log(_T_MIN))
-_LOG_T_MAX = float(np.log(_T_MAX))
+_ALPHA_MIN = 1.0 / _T_MAX
+_ALPHA_MAX = 1.0 / _T_MIN
+_LOG_ALPHA_MIN = float(np.log(_ALPHA_MIN))
+_LOG_ALPHA_MAX = float(np.log(_ALPHA_MAX))
 
 
 def _as_array(values: object, *, dtype: DTypeLike | None = None) -> np.ndarray:
@@ -93,9 +95,14 @@ def _nll(logits: np.ndarray, labels: np.ndarray, T: float) -> float:
     return float(np.mean(nll))
 
 
-def _nll_log_temperature(logits: np.ndarray, labels: np.ndarray, log_T: float) -> float:
-    temperature = float(np.exp(log_T))
-    return _nll(logits, labels, temperature)
+def _nll_alpha(logits: np.ndarray, labels: np.ndarray, alpha: float) -> float:
+    T = 1.0 / max(alpha, _EPS)
+    return _nll(logits, labels, T)
+
+
+def _nll_log_alpha(logits: np.ndarray, labels: np.ndarray, log_alpha: float) -> float:
+    alpha = float(np.exp(log_alpha))
+    return _nll_alpha(logits, labels, alpha)
 
 
 def fit_temperature(
@@ -105,10 +112,11 @@ def fit_temperature(
     max_iter: int = 50,
     seed: int = 123,
 ) -> float:
-    """Return temperature ``T`` (>0) so scaled logits are ``logits / T``.
+    """Returns T (>0) such that ``temperature_scale(logits, T)`` scales as ``logits / T``.
 
-    A simple golden-section search is used over ``[_T_MIN, _T_MAX]`` which keeps
-    the implementation dependency-free while remaining deterministic.
+    A simple golden-section search is used over ``[_ALPHA_MIN, _ALPHA_MAX]`` to
+    optimize the multiplier ``alpha`` in ``softmax(alpha * logits)`` while
+    keeping the implementation dependency-free and deterministic.
     """
 
     rng = np.random.default_rng(seed)
@@ -125,11 +133,11 @@ def fit_temperature(
     labels_arr = labels_arr[perm]
 
     phi = (np.sqrt(5.0) - 1.0) / 2.0
-    a, b = _LOG_T_MIN, _LOG_T_MAX
+    a, b = _LOG_ALPHA_MIN, _LOG_ALPHA_MAX
     c = b - phi * (b - a)
     d = a + phi * (b - a)
-    fc = _nll_log_temperature(logits_arr, labels_arr, c)
-    fd = _nll_log_temperature(logits_arr, labels_arr, d)
+    fc = _nll_log_alpha(logits_arr, labels_arr, c)
+    fd = _nll_log_alpha(logits_arr, labels_arr, d)
 
     for _ in range(max_iter):
         if abs(b - a) < 1e-4:
@@ -137,15 +145,17 @@ def fit_temperature(
         if fc < fd:
             b, d, fd = d, c, fc
             c = b - phi * (b - a)
-            fc = _nll_log_temperature(logits_arr, labels_arr, c)
+            fc = _nll_log_alpha(logits_arr, labels_arr, c)
         else:
             a, c, fc = c, d, fd
             d = a + phi * (b - a)
-            fd = _nll_log_temperature(logits_arr, labels_arr, d)
+            fd = _nll_log_alpha(logits_arr, labels_arr, d)
 
-    log_T_opt = (a + b) / 2.0
-    T_opt = float(np.exp(log_T_opt))
-    return float(np.clip(T_opt, _T_MIN, _T_MAX))
+    log_alpha_opt = (a + b) / 2.0
+    alpha_hat = float(np.exp(log_alpha_opt))
+    T = 1.0 / max(alpha_hat, 1e-8)
+    assert T > 0.0, "fit_temperature must return positive T"
+    return float(np.clip(T, _T_MIN, _T_MAX))
 
 
 @dataclass(frozen=True)
