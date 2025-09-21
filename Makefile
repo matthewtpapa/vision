@@ -113,9 +113,9 @@ verify:
 
 readme-smoke:
 >@python -c "import numpy" 2>/dev/null || { \
-  echo "NumPy not found. Install with 'pip install numpy' (or run CI workflow: readme-smoke)."; \
-  exit 1; \
-}
+>  echo "NumPy not found. Install with 'pip install numpy' (or run CI workflow: readme-smoke)."; \
+>  exit 1; \
+>}
 >python scripts/smoke_readme.py
 
 hooks:
