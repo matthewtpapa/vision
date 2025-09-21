@@ -106,43 +106,56 @@ jobs:
           python-version: "3.11"
           cache: "pip"
           cache-dependency-path: requirements-dev.txt
-      - name: Install
+      - name: Install (*nix)
         if: matrix.os != 'windows-latest'
+        shell: bash
         run: |
           pip install -r requirements-dev.txt
           pip install -e .
+      - name: make verify (*nix)
+        if: matrix.os != 'windows-latest'
+        shell: bash
+        run: make verify
+      - name: Import smoke (*nix)
+        if: matrix.os != 'windows-latest'
+        shell: bash
+        run: python -c "import latency_vision as lv; print(getattr(lv,'__version__','unknown'))"
+      - name: Force src on path (Windows)
+        if: matrix.os == 'windows-latest'
+        shell: pwsh
+        run: |
+          Add-Content -Path $env:GITHUB_ENV -Value "PYTHONPATH=$pwd\src"
+      - name: Clean previous installs (Windows)
+        if: matrix.os == 'windows-latest'
+        shell: pwsh
+        run: |
+          python -m pip uninstall -y latency-vision || $true
+          Remove-Item -Recurse -Force build, dist, *.egg-info -ErrorAction SilentlyContinue
+          $py = @'
+import pathlib, shutil
+for p in pathlib.Path(".").rglob("__pycache__"):
+    shutil.rmtree(p, ignore_errors=True)
+'@
+          $py | python -
       - name: Install (Windows)
         if: matrix.os == 'windows-latest'
         shell: pwsh
         run: |
-          echo "PYTHONPATH=$Env:GITHUB_WORKSPACE/src" >> $Env:GITHUB_ENV
-          python -m pip uninstall -y latency-vision || $true
-          Remove-Item -Recurse -Force build, dist, *.egg-info -ErrorAction SilentlyContinue
-          python - <<'PY'
-          import pathlib, shutil
-          for p in pathlib.Path('.').rglob('__pycache__'):
-              shutil.rmtree(p, ignore_errors=True)
-          PY
           pip install -r requirements-dev.txt
           pip install -e .
-      - name: Lint/type/tests
-        if: matrix.os != 'windows-latest'
-        run: |
-          ruff check .
-          mypy src
-          pytest -q
-      - name: Verify import paths (Windows)
+      - name: Import debug (Windows)
         if: matrix.os == 'windows-latest'
         shell: pwsh
         run: |
-          python - <<'PY'
-          import inspect, latency_vision as lv
-          from latency_vision.calibration import fit_temperature, temperature_scale
-          import latency_vision.calibration as cal
-          print("latency_vision.__file__ =", lv.__file__)
-          print("calibration module file  =", cal.__file__)
-          print("fit_temperature file     =", inspect.getsourcefile(fit_temperature))
-          PY
+          $py = @'
+import inspect, latency_vision as lv
+from latency_vision.calibration import fit_temperature, temperature_scale
+import latency_vision.calibration as cal
+print("latency_vision.__file__ =", lv.__file__)
+print("calibration module file  =", cal.__file__)
+print("fit_temperature file     =", inspect.getsourcefile(fit_temperature))
+'@
+          $py | python -
       - name: Lint/type/tests (Windows)
         if: matrix.os == 'windows-latest'
         shell: pwsh
@@ -150,9 +163,6 @@ jobs:
           ruff check .
           mypy src
           pytest -q
-      - name: Import smoke
-        if: matrix.os != 'windows-latest'
-        run: python -c "import latency_vision as lv; print(getattr(lv,'__version__','unknown'))"
       - name: Import smoke (Windows)
         if: matrix.os == 'windows-latest'
         shell: pwsh
