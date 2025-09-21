@@ -1,0 +1,8 @@
+name: ci-probe
+on:
+  workflow_dispatch: {}
+jobs:
+  echo:
+    runs-on: ubuntu-latest
+    steps:
+      - run: echo "ci-probe ok"
