@@ -50,6 +50,10 @@ def test_fit_temperature_recovers_ground_truth() -> None:
     fitted = fit_temperature(logits, labels, seed=999)
     assert abs(fitted - true_T) < 0.3
 
+    pred_true = np.argmax(softmax(temperature_scale(logits, true_T)), axis=1)
+    pred_fit = np.argmax(softmax(temperature_scale(logits, fitted)), axis=1)
+    assert (pred_true == pred_fit).mean() > 0.9
+
 
 def test_unknown_rate_guard() -> None:
     assert unknown_rate_guard([True, False, True, True]) == pytest.approx(0.75)

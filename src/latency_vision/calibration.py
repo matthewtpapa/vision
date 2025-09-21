@@ -10,6 +10,9 @@ from numpy.typing import DTypeLike
 
 _T_MIN = 0.5
 _T_MAX = 5.0
+_EPS = 1e-8
+_ALPHA_MIN = 1.0 / _T_MAX
+_ALPHA_MAX = 1.0 / _T_MIN
 
 
 def _as_array(values: object, *, dtype: DTypeLike | None = None) -> np.ndarray:
@@ -56,13 +59,12 @@ def distances_to_logits(d: np.ndarray | Iterable[float], method: str = "neg") ->
 
 
 def temperature_scale(logits: np.ndarray | Iterable[float], T: float) -> np.ndarray:
-    """Scale logits by temperature *T* (clipped to ``[_T_MIN, _T_MAX]``)."""
+    """Return logits divided by the clipped temperature ``T``."""
 
     clipped_T = float(np.clip(T, _T_MIN, _T_MAX))
     arr = _as_array(logits, dtype=np.float64)
-    if clipped_T == 0.0:  # pragma: no cover - defensive
-        return arr.copy()
-    return arr / clipped_T
+    stable_T = max(clipped_T, _EPS)
+    return arr / stable_T
 
 
 def softmax(logits: np.ndarray | Iterable[float]) -> np.ndarray:
@@ -89,6 +91,17 @@ def _nll(logits: np.ndarray, labels: np.ndarray, T: float) -> float:
     chosen = np.take_along_axis(scaled, labels[:, None], axis=1)
     nll = -chosen + logsumexp
     return float(np.mean(nll))
+
+
+def _temperature_from_alpha(alpha: float) -> float:
+    stable_alpha = max(float(alpha), _EPS)
+    temperature = 1.0 / stable_alpha
+    return float(np.clip(temperature, _T_MIN, _T_MAX))
+
+
+def _nll_alpha(logits: np.ndarray, labels: np.ndarray, alpha: float) -> float:
+    temperature = _temperature_from_alpha(alpha)
+    return _nll(logits, labels, temperature)
 
 
 def fit_temperature(
@@ -118,11 +131,11 @@ def fit_temperature(
     labels_arr = labels_arr[perm]
 
     phi = (np.sqrt(5.0) - 1.0) / 2.0
-    a, b = _T_MIN, _T_MAX
+    a, b = _ALPHA_MIN, _ALPHA_MAX
     c = b - phi * (b - a)
     d = a + phi * (b - a)
-    fc = _nll(logits_arr, labels_arr, c)
-    fd = _nll(logits_arr, labels_arr, d)
+    fc = _nll_alpha(logits_arr, labels_arr, c)
+    fd = _nll_alpha(logits_arr, labels_arr, d)
 
     for _ in range(max_iter):
         if abs(b - a) < 1e-4:
@@ -130,14 +143,14 @@ def fit_temperature(
         if fc < fd:
             b, d, fd = d, c, fc
             c = b - phi * (b - a)
-            fc = _nll(logits_arr, labels_arr, c)
+            fc = _nll_alpha(logits_arr, labels_arr, c)
         else:
             a, c, fc = c, d, fd
             d = a + phi * (b - a)
-            fd = _nll(logits_arr, labels_arr, d)
+            fd = _nll_alpha(logits_arr, labels_arr, d)
 
-    T_opt = (a + b) / 2.0
-    return float(np.clip(T_opt, _T_MIN, _T_MAX))
+    alpha_opt = (a + b) / 2.0
+    return _temperature_from_alpha(alpha_opt)
 
 
 @dataclass(frozen=True)
