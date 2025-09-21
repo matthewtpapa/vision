@@ -23,14 +23,46 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.11"
-      - name: Install dependencies
+      - name: Force src on path
+        run: echo "PYTHONPATH=$PWD/src" >> $GITHUB_ENV
+      - name: Clean previous installs
+        run: |
+          python -m pip uninstall -y latency-vision || true
+          rm -rf build dist .eggs *.egg-info
+          python - <<'PY'
+import pathlib, shutil, site, sys
+# remove __pycache__ and editable metadata
+for p in pathlib.Path(".").rglob("__pycache__"):
+    shutil.rmtree(p, ignore_errors=True)
+for s in site.getsitepackages() + [site.getusersitepackages()]:
+    if not s:
+        continue
+    for p in pathlib.Path(s).glob("latency_vision*"):
+        print("removing stale", p, file=sys.stderr)
+        shutil.rmtree(p, ignore_errors=True)
+PY
+      - name: Install deps (editable, no cache)
         run: |
           python -m pip install -U pip
           pip install -r requirements-dev.txt
-          pip install -e .
+          pip install -e . --no-deps
+      - name: Import debug
+        run: |
+          python - <<'PY'
+import inspect, latency_vision as lv
+import latency_vision.calibration as cal
+from latency_vision.calibration import fit_temperature, temperature_scale
+print("latency_vision.__file__ =", lv.__file__)
+print("calibration module file  =", cal.__file__)
+print("fit_temperature source from", inspect.getsourcefile(fit_temperature))
+src = inspect.getsource(fit_temperature)
+print("fit_temperature snippet:\n", "\n".join(src.splitlines()[:25]))
+PY
       - name: Ruff check
         run: ruff check .
       - name: Type check
         run: mypy src
       - name: Pytest
+        env:
+          VISION__CALIB__LOCK: "1"
         run: pytest -q
