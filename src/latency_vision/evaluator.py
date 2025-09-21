@@ -65,6 +65,7 @@ def run_eval(
     unknown_rate_band: tuple[float, float] | None = None,
     process_start_ns: int | None = None,
     cli_entry_ns: int | None = None,
+    fail_on_guardrail: bool = False,
 ) -> int:
     """Run the evaluation pipeline over frames in *input_dir*."""
     import numpy as np
@@ -414,20 +415,29 @@ def run_eval(
     }
     metrics["unknown_rate_band"] = [band_min, band_max]
     budget = float(budget_ms)
-    exit_code = 0
-    if metrics["p95_ms"] > budget:
-        exit_code = 2
+    budget_violation = bool(metrics.get("p95_ms", 0.0) > budget)
     ur = float(metrics.get("unknown_rate", 0.0))
-    if not (band_min <= ur <= band_max):
-        metrics["unknown_rate_violation"] = True
-        exit_code = 2
-        print(
-            f"[guardrail] unknown_rate {ur:.3f} outside band [{band_min:.3f}, {band_max:.3f}]",
-            file=sys.stderr,
+    guardrail_violation = not (band_min <= ur <= band_max)
+    metrics["guardrail_violation"] = guardrail_violation
+    metrics["unknown_rate_violation"] = guardrail_violation
+    if guardrail_violation:
+        base_msg = (
+            f"[guardrail] unknown_rate {ur:.3f} outside band "
+            f"[{band_min:.3f}, {band_max:.3f}]"
         )
+        if fail_on_guardrail:
+            print(base_msg, file=sys.stderr)
+        else:
+            print(f"{base_msg} (non-fatal)", file=sys.stderr)
     if os.getenv("VISION_DEBUG_TIMING") == "1" and cli_entry_ns is not None:
         metrics["process_cold_start_ms"] = (first_result_ns - cli_entry_ns) / 1e6
     _atomic_write_json(out_dir / "metrics.json", metrics)
+
+    exit_code = 0
+    if budget_violation:
+        exit_code = 1
+    if guardrail_violation and fail_on_guardrail:
+        exit_code = 1
 
     return exit_code
 

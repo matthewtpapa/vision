@@ -120,6 +120,12 @@ def build_parser() -> argparse.ArgumentParser:
             "fixture manifest > default 0.10,0.40."
         ),
     )
+    eval_parser.add_argument(
+        "--fail-on-guardrail",
+        action="store_true",
+        default=None,
+        help="Exit with status 1 if guardrails are violated.",
+    )
 
     subparsers.add_parser("hello", help="Print environment information.")
     return parser
@@ -158,6 +164,12 @@ def main(argv: Sequence[str] | None = None) -> int:
             band_arg = (low, high)
         else:
             band_arg = None
+        env_fail = os.getenv("VISION__EVAL__FAIL_ON_GUARDRAIL", "").strip()
+        fail_default = env_fail == "1"
+        fail_on_guardrail = args.fail_on_guardrail
+        if fail_on_guardrail is None:
+            fail_on_guardrail = fail_default
+
         ret = evaluator.run_eval(
             args.input,
             args.output,
@@ -167,6 +179,7 @@ def main(argv: Sequence[str] | None = None) -> int:
             unknown_rate_band=band_arg,
             process_start_ns=t0_process_ns,
             cli_entry_ns=t0_cli_ns,
+            fail_on_guardrail=bool(fail_on_guardrail),
         )
         sys.exit(ret)
     elif args.command == "hello":
