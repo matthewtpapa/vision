@@ -189,11 +189,12 @@ def run_eval(
             frame = np.asarray(img.convert("RGB"))
         results = pipeline.process(frame)
         emb = pipeline.last_first_crop_embedding()
+        now_ns = time.monotonic_ns()
         frame_embeddings.append(list(emb) if emb is not None else None)
-        frame_ts_ns.append(time.monotonic_ns())
+        frame_ts_ns.append(now_ns)
         processed += 1
         if results and first_result_ns is None:
-            first_result_ns = time.monotonic_ns()
+            first_result_ns = now_ns
 
     end_ns = time.monotonic_ns()
     if first_result_ns is None:
