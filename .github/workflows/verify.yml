@@ -75,7 +75,7 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: purity
+          name: purity-${{ matrix.python-version }}
           path: |
             artifacts/purity_report.json
             artifacts/syscall_report.txt
