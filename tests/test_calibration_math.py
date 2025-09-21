@@ -42,13 +42,19 @@ def test_temperature_monotonicity() -> None:
 
 def test_fit_temperature_recovers_ground_truth() -> None:
     rng = np.random.default_rng(123)
-    logits = rng.normal(size=(64, 3))
+    logits = rng.normal(size=(256, 3))
     logits = distances_to_logits(-logits)
     true_T = 2.5
     scaled = softmax(temperature_scale(logits, true_T))
-    labels = np.argmax(scaled, axis=1)
+    labels = np.array(
+        [rng.choice(scaled.shape[1], p=scaled[i]) for i in range(scaled.shape[0])],
+        dtype=np.int64,
+    )
     fitted = fit_temperature(logits, labels, seed=999)
     assert abs(fitted - true_T) < 0.3
+    pred_true = np.argmax(softmax(temperature_scale(logits, true_T)), axis=1)
+    pred_fit = np.argmax(softmax(temperature_scale(logits, fitted)), axis=1)
+    assert (pred_true == pred_fit).mean() > 0.9
 
 
 def test_unknown_rate_guard() -> None:
