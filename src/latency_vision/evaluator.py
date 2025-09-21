@@ -12,7 +12,7 @@ import sys
 import time
 from collections.abc import Iterable, Sequence
 from pathlib import Path
-from typing import Any, Literal, cast
+from typing import Any, Literal, Optional, cast
 
 from . import __version__
 from .config import get_config
@@ -63,7 +63,7 @@ def run_eval(
     budget_ms: int = 33,
     duration_min: int = 0,
     unknown_rate_band: tuple[float, float] | None = None,
-    process_start_ns: int | None = None,
+    process_start_ns: Optional[int] = None,
     cli_entry_ns: int | None = None,
 ) -> int:
     """Run the evaluation pipeline over frames in *input_dir*."""
@@ -171,8 +171,6 @@ def run_eval(
     frame_ts_ns: list[int] = []
 
     t0_ready_ns = time.monotonic_ns()
-    if process_start_ns is None:
-        process_start_ns = t0_ready_ns
     deadline = None
     if duration_min > 0:
         deadline = time.monotonic() + duration_min * 60.0
@@ -199,8 +197,12 @@ def run_eval(
     if first_result_ns is None:
         first_result_ns = end_ns
 
-    start_anchor_ns = max(process_start_ns, t0_ready_ns)
-    cold_start_ms = (first_result_ns - start_anchor_ns) / 1e6
+    start_ns = process_start_ns if process_start_ns is not None else t0_ready_ns
+    if first_result_ns < start_ns:
+        cold_start_ms = 0.0
+    else:
+        cold_start_ms = (first_result_ns - start_ns) / 1e6
+    cold_start_ms = float(cold_start_ms)
     index_bootstrap_ms = pipeline.bootstrap_time_ms() or 0.0
 
     per_frame_ms, per_stage_ms, unknown_flags, controller_log = pipeline.get_eval_counters()
@@ -422,7 +424,11 @@ def run_eval(
             file=sys.stderr,
         )
     if os.getenv("VISION_DEBUG_TIMING") == "1" and cli_entry_ns is not None:
-        metrics["process_cold_start_ms"] = (first_result_ns - cli_entry_ns) / 1e6
+        if first_result_ns < cli_entry_ns:
+            process_cold_start_ms = 0.0
+        else:
+            process_cold_start_ms = (first_result_ns - cli_entry_ns) / 1e6
+        metrics["process_cold_start_ms"] = float(process_cold_start_ms)
     _atomic_write_json(out_dir / "metrics.json", metrics)
 
     return exit_code
