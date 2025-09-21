@@ -19,6 +19,17 @@ from .calibration import (
 )
 
 
+def _ensure_2d(x: Any) -> np.ndarray:
+    """Return *x* as a 2-D array, accepting flat probability vectors."""
+
+    arr = np.asarray(x)
+    if arr.ndim == 1:
+        arr = arr[np.newaxis, :]
+    if arr.ndim != 2:
+        raise ValueError("expected 1D or 2D probabilities")
+    return arr
+
+
 def _percentile(values: Iterable[float], q: float) -> float:
     arr = np.sort(np.asarray(list(values), dtype=np.float64))
     if arr.size == 0:
@@ -103,7 +114,8 @@ def evaluate_labelbank_calibration(
             return np.array([], dtype=np.float64)
         logits_b = np.array([distances_to_logits(e["distances"]) for e in batch], dtype=np.float64)
         probs_b = softmax(temperature_scale(logits_b, T))
-        return np.max(probs_b, axis=1)
+        probs_2d = _ensure_2d(probs_b)
+        return np.max(probs_2d, axis=1)
 
     known_scores = _scores(known)
     synth_scores = _scores(synth)
