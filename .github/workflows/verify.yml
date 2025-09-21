@@ -7,7 +7,6 @@ on:
     branches:
       - main
       - develop
-      - "**/ci-*"
 jobs:
   verify:
     runs-on: ubuntu-latest
@@ -16,50 +15,22 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.11"
-      - run: |
-          python -V
-          echo "verify smoke OK"
+      - run: python -V
   verify-smoke:
-    runs-on: ${{ matrix.os }}
-    strategy:
-      matrix:
-        os: [ubuntu-latest, macos-14, windows-latest]
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with:
           python-version: "3.11"
-      - name: Environment info (*nix)
-        if: matrix.os != 'windows-latest'
-        shell: bash
-        run: |
-          uname -a
-          python -V
-      - name: Environment info (Windows)
-        if: matrix.os == 'windows-latest'
-        shell: pwsh
-        run: |
-          Get-ComputerInfo | Select-Object OSName, OSVersion | Format-List
-          python -V
-      - name: Install dependencies (*nix)
-        if: matrix.os != 'windows-latest'
-        shell: bash
+      - name: Install dependencies
         run: |
           python -m pip install -U pip
           pip install -r requirements-dev.txt
           pip install -e .
-      - name: Install dependencies (Windows)
-        if: matrix.os == 'windows-latest'
-        shell: pwsh
-        run: |
-          python -m pip install -U pip
-          pip install -r requirements-dev.txt
-          pip install -e .
-      - name: Ruff check (*nix)
-        if: matrix.os != 'windows-latest'
-        shell: bash
+      - name: Ruff check
         run: ruff check .
-      - name: Ruff check (Windows)
-        if: matrix.os == 'windows-latest'
-        shell: pwsh
-        run: ruff check .
+      - name: Type check
+        run: mypy src
+      - name: Pytest
+        run: pytest -q
