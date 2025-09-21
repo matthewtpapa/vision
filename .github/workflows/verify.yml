@@ -1,12 +1,14 @@
 name: verify
 on:
   pull_request:
-    types: [opened, synchronize, reopened]
-  workflow_dispatch: {}
+    types: [opened, synchronize, reopened, ready_for_review]
   push:
-    branches:
-      - main
-      - develop
+    branches: ['**']
+  workflow_dispatch: {}
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
 jobs:
   verify:
     runs-on: ubuntu-latest
