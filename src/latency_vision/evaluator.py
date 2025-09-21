@@ -198,7 +198,10 @@ def run_eval(
 
     end_ns = time.monotonic_ns()
     if first_result_ns is None:
-        first_result_ns = end_ns
+        if frame_ts_ns:
+            first_result_ns = frame_ts_ns[0]
+        else:
+            first_result_ns = end_ns
 
     start_anchor_ns = max(process_start_ns, t0_ready_ns)
     cold_start_ms = (first_result_ns - start_anchor_ns) / 1e6
