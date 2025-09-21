@@ -111,7 +111,7 @@ def fit_temperature(
     max_iter: int = 50,
     seed: int = 123,
 ) -> float:
-    """Fit a temperature value that minimises negative log-likelihood.
+    """Return temperature ``T`` (>0) so scaled logits are ``logits / T``.
 
     A simple golden-section search is used over ``[_T_MIN, _T_MAX]`` which keeps
     the implementation dependency-free while remaining deterministic.

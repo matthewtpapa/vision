@@ -49,6 +49,7 @@ def test_fit_temperature_recovers_ground_truth() -> None:
     labels = np.argmax(scaled, axis=1)
     fitted = fit_temperature(logits, labels, seed=999)
     assert abs(fitted - true_T) < 0.3
+    assert fitted > 1.0, "fit_temperature must return T, not alpha (1/T)"
 
     pred_true = np.argmax(softmax(temperature_scale(logits, true_T)), axis=1)
     pred_fit = np.argmax(softmax(temperature_scale(logits, fitted)), axis=1)
