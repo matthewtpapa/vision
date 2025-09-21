@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 """Run a command with network sandboxing and syscall tracing."""
+
 from __future__ import annotations
 
 import json
