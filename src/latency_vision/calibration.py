@@ -13,12 +13,8 @@ from numpy.typing import DTypeLike
 _T_MIN = 0.5
 _T_MAX = 5.0
 _EPS = 1e-8
-_ALPHA_MIN = 1.0 / _T_MAX
-_ALPHA_MAX = 1.0 / _T_MIN
-_LOG_ALPHA_MIN = float(np.log(_ALPHA_MIN))
-_LOG_ALPHA_MAX = float(np.log(_ALPHA_MAX))
-
-_CALIB_ASSERT = os.getenv("VISION__CALIB__LOCK", "0") == "1"
+_LOG_T_MIN = -3.0
+_LOG_T_MAX = 3.0
 
 
 def _as_array(values: object, *, dtype: DTypeLike | None = None) -> np.ndarray:
@@ -99,14 +95,15 @@ def _nll(logits: np.ndarray, labels: np.ndarray, T: float) -> float:
     return float(np.mean(nll))
 
 
-def _nll_alpha(logits: np.ndarray, labels: np.ndarray, alpha: float) -> float:
-    T = 1.0 / max(alpha, _EPS)
-    return _nll(logits, labels, T)
+def _nll_log_T(logits_2d: np.ndarray, labels_1d: np.ndarray, u: float) -> float:
+    """Return the mean NLL for ``logits_2d`` scaled by ``T = exp(u)``."""
 
-
-def _nll_log_alpha(logits: np.ndarray, labels: np.ndarray, log_alpha: float) -> float:
-    alpha = float(np.exp(log_alpha))
-    return _nll_alpha(logits, labels, alpha)
+    T = float(np.exp(u))
+    z = temperature_scale(logits_2d, T)
+    z = z - z.max(axis=1, keepdims=True)
+    p = np.exp(z)
+    p /= p.sum(axis=1, keepdims=True)
+    return float(-np.log(p[np.arange(p.shape[0]), labels_1d]).mean())
 
 
 def fit_temperature(
@@ -116,11 +113,11 @@ def fit_temperature(
     max_iter: int = 50,
     seed: int = 123,
 ) -> float:
-    """Returns T (>0) such that ``temperature_scale(logits, T)`` scales as ``logits / T``.
+    """Returns temperature ``T`` (>0) such that logits scale as ``logits / T``.
 
-    A simple golden-section search is used over ``[_ALPHA_MIN, _ALPHA_MAX]`` to
-    optimize the multiplier ``alpha`` in ``softmax(alpha * logits)`` while
-    keeping the implementation dependency-free and deterministic.
+    A simple golden-section search is used over ``[exp(_LOG_T_MIN), exp(_LOG_T_MAX)]``
+    to optimize ``u = log T`` while keeping the implementation dependency-free
+    and deterministic.
     """
 
     rng = np.random.default_rng(seed)
@@ -137,11 +134,11 @@ def fit_temperature(
     labels_arr = labels_arr[perm]
 
     phi = (np.sqrt(5.0) - 1.0) / 2.0
-    a, b = _LOG_ALPHA_MIN, _LOG_ALPHA_MAX
+    a, b = _LOG_T_MIN, _LOG_T_MAX
     c = b - phi * (b - a)
     d = a + phi * (b - a)
-    fc = _nll_log_alpha(logits_arr, labels_arr, c)
-    fd = _nll_log_alpha(logits_arr, labels_arr, d)
+    fc = _nll_log_T(logits_arr, labels_arr, c)
+    fd = _nll_log_T(logits_arr, labels_arr, d)
 
     for _ in range(max_iter):
         if abs(b - a) < 1e-4:
@@ -149,21 +146,18 @@ def fit_temperature(
         if fc < fd:
             b, d, fd = d, c, fc
             c = b - phi * (b - a)
-            fc = _nll_log_alpha(logits_arr, labels_arr, c)
+            fc = _nll_log_T(logits_arr, labels_arr, c)
         else:
             a, c, fc = c, d, fd
             d = a + phi * (b - a)
-            fd = _nll_log_alpha(logits_arr, labels_arr, d)
+            fd = _nll_log_T(logits_arr, labels_arr, d)
 
-    log_alpha_opt = (a + b) / 2.0
-    alpha_hat = float(np.exp(log_alpha_opt))
-    raw_T = 1.0 / max(alpha_hat, _EPS)
+    u_opt = (a + b) / 2.0
+    raw_T = float(np.exp(u_opt))
     T = float(np.clip(raw_T, _T_MIN, _T_MAX))
-    assert T > 1.0, "fit_temperature must return T (>1.0 here), not alpha (≈0.5)"
-    if _CALIB_ASSERT:
-        assert T > 1.0, "Convention lock: fit_temperature must return T, not alpha"
+    assert T > 0.0, "fit_temperature must return a positive temperature"
     if os.getenv("VISION__CALIB__DEBUG") == "1":
-        print(f"[calib] alpha_hat={alpha_hat:.6f} -> T={T:.6f}", file=sys.stderr)
+        print(f"[calib] u_opt={u_opt:.6f} -> T={T:.6f}", file=sys.stderr)
     return T
 
 
