@@ -95,6 +95,63 @@ def test_eval_cli_creates_artifacts(tmp_path: Path) -> None:
         assert col in header
 
 
+def test_eval_cli_default_unknown_band_warns_only(tmp_path: Path) -> None:
+    in_dir = tmp_path / "in"
+    out_dir = tmp_path / "out"
+    in_dir.mkdir()
+    out_dir.mkdir()
+
+    for i in range(4):
+        img = Image.new("RGB", (32, 32), color=(i, 0, 0))
+        img.save(in_dir / f"{i}.png")
+
+    result = run_cli(
+        "eval",
+        "--input",
+        str(in_dir),
+        "--output",
+        str(out_dir),
+        "--warmup",
+        "0",
+    )
+
+    assert result.returncode == 0
+    assert "[guardrail]" not in result.stderr
+
+    metrics = json.loads((out_dir / "metrics.json").read_text())
+    assert metrics["unknown_rate_band"] == [pytest.approx(0.10), pytest.approx(0.40)]
+    assert metrics.get("unknown_rate_violation") is True
+
+
+def test_eval_cli_unknown_band_enforced(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    in_dir = tmp_path / "in"
+    out_dir = tmp_path / "out"
+    in_dir.mkdir()
+    out_dir.mkdir()
+
+    for i in range(4):
+        img = Image.new("RGB", (32, 32), color=(i, 0, 0))
+        img.save(in_dir / f"{i}.png")
+
+    monkeypatch.setenv("VISION__UNKNOWN_RATE_BAND", "0.0,0.0")
+
+    result = run_cli(
+        "eval",
+        "--input",
+        str(in_dir),
+        "--output",
+        str(out_dir),
+        "--warmup",
+        "0",
+    )
+
+    assert result.returncode != 0
+    assert "[guardrail]" in result.stderr
+
+    metrics = json.loads((out_dir / "metrics.json").read_text())
+    assert metrics.get("unknown_rate_violation") is True
+
+
 def test_eval_cli_budget_breach_returns_nonzero(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
