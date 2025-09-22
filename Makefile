@@ -46,7 +46,7 @@ prove:
 	$(MAKE) eval-pack
 	$(MAKE) bench
 	$(MAKE) slo-check
-	$(MAKE) metrics-hash
 	$(MAKE) purity
+	$(MAKE) metrics-hash
 	$(MAKE) supplychain
 	PYTHONPATH="src${PYTHONPATH:+:${PYTHONPATH}}" python scripts/step_summary.py
