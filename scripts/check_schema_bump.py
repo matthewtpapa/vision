@@ -45,7 +45,7 @@ def _current_schema_version() -> str:
 
 
 def main() -> int:
-    base_ref = os.environ.get("GIT_DIFF_BASE", "HEAD~1")
+    base_ref = os.environ.get("GIT_DIFF_BASE") or "HEAD~1"
     changed = _git_diff_names(base_ref)
     schema_changes = {path for path in changed if path.startswith(f"{SCHEMA_DIR.as_posix()}/")}
     if not schema_changes:

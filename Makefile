@@ -64,4 +64,4 @@ api-freeze:
 
 schema-bump:
 	set -euo pipefail
-	GIT_DIFF_BASE="${GIT_DIFF_BASE:-HEAD~1}" PYTHONPATH="src${PYTHONPATH:+:${PYTHONPATH}}" python scripts/check_schema_bump.py
+	GIT_DIFF_BASE="$${GIT_DIFF_BASE:-HEAD~1}" PYTHONPATH="src${PYTHONPATH:+:${PYTHONPATH}}" python scripts/check_schema_bump.py
