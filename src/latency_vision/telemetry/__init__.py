@@ -40,6 +40,11 @@ class Telemetry:
     def __init__(self) -> None:
         self._stats: dict[str, list[float]] = {}
 
+    def now_ns(self) -> int:
+        """Return the current monotonic time in nanoseconds."""
+
+        return now_ns()
+
     def record(self, stage: str, ms: float) -> None:
         self._stats.setdefault(stage, []).append(float(ms))
 
