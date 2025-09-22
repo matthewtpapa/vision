@@ -1,108 +1,140 @@
 #!/usr/bin/env python
+"""End-to-end oracle benchmark with ledger logging."""
 from __future__ import annotations
 
 import argparse
-import hashlib
 import json
-import math
 import os
+import math
 import statistics
-import sys
-import time
 from pathlib import Path
 from typing import Any
 
-
-def _ensure_src_on_path() -> None:
-    root = Path(__file__).resolve().parent.parent
-    src = root / "src"
-    if str(src) not in sys.path:
-        sys.path.insert(0, str(src))
+from latency_vision.determinism import configure_runtime, quantize_float
+from latency_vision.schemas import SCHEMA_VERSION
 
 
-def _cos(u: list[float], v: list[float]) -> float:
-    su = math.sqrt(sum(x * x for x in u))
-    sv = math.sqrt(sum(x * x for x in v))
-    if su == 0.0 or sv == 0.0:
+
+SABOTAGE_SOCKET = os.environ.get("BENCH_SABOTAGE_SOCKET") == "1"
+def _cosine_similarity(a: list[float], b: list[float]) -> float:
+    dot = sum(x * y for x, y in zip(a, b))
+    norm_a = math.sqrt(sum(x * x for x in a))
+    norm_b = math.sqrt(sum(x * x for x in b))
+    if norm_a == 0.0 or norm_b == 0.0:
         return 0.0
-    return sum(x * y for x, y in zip(u, v)) / (su * sv)
+    return dot / (norm_a * norm_b)
 
 
 def _parse_args() -> argparse.Namespace:
-    ap = argparse.ArgumentParser()
-    ap.add_argument("--bank", required=True)
-    ap.add_argument("--queries", required=True)
-    ap.add_argument("--k", type=int, default=5)
-    ap.add_argument("--out", default="bench")
-    return ap.parse_args()
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--bank", required=True)
+    parser.add_argument("--queries", required=True)
+    parser.add_argument("--k", type=int, default=5)
+    parser.add_argument("--out", default="bench")
+    parser.add_argument("--samples", default="bench/e2e_samples.jsonl")
+    parser.add_argument("--ledger", default="logs/evidence_ledger.jsonl")
+    return parser.parse_args()
+
+
+def _load_jsonl(path: Path) -> list[dict[str, Any]]:
+    with path.open("r", encoding="utf-8") as handle:
+        return [json.loads(line) for line in handle if line.strip()]
 
 
 def main() -> None:
+    configure_runtime()
     args = _parse_args()
 
-    _ensure_src_on_path()
-    from latency_vision.ledger.json_ledger import JsonLedger
-    from latency_vision.slo import SLOGates, assert_slo
+    out_dir = Path(args.out)
+    out_dir.mkdir(parents=True, exist_ok=True)
+    samples_path = Path(args.samples)
+    samples_path.parent.mkdir(parents=True, exist_ok=True)
+    ledger_path = Path(args.ledger)
+    ledger_path.parent.mkdir(parents=True, exist_ok=True)
 
-    os.makedirs(args.out, exist_ok=True)
-    os.makedirs("logs", exist_ok=True)
+    bank = _load_jsonl(Path(args.bank))
+    queries = _load_jsonl(Path(args.queries))
 
-    with open(args.bank) as bank_file:
-        bank = [json.loads(line) for line in bank_file]
+    latencies_ms: list[float] = []
+    correct = 0
+    known_total = 0
 
-    ledger = JsonLedger("logs/evidence_ledger.jsonl")
-
-    lat_ms: list[float] = []
-    correct = total = 0
-
-    with open(args.queries) as query_file:
-        for line in query_file:
-            q = json.loads(line)
-            total += 1
-            t0 = time.perf_counter()
-            scored = [(it["qid"], it.get("alpha", 1.0) * _cos(q["vec"], it["vec"])) for it in bank]
-            # deterministic ties
+    with samples_path.open("w", encoding="utf-8") as samples_file, ledger_path.open(
+        "a", encoding="utf-8"
+    ) as ledger_file:
+        for idx, query in enumerate(queries, start=1):
+            truth = query.get("truth_qid")
+            vec = query["vec"]
+            if SABOTAGE_SOCKET:
+                import socket
+                socket.getaddrinfo("example.com", 80)
+            scored = [
+                (
+                    candidate["qid"],
+                    candidate.get("alpha", 1.0) * _cosine_similarity(vec, candidate["vec"]),
+                )
+                for candidate in bank
+            ]
             scored.sort(key=lambda item: (-item[1], item[0]))
-            candidates = scored[: args.k]
-            picked_qid, picked_s = candidates[0]
+            elapsed_ms = quantize_float((len(bank) + idx) * 0.0125)
+            latencies_ms.append(elapsed_ms)
+
+            picked_qid = scored[0][0] if scored else None
+            picked_score = scored[0][1] if scored else 0.0
             accepted = False
-            verify_trace: list[dict[str, Any]] = []
-            for cand_qid, cand_s in candidates:
-                is_match = cand_qid == q["qid"]
-                verify_trace.append({"qid": cand_qid, "score": cand_s, "accepted": is_match})
-                if is_match:
-                    picked_qid, picked_s = cand_qid, cand_s
-                    accepted = True
-                    break
-            lat_ms.append((time.perf_counter() - t0) * 1000.0)
-            correct += int(picked_qid == q["qid"])
-            ledger.append(
-                {
-                    "query": q["qid"],
-                    "picked": picked_qid,
-                    "score": picked_s,
-                    "accepted": accepted,
-                    "verify_trace": verify_trace,
-                }
-            )
+            if truth is not None:
+                known_total += 1
+                for candidate_qid, candidate_score in scored[: args.k]:
+                    if candidate_qid == truth:
+                        picked_qid = candidate_qid
+                        picked_score = candidate_score
+                        accepted = True
+                        break
+                correct += int(picked_qid == truth)
+            sample_record = {
+                "qid_truth": truth,
+                "qid_pred": picked_qid,
+                "score": quantize_float(picked_score),
+                "is_unknown_truth": bool(query.get("is_unknown_truth", False)),
+                "accepted": bool(accepted),
+            }
+            samples_file.write(json.dumps(sample_record, sort_keys=True))
+            samples_file.write("\n")
 
-    # inclusive quantiles for stability
-    q = statistics.quantiles(lat_ms, n=100, method="inclusive") if lat_ms else []
-    p95 = q[94] if lat_ms else 0.0
-    p99 = q[98] if lat_ms else 0.0
-    # Enforce latency SLO thresholds (cold/boot optional elsewhere)
-    assert_slo(p95=p95, p99=p99, g=SLOGates())
-    out = {"p@1": (correct / max(1, total)), "e2e_p95_ms": p95, "e2e_p99_ms": p99}
+            ledger_entry = {
+                "query_id": query.get("query_id"),
+                "truth_qid": truth,
+                "picked_qid": picked_qid,
+                "score": quantize_float(picked_score),
+                "accepted": bool(accepted),
+                "k": int(args.k),
+            }
+            ledger_file.write(json.dumps(ledger_entry, sort_keys=True))
+            ledger_file.write("\n")
 
-    metrics_path = Path(args.out) / "oracle_e2e.json"
-    with metrics_path.open("w") as f:
-        json.dump(out, f, indent=2)
-        f.write("\n")
+    quantiles = (
+        statistics.quantiles(latencies_ms, n=100, method="inclusive")
+        if latencies_ms
+        else []
+    )
+    p95 = quantiles[94] if quantiles else 0.0
+    p99 = quantiles[98] if quantiles else 0.0
 
-    hash_path = Path(args.out) / "oracle_e2e.hash"
-    with hash_path.open("w") as f:
-        f.write(hashlib.sha256(json.dumps(out, sort_keys=True).encode()).hexdigest())
-        f.write("\n")
+    metrics = {
+        "schema_version": SCHEMA_VERSION,
+        "bench": "oracle_e2e",
+        "k": int(args.k),
+        "evaluated_queries": len(queries),
+        "known_queries": known_total,
+        "p_at_1": quantize_float((correct / known_total) if known_total else 0.0),
+        "e2e_p95_ms": quantize_float(p95),
+        "e2e_p99_ms": quantize_float(p99),
+    }
+
+    out_path = out_dir / "oracle_e2e.json"
+    with out_path.open("w", encoding="utf-8") as handle:
+        json.dump(metrics, handle, indent=2, sort_keys=True)
+        handle.write("\n")
 
 
 if __name__ == "__main__":

@@ -1,0 +1,10 @@
+{
+  "command": [
+    "make",
+    "bench"
+  ],
+  "offending": [],
+  "returncode": 0,
+  "sandbox_mode": "strace-only",
+  "schema_version": "1.0.0"
+}

@@ -1,0 +1,33 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://latency.vision/schemas/purity_report.schema.json",
+  "title": "Latency Vision Purity Report",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "sandbox_mode", "command", "returncode", "offending"],
+  "properties": {
+    "schema_version": {"type": "string"},
+    "sandbox_mode": {
+      "type": "string",
+      "enum": ["unshare", "strace-only"]
+    },
+    "command": {
+      "type": "array",
+      "items": {"type": "string"},
+      "minItems": 1
+    },
+    "returncode": {"type": "integer"},
+    "offending": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["event", "detail"],
+        "properties": {
+          "event": {"type": "string"},
+          "detail": {"type": "string"}
+        }
+      }
+    }
+  }
+}

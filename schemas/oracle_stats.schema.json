@@ -1,0 +1,41 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://latency.vision/schemas/oracle_stats.schema.json",
+  "title": "Latency Vision Offline Oracle Bench Metrics",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "bench",
+    "k",
+    "total_queries",
+    "known_queries",
+    "candidate_at_k_recall",
+    "p95_ms",
+    "p99_ms"
+  ],
+  "properties": {
+    "schema_version": {"type": "string"},
+    "bench": {"type": "string"},
+    "k": {"type": "integer", "minimum": 1},
+    "total_queries": {"type": "integer", "minimum": 0},
+    "known_queries": {"type": "integer", "minimum": 0},
+    "candidate_at_k_recall": {
+      "type": "number",
+      "minimum": 0.0,
+      "maximum": 1.0
+    },
+    "p95_ms": {
+      "type": "number",
+      "minimum": 0.0
+    },
+    "p99_ms": {
+      "type": "number",
+      "minimum": 0.0
+    },
+    "wall_clock_ms": {
+      "type": "number",
+      "minimum": 0.0
+    }
+  }
+}
