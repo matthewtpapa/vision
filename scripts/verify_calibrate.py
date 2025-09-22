@@ -65,7 +65,7 @@ def calibrate(manifest_path: str, out_path: str, seed: int) -> None:
         "diversity_min": min(diversity_vals) if diversity_vals else 0,
         "sprt": {"accept": _quantile(r_vals, 0.5), "reject": 0.0},
         "seed": seed,
-        "created_utc": datetime.now(timezone.utc).isoformat().replace("+00:00", "Z"),
+        "created_utc": datetime.now(timezone.utc).isoformat().replace("+00:00", "Z"),  # noqa: UP017
     }
 
     core = {
