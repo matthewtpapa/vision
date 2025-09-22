@@ -10,7 +10,6 @@ import random
 import struct
 import zlib
 from pathlib import Path
-from typing import cast
 
 
 def _chunk(tag: bytes, data: bytes) -> bytes:
@@ -41,7 +40,7 @@ def build_fixture(out: Path, n: int, seed: int) -> None:
     random.seed(seed)
     out.mkdir(parents=True, exist_ok=True)
     for idx in range(n):
-        color = cast(tuple[int, int, int], tuple(random.randint(0, 255) for _ in range(3)))
+        color = tuple(random.randint(0, 255) for _ in range(3))
         png = _solid_png(640, 640, color)
         (out / f"frame_{idx:04d}.png").write_bytes(png)
 

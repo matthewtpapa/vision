@@ -10,8 +10,19 @@ from pathlib import Path
 from typing import Any
 
 try:
-    from jsonschema import Draft202012Validator as _RuntimeDraftValidator
-except ImportError:  # pragma: no cover - fallback when dependency unavailable
+    from jsonschema import Draft202012Validator
+except Exception:  # pragma: no cover - fallback when dependency unavailable
+
+    class Draft202012Validator:  # type: ignore[override]
+        """Minimal validator supporting the keywords used in our schema."""
+
+        def __init__(self, schema: dict[str, Any]) -> None:
+            self._schema = schema
+
+        def iter_errors(self, instance: Any):  # type: ignore[override]
+            errors: list[_SimpleError] = []
+            _validate_schema(self._schema, instance, (), errors)
+            return iter(errors)
 
     class _SimpleError:
         def __init__(self, path: tuple[Any, ...], message: str) -> None:
@@ -66,22 +77,6 @@ except ImportError:  # pragma: no cover - fallback when dependency unavailable
                         f"{instance} is greater than the maximum of {maximum}",
                     )
                 )
-
-    class _FallbackDraftValidator:
-        """Minimal validator supporting the keywords used in our schema."""
-
-        def __init__(self, schema: dict[str, Any]) -> None:
-            self._schema = schema
-
-        def iter_errors(self, instance: Any):
-            errors: list[_SimpleError] = []
-            _validate_schema(self._schema, instance, (), errors)
-            return iter(errors)
-
-    _RuntimeDraftValidator = _FallbackDraftValidator
-
-
-Draft202012Validator = _RuntimeDraftValidator
 
 
 ROOT = Path(__file__).resolve().parents[1]

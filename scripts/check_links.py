@@ -21,8 +21,8 @@ def _check_target(base: Path, target: str, missing: list[str]) -> None:
     if target.startswith("#") or target.startswith("mailto:"):
         return
     path_part = target.split("#", 1)[0]
-    path_obj = Path(path_part)
-    resolved = (base.parent / path_obj).resolve()
+    path_part = Path(path_part)
+    resolved = (base.parent / path_part).resolve()
     try:
         rel = resolved.relative_to(ROOT)
     except Exception:

@@ -302,4 +302,4 @@ check-metrics-schema:
 verify-static:
 >@echo "==> Lint"; ruff check .
 >@echo "==> Format check"; ruff format --check .
->@echo "==> Types"; mypy --config-file mypy.ini src scripts
+>@echo "==> Types"; mypy --config-file mypy.ini
