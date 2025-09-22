@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 """Run a command under a lightweight sandbox and emit a purity report."""
+
 from __future__ import annotations
 
 import argparse
@@ -9,8 +10,8 @@ import shutil
 import subprocess
 import sys
 import tempfile
+from collections.abc import Iterable
 from pathlib import Path
-from typing import Iterable, List
 
 from latency_vision.schemas import SCHEMA_VERSION
 
@@ -29,7 +30,6 @@ STRACE_FORBIDDEN_KEYWORDS = (
     "recvfrom(",
     "socket(",
 )
-
 
 
 def _write_sitecustomize(path: Path) -> None:
@@ -92,12 +92,13 @@ if _LOG:
     )
 
 
-def _run_with_strace(command: List[str], log_path: Path) -> tuple[int, list[dict[str, str]], str]:
+def _run_with_strace(command: list[str], log_path: Path) -> tuple[int, list[dict[str, str]], str]:
     strace_bin = shutil.which("strace")
     unshare_bin = shutil.which("unshare")
     sandbox_mode = "strace-only"
     if strace_bin is None:
-        # Fall back to Python sitecustomize hooking.
+        if os.environ.get("PURITY_ALLOW_WEAK_FALLBACK") != "1":
+            raise SystemExit("strace is required for the purity sandbox to run")
         with tempfile.TemporaryDirectory() as temp_dir:
             temp_path = Path(temp_dir)
             site_dir = (
@@ -112,9 +113,7 @@ def _run_with_strace(command: List[str], log_path: Path) -> tuple[int, list[dict
             env = os.environ.copy()
             existing_pythonpath = env.get("PYTHONPATH", "")
             if existing_pythonpath:
-                env["PYTHONPATH"] = os.pathsep.join(
-                    [str(temp_path), existing_pythonpath]
-                )
+                env["PYTHONPATH"] = os.pathsep.join([str(temp_path), existing_pythonpath])
             else:
                 env["PYTHONPATH"] = str(temp_path)
             env["PYTHONUSERBASE"] = str(temp_path)
@@ -122,7 +121,11 @@ def _run_with_strace(command: List[str], log_path: Path) -> tuple[int, list[dict
             result = subprocess.run(command, env=env, check=False)
         events = []
         if log_path.exists():
-            events = [json.loads(line) for line in log_path.read_text(encoding="utf-8").splitlines() if line]
+            events = [
+                json.loads(line)
+                for line in log_path.read_text(encoding="utf-8").splitlines()
+                if line
+            ]
         return result.returncode, events, sandbox_mode
 
     log_path.parent.mkdir(parents=True, exist_ok=True)
@@ -169,7 +172,7 @@ def _run_with_strace(command: List[str], log_path: Path) -> tuple[int, list[dict
     return result.returncode, events, sandbox_mode
 
 
-def run_sandboxed(command: List[str], report_path: Path) -> int:
+def run_sandboxed(command: list[str], report_path: Path) -> int:
     log_path = Path("artifacts/purity_trace.log")
     log_path.parent.mkdir(parents=True, exist_ok=True)
     if log_path.exists():

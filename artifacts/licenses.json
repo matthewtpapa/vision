@@ -1,9 +1,106 @@
 {
   "notices": [
     {
-      "license": "Apache-2.0",
-      "name": "latency-vision",
-      "version": "0.1.0-rc.2"
+      "homepage": "",
+      "license": "MIT License",
+      "name": "black",
+      "version": "25.1.0"
+    },
+    {
+      "homepage": "",
+      "license": "UNKNOWN",
+      "name": "click",
+      "version": "8.2.1"
+    },
+    {
+      "homepage": "",
+      "license": "MIT License",
+      "name": "iniconfig",
+      "version": "2.1.0"
+    },
+    {
+      "homepage": "",
+      "license": "MIT License",
+      "name": "isort",
+      "version": "6.0.1"
+    },
+    {
+      "homepage": "",
+      "license": "MIT",
+      "name": "mypy",
+      "version": "1.17.1"
+    },
+    {
+      "homepage": "",
+      "license": "UNKNOWN",
+      "name": "mypy_extensions",
+      "version": "1.1.0"
+    },
+    {
+      "homepage": "https://github.com/ekalinin/nodeenv",
+      "license": "BSD",
+      "name": "nodeenv",
+      "version": "1.9.1"
+    },
+    {
+      "homepage": "",
+      "license": "Apache Software License",
+      "name": "packaging",
+      "version": "25.0"
+    },
+    {
+      "homepage": "",
+      "license": "Mozilla Public License 2.0 (MPL 2.0)",
+      "name": "pathspec",
+      "version": "0.12.1"
+    },
+    {
+      "homepage": "",
+      "license": "UNKNOWN",
+      "name": "pip",
+      "version": "25.2"
+    },
+    {
+      "homepage": "",
+      "license": "MIT License",
+      "name": "platformdirs",
+      "version": "4.4.0"
+    },
+    {
+      "homepage": "",
+      "license": "MIT",
+      "name": "pluggy",
+      "version": "1.6.0"
+    },
+    {
+      "homepage": "",
+      "license": "BSD-2-Clause",
+      "name": "Pygments",
+      "version": "2.19.2"
+    },
+    {
+      "homepage": "https://github.com/RobertCraigie/pyright-python",
+      "license": "MIT",
+      "name": "pyright",
+      "version": "1.1.404"
+    },
+    {
+      "homepage": "",
+      "license": "MIT",
+      "name": "pytest",
+      "version": "8.4.1"
+    },
+    {
+      "homepage": "https://docs.astral.sh/ruff",
+      "license": "MIT License",
+      "name": "ruff",
+      "version": "0.12.11"
+    },
+    {
+      "homepage": "",
+      "license": "UNKNOWN",
+      "name": "typing_extensions",
+      "version": "4.15.0"
     }
   ],
   "schema_version": "1.0.0"

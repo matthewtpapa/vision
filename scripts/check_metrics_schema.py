@@ -1,37 +1,156 @@
 #!/usr/bin/env python
-"""Lightweight schema checks for prove artifacts."""
+"""Validate prove artifacts against the bundled JSON Schemas."""
+
 from __future__ import annotations
 
 import json
 from pathlib import Path
+from typing import Any
+
+try:
+    from jsonschema import Draft202012Validator
+except ImportError:  # pragma: no cover - jsonschema unavailable in sandbox
+    import re
+
+    class ValidationError(Exception):
+        """Fallback validation error mirroring jsonschema's API."""
+
+        def __init__(self, message: str, path: tuple[object, ...]):
+            super().__init__(message)
+            self.message = message
+            self.path = list(path)
+
+    class Draft202012Validator:  # type: ignore[override]
+        """Minimal Draft 2020-12 validator used when jsonschema is unavailable."""
+
+        def __init__(self, schema: dict[str, Any]):
+            self._schema = schema
+
+        def iter_errors(self, instance: Any):  # type: ignore[override]
+            yield from _validate_with_schema(instance, self._schema, ())
+
+    def _validate_with_schema(instance: Any, schema: dict[str, Any], path: tuple[object, ...]):
+        schema_type = schema.get("type")
+        if schema_type == "object":
+            if not isinstance(instance, dict):
+                yield ValidationError("value is not an object", path)
+                return
+            required = schema.get("required", [])
+            for key in required:
+                if key not in instance:
+                    yield ValidationError(f"missing required property '{key}'", path + (key,))
+            properties = schema.get("properties", {})
+            if schema.get("additionalProperties", True) is False:
+                for key in instance:
+                    if key not in properties:
+                        yield ValidationError(
+                            f"additional property '{key}' is not allowed", path + (key,)
+                        )
+            for key, subschema in properties.items():
+                if key in instance:
+                    yield from _validate_with_schema(instance[key], subschema, path + (key,))
+            return
+        if schema_type == "array":
+            if not isinstance(instance, list):
+                yield ValidationError("value is not an array", path)
+                return
+            min_items = schema.get("minItems")
+            if isinstance(min_items, int) and len(instance) < min_items:
+                yield ValidationError(f"array has fewer than {min_items} items", path)
+            if schema.get("uniqueItems"):
+                seen = set()
+                for index, item in enumerate(instance):
+                    marker = json.dumps(item, sort_keys=True, separators=(",", ":"))
+                    if marker in seen:
+                        yield ValidationError("array items are not unique", path + (index,))
+                    else:
+                        seen.add(marker)
+            item_schema = schema.get("items")
+            if isinstance(item_schema, dict):
+                for index, item in enumerate(instance):
+                    yield from _validate_with_schema(item, item_schema, path + (index,))
+            return
+        if schema_type == "string":
+            if not isinstance(instance, str):
+                yield ValidationError("value is not a string", path)
+                return
+            pattern = schema.get("pattern")
+            if pattern and not re.fullmatch(pattern, instance):
+                yield ValidationError("string does not match required pattern", path)
+            enum = schema.get("enum")
+            if enum and instance not in enum:
+                yield ValidationError("string is not an allowed value", path)
+            return
+        if schema_type == "integer":
+            if not isinstance(instance, int) or isinstance(instance, bool):
+                yield ValidationError("value is not an integer", path)
+                return
+            minimum = schema.get("minimum")
+            if minimum is not None and instance < minimum:
+                yield ValidationError("integer is below the minimum", path)
+            maximum = schema.get("maximum")
+            if maximum is not None and instance > maximum:
+                yield ValidationError("integer exceeds the maximum", path)
+            return
+        if schema_type == "number":
+            if not isinstance(instance, int | float) or isinstance(instance, bool):
+                yield ValidationError("value is not numeric", path)
+                return
+            minimum = schema.get("minimum")
+            if minimum is not None and float(instance) < float(minimum):
+                yield ValidationError("number is below the minimum", path)
+            maximum = schema.get("maximum")
+            if maximum is not None and float(instance) > float(maximum):
+                yield ValidationError("number exceeds the maximum", path)
+            return
+        if schema_type == "boolean":
+            if not isinstance(instance, bool):
+                yield ValidationError("value is not a boolean", path)
+            return
+        # Fallback: recurse into properties if provided even without explicit type.
+        for key, subschema in schema.get("properties", {}).items():
+            if isinstance(instance, dict) and key in instance:
+                yield from _validate_with_schema(instance[key], subschema, path + (key,))
+
 
 from latency_vision.schemas import load_schema
 
-
-def _load_json(path: str | Path) -> dict:
-    return json.loads(Path(path).read_text(encoding="utf-8"))
+ROOT = Path(__file__).resolve().parent.parent
 
 
-def _require_keys(mapping: dict, required: list[str]) -> None:
-    missing = [key for key in required if key not in mapping]
-    if missing:
-        raise SystemExit(f"missing keys: {missing}")
+def _load_json(path: Path) -> Any:
+    if not path.is_file():
+        raise SystemExit(f"missing artifact for schema validation: {path}")
+    return json.loads(path.read_text(encoding="utf-8"))
+
+
+def _validate(instance: Any, schema_name: str, *, label: str) -> None:
+    schema = load_schema(schema_name)
+    validator = Draft202012Validator(schema)
+    errors = sorted(validator.iter_errors(instance), key=lambda err: list(err.path))
+    if errors:
+        messages = []
+        for error in errors:
+            location = " / ".join(str(part) for part in error.path)
+            prefix = f"{label}" if not location else f"{label} -> {location}"
+            messages.append(f"{prefix}: {error.message}")
+        raise SystemExit("schema validation failed:\n" + "\n".join(messages))
 
 
 def main() -> None:
-    purity = _load_json("artifacts/purity_report.json")
-    load_schema("purity_report.schema.json")
-    _require_keys(
-        purity,
-        [
-            "sandbox_mode",
-            "command",
-            "returncode",
-            "network_syscalls",
-            "offending",
-        ],
-    )
-    print("purity schema ok")
+    offline = _load_json(ROOT / "bench/oracle_stats.json")
+    _validate(offline, "oracle_stats.schema.json", label="bench/oracle_stats.json")
+
+    e2e = _load_json(ROOT / "bench/oracle_e2e.json")
+    _validate(e2e, "oracle_e2e.schema.json", label="bench/oracle_e2e.json")
+
+    purity = _load_json(ROOT / "artifacts/purity_report.json")
+    _validate(purity, "purity_report.schema.json", label="artifacts/purity_report.json")
+
+    manifest = _load_json(ROOT / "bench/fixtures/manifest.json")
+    _validate(manifest, "metrics_manifest.schema.json", label="bench/fixtures/manifest.json")
+
+    print("all schemas validated")
 
 
 if __name__ == "__main__":

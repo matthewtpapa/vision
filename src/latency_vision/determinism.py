@@ -1,11 +1,12 @@
 """Deterministic runtime helpers for latency benchmarks."""
+
 from __future__ import annotations
 
 import os
 import random
 import secrets
 from dataclasses import dataclass
-from decimal import Decimal, ROUND_HALF_UP
+from decimal import ROUND_HALF_UP, Decimal
 from typing import Any
 
 DEFAULT_SEED = 20240520
@@ -87,7 +88,7 @@ def blas_fingerprint() -> dict[str, Any]:
     }
     try:
         import numpy as np
-        from numpy import __config__  # type: ignore
+        from numpy import __config__
 
         fingerprint["numpy"] = {
             "version": str(np.__version__),
@@ -104,7 +105,7 @@ def blas_fingerprint() -> dict[str, Any]:
                 fingerprint["numpy"]["build_info"][key] = {
                     inner_key: value[inner_key]
                     for inner_key in sorted(value)
-                    if isinstance(value[inner_key], (str, int, float, list, tuple))
+                    if isinstance(value[inner_key], str | int | float | list | tuple)
                 }
                 fingerprint["numpy"]["blas_keys"].append(key)
         fingerprint["numpy"]["blas_keys"].sort()

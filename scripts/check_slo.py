@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 """Check SLO gates against generated metrics."""
+
 from __future__ import annotations
 
 import json

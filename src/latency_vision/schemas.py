@@ -1,8 +1,9 @@
 """Schema loader utilities for Latency Vision fixtures and reports."""
+
 from __future__ import annotations
 
 import json
-from functools import lru_cache
+from functools import cache
 from pathlib import Path
 from typing import Any
 
@@ -14,7 +15,7 @@ def _schemas_dir() -> Path:
     return Path(__file__).resolve().parents[2] / "schemas"
 
 
-@lru_cache(maxsize=None)
+@cache
 def load_schema(name: str) -> dict[str, Any]:
     """Load a JSON schema by filename.
 

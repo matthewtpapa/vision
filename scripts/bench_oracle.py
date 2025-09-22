@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 """Offline oracle benchmark with deterministic configuration."""
+
 from __future__ import annotations
 
 import argparse
@@ -69,9 +70,7 @@ def main() -> None:
 
     recall = (hits / known_total) if known_total else 0.0
     quantiles = (
-        statistics.quantiles(latencies_ms, n=100, method="inclusive")
-        if latencies_ms
-        else []
+        statistics.quantiles(latencies_ms, n=100, method="inclusive") if latencies_ms else []
     )
     p95 = quantiles[94] if quantiles else 0.0
     p99 = quantiles[98] if quantiles else 0.0
@@ -92,7 +91,6 @@ def main() -> None:
     with stats_path.open("w", encoding="utf-8") as handle:
         json.dump(stats, handle, indent=2, sort_keys=True)
         handle.write("\n")
-
 
 
 if __name__ == "__main__":

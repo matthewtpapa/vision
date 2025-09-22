@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 """Generate a canonical metrics hash and payload artifact."""
+
 from __future__ import annotations
 
 import hashlib
@@ -15,8 +16,10 @@ from latency_vision.schemas import SCHEMA_VERSION, load_schema
 ROOT = Path(__file__).resolve().parent.parent
 ARTIFACTS = ROOT / "artifacts"
 
+
 def _load_json(path: Path) -> Any:
     return json.loads(path.read_text(encoding="utf-8"))
+
 
 def _quantize_structure(value: Any) -> Any:
     if isinstance(value, float):
@@ -27,20 +30,30 @@ def _quantize_structure(value: Any) -> Any:
         return [_quantize_structure(item) for item in value]
     return value
 
+
 def _collect_requirements() -> dict[str, list[str]]:
     requirements: dict[str, list[str]] = {}
     for path in sorted(ROOT.glob("requirements*.txt")):
-        lines = [line.strip() for line in path.read_text(encoding="utf-8").splitlines() if line.strip()]
+        lines = [
+            line.strip() for line in path.read_text(encoding="utf-8").splitlines() if line.strip()
+        ]
         requirements[path.name] = sorted(lines)
     return requirements
+
 
 def _require_keys(mapping: Mapping[str, Any], keys: list[str]) -> None:
     missing = [key for key in keys if key not in mapping]
     if missing:
         raise ValueError(f"missing keys: {missing}")
 
-def _ensure_number(value: Any, *, min_value: float | None = None, max_value: float | None = None) -> float:
-    if isinstance(value, bool) or not isinstance(value, (int, float)):
+
+def _ensure_number(
+    value: Any,
+    *,
+    min_value: float | None = None,
+    max_value: float | None = None,
+) -> float:
+    if isinstance(value, bool) or not isinstance(value, int | float):
         raise TypeError(f"expected numeric value, received {type(value)!r}")
     result = float(value)
     if min_value is not None and result < min_value:
@@ -49,7 +62,13 @@ def _ensure_number(value: Any, *, min_value: float | None = None, max_value: flo
         raise ValueError(f"value {result} > maximum {max_value}")
     return result
 
-def _validate_schema(data: Mapping[str, Any], schema_name: str, *, extra_allowed: set[str] | None = None) -> None:
+
+def _validate_schema(
+    data: Mapping[str, Any],
+    schema_name: str,
+    *,
+    extra_allowed: set[str] | None = None,
+) -> None:
     schema = load_schema(schema_name)
     if not isinstance(data, Mapping):
         raise TypeError(f"{schema_name} payload must be an object")
@@ -87,17 +106,17 @@ def _validate_schema(data: Mapping[str, Any], schema_name: str, *, extra_allowed
         else:
             raise TypeError(f"unsupported schema type {schema_type!r} for key {key}")
 
+
 def _validate_offline(data: Mapping[str, Any]) -> None:
     _validate_schema(data, "oracle_stats.schema.json")
     if data.get("schema_version") != SCHEMA_VERSION:
-        raise ValueError(
-            f"offline schema_version {data.get('schema_version')} != {SCHEMA_VERSION}"
-        )
+        raise ValueError(f"offline schema_version {data.get('schema_version')} != {SCHEMA_VERSION}")
     _ensure_number(data["candidate_at_k_recall"], min_value=0.0, max_value=1.0)
     _ensure_number(data["p95_ms"], min_value=0.0)
     _ensure_number(data["p99_ms"], min_value=0.0)
     if "wall_clock_ms" in data:
         _ensure_number(data["wall_clock_ms"], min_value=0.0)
+
 
 def _normalize_e2e(data: Mapping[str, Any]) -> Mapping[str, Any]:
     if "p_at_1" not in data and "p@1" in data:
@@ -105,6 +124,7 @@ def _normalize_e2e(data: Mapping[str, Any]) -> Mapping[str, Any]:
         copied["p_at_1"] = copied["p@1"]
         return copied
     return data
+
 
 def _validate_e2e(data: Mapping[str, Any]) -> None:
     normalized = _normalize_e2e(data)
@@ -116,6 +136,7 @@ def _validate_e2e(data: Mapping[str, Any]) -> None:
     _ensure_number(normalized.get("p_at_1", normalized.get("p@1")), min_value=0.0, max_value=1.0)
     _ensure_number(normalized["e2e_p95_ms"], min_value=0.0)
     _ensure_number(normalized["e2e_p99_ms"], min_value=0.0)
+
 
 def main() -> None:
     offline = _load_json(ROOT / "bench/oracle_stats.json")
@@ -158,9 +179,8 @@ def main() -> None:
     (ARTIFACTS / "metrics_hash_payload.json").write_text(
         json.dumps(payload, indent=2, sort_keys=True) + "\n", encoding="utf-8"
     )
-    (ARTIFACTS / "metrics_hash.txt").write_text(
-        f"metrics_hash: {digest}\n", encoding="utf-8"
-    )
+    (ARTIFACTS / "metrics_hash.txt").write_text(f"metrics_hash: {digest}\n", encoding="utf-8")
+
 
 if __name__ == "__main__":
     main()

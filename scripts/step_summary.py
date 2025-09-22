@@ -1,8 +1,10 @@
 #!/usr/bin/env python
 """Emit a human-readable summary of gate metrics."""
+
 from __future__ import annotations
 
 import json
+import os
 from pathlib import Path
 
 GATE_SUMMARY = Path("gate_summary.txt")
@@ -16,9 +18,7 @@ def main() -> None:
     offline = _load(Path("bench/oracle_stats.json"))
     e2e = _load(Path("bench/oracle_e2e.json"))
     purity = _load(Path("artifacts/purity_report.json"))
-    metrics_hash = (
-        Path("artifacts/metrics_hash.txt").read_text(encoding="utf-8").split()
-    )[-1]
+    metrics_hash = (Path("artifacts/metrics_hash.txt").read_text(encoding="utf-8").split())[-1]
 
     summary = (
         "recall={recall:.4f} lookup_p95_ms={p95:.4f} p@1={p1:.4f} e2e_p95_ms={ep95:.4f} "
@@ -34,6 +34,11 @@ def main() -> None:
 
     print(summary)
     GATE_SUMMARY.write_text(summary + "\n", encoding="utf-8")
+
+    step_summary = os.environ.get("GITHUB_STEP_SUMMARY")
+    if step_summary:
+        with open(step_summary, "a", encoding="utf-8") as handle:
+            handle.write(summary + "\n")
 
 
 if __name__ == "__main__":

@@ -1,11 +1,12 @@
 #!/usr/bin/env python
 """End-to-end oracle benchmark with ledger logging."""
+
 from __future__ import annotations
 
 import argparse
 import json
-import os
 import math
+import os
 import statistics
 from pathlib import Path
 from typing import Any
@@ -13,9 +14,9 @@ from typing import Any
 from latency_vision.determinism import configure_runtime, quantize_float
 from latency_vision.schemas import SCHEMA_VERSION
 
-
-
 SABOTAGE_SOCKET = os.environ.get("BENCH_SABOTAGE_SOCKET") == "1"
+
+
 def _cosine_similarity(a: list[float], b: list[float]) -> float:
     dot = sum(x * y for x, y in zip(a, b))
     norm_a = math.sqrt(sum(x * x for x in a))
@@ -59,14 +60,16 @@ def main() -> None:
     correct = 0
     known_total = 0
 
-    with samples_path.open("w", encoding="utf-8") as samples_file, ledger_path.open(
-        "a", encoding="utf-8"
-    ) as ledger_file:
+    with (
+        samples_path.open("w", encoding="utf-8") as samples_file,
+        ledger_path.open("a", encoding="utf-8") as ledger_file,
+    ):
         for idx, query in enumerate(queries, start=1):
             truth = query.get("truth_qid")
             vec = query["vec"]
             if SABOTAGE_SOCKET:
                 import socket
+
                 socket.getaddrinfo("example.com", 80)
             scored = [
                 (
@@ -113,9 +116,7 @@ def main() -> None:
             ledger_file.write("\n")
 
     quantiles = (
-        statistics.quantiles(latencies_ms, n=100, method="inclusive")
-        if latencies_ms
-        else []
+        statistics.quantiles(latencies_ms, n=100, method="inclusive") if latencies_ms else []
     )
     p95 = quantiles[94] if quantiles else 0.0
     p99 = quantiles[98] if quantiles else 0.0
