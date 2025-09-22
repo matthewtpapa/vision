@@ -297,3 +297,9 @@ config-artifact:
 .PHONY: check-metrics-schema
 check-metrics-schema:
 >python scripts/check_metrics_schema.py
+
+.PHONY: verify-static
+verify-static:
+>@echo "==> Lint"; ruff check .
+>@echo "==> Format check"; ruff format --check .
+>@echo "==> Types"; mypy --config-file mypy.ini

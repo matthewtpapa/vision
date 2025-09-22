@@ -170,9 +170,7 @@ def run_eval(
     frame_embeddings: list[list[float] | None] = []
     frame_ts_ns: list[int] = []
 
-    t0_ready_ns = time.monotonic_ns()
-    if process_start_ns is None:
-        process_start_ns = t0_ready_ns
+    ready_ns = time.monotonic_ns()
     deadline = None
     if duration_min > 0:
         deadline = time.monotonic() + duration_min * 60.0
@@ -199,8 +197,9 @@ def run_eval(
     if first_result_ns is None:
         first_result_ns = end_ns
 
-    start_anchor_ns = max(process_start_ns, t0_ready_ns)
-    cold_start_ms = (first_result_ns - start_anchor_ns) / 1e6
+    # Anchor cold start to the later of {process_start_ns, ready_ns}
+    anchor_ns = ready_ns if process_start_ns is None else max(ready_ns, int(process_start_ns))
+    cold_start_ms = max(0.0, (first_result_ns - anchor_ns) / 1e6)
     index_bootstrap_ms = pipeline.bootstrap_time_ms() or 0.0
 
     per_frame_ms, per_stage_ms, unknown_flags, controller_log = pipeline.get_eval_counters()
