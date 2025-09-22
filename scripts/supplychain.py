@@ -187,6 +187,57 @@ def _parse_dependency_tree(tree: object) -> tuple[dict[str, dict[str, str]], dic
     return package_info, dependencies
 
 
+def _subset_runtime_packages(
+    package_info: dict[str, dict[str, str]],
+    dependencies: dict[str, set[str]],
+    root_key: str,
+) -> tuple[dict[str, dict[str, str]], dict[str, set[str]], str] | None:
+    if not package_info:
+        return None
+
+    target_key = root_key if root_key in package_info else None
+    if target_key is None:
+        for key, info in package_info.items():
+            name = info.get("name")
+            if isinstance(name, str) and _canonicalize_name(name) == root_key:
+                target_key = key
+                break
+    if target_key is None:
+        return None
+
+    reachable: set[str] = set()
+    stack: list[str] = [target_key]
+    while stack:
+        candidate = stack.pop()
+        if candidate in reachable or candidate not in package_info:
+            continue
+        reachable.add(candidate)
+        stack.extend(sorted(dependencies.get(candidate, set())))
+
+    filtered_info = {key: package_info[key] for key in reachable}
+    filtered_dependencies = {
+        key: {dep for dep in dependencies.get(key, set()) if dep in reachable} for key in reachable
+    }
+    return filtered_info, filtered_dependencies, target_key
+
+
+def _fallback_runtime_packages(
+    root_key: str,
+) -> tuple[dict[str, dict[str, str]], dict[str, set[str]], str] | None:
+    try:
+        result = _run_module("pipdeptree", "--json-tree")
+    except subprocess.CalledProcessError:
+        return None
+
+    try:
+        tree = json.loads(result.stdout)
+    except json.JSONDecodeError:
+        return None
+
+    package_info, dependencies = _parse_dependency_tree(tree)
+    return _subset_runtime_packages(package_info, dependencies, root_key)
+
+
 def _build_runtime_context() -> RuntimeContext:
     root_distribution = _discover_root_distribution()
     try:
@@ -200,13 +251,37 @@ def _build_runtime_context() -> RuntimeContext:
         raise SupplyChainError("pipdeptree produced invalid JSON") from exc
 
     package_info, dependencies = _parse_dependency_tree(tree)
+    root_key = _canonicalize_name(root_distribution)
+
+    subset = _subset_runtime_packages(package_info, dependencies, root_key)
+    if subset is not None:
+        package_info, dependencies, root_key = subset
+    else:
+        fallback = _fallback_runtime_packages(root_key)
+        if fallback is not None:
+            package_info, dependencies, root_key = fallback
+        else:
+            package_info = {}
+            dependencies = {}
+
+    distribution = _distribution_from_name(root_distribution)
+    entry = package_info.setdefault(root_key, {"name": "", "version": ""})
+    if not entry.get("name"):
+        if distribution is not None:
+            meta_name = distribution.metadata.get("Name")
+            entry["name"] = meta_name or root_distribution
+        else:
+            entry["name"] = root_distribution
+    if not entry.get("version"):
+        if distribution is not None:
+            version = getattr(distribution, "version", "") or distribution.metadata.get("Version")
+            if version:
+                entry["version"] = version
+        entry.setdefault("version", "")
+    dependencies.setdefault(root_key, set())
+
     if not package_info:
         raise SupplyChainError("Runtime dependency set is empty")
-
-    root_key = _canonicalize_name(root_distribution)
-    if root_key not in package_info:
-        package_info[root_key] = {"name": root_distribution, "version": ""}
-        dependencies.setdefault(root_key, set())
 
     package_names = sorted(
         {info["name"] for info in package_info.values() if info["name"]},
