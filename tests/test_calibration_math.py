@@ -42,7 +42,7 @@ def test_temperature_monotonicity() -> None:
 
 def test_fit_temperature_recovers_ground_truth() -> None:
     rng = np.random.default_rng(123)
-    logits = rng.normal(size=(64, 3))
+    logits = rng.normal(size=(4096, 3))
     logits = distances_to_logits(-logits)
     true_T = 2.5
     scaled = softmax(temperature_scale(logits, true_T))
