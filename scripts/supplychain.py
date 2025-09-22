@@ -550,8 +550,7 @@ def _collect_wheel_hashes(context: RuntimeContext) -> None:
             except subprocess.CalledProcessError as exc:
                 message = exc.stderr or exc.stdout or "pip download failed"
                 raise SupplyChainError(
-                    "Failed to download wheels for runtime dependencies: "
-                    f"{message.strip()}"
+                    f"Failed to download wheels for runtime dependencies: {message.strip()}"
                 ) from exc
         try:
             subprocess.run(  # noqa: PLW1510
