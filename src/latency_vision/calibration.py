@@ -145,7 +145,7 @@ def fit_temperature(
     # determinism harness to miss its planted temperature.  When we detect the
     # separable regime, fall back to a monotonic margin-matching search that
     # keeps probabilities in the same scale as the observed logit gaps.
-    if clipped <= (_T_MIN + 1e-6):
+    if clipped <= (_T_MIN + 1e-4):
         predictions = np.argmax(logits_arr, axis=1)
         if np.all(predictions == labels_arr):
             # Empirically the expectation of the margin between the chosen logit
