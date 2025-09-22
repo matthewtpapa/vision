@@ -17,7 +17,7 @@
   "properties": {
     "schema_version": {
       "type": "string",
-      "pattern": "^\d+\.\d+\.\d+(?:[-+][A-Za-z0-9.]+)?$"
+      "pattern": "^\\d+\\.\\d+\\.\\d+(?:[-+][A-Za-z0-9.]+)?$"
     },
     "bench": {
       "type": "string",
