@@ -170,7 +170,7 @@ def run_eval(
     frame_embeddings: list[list[float] | None] = []
     frame_ts_ns: list[int] = []
 
-    t0_ready_ns = time.monotonic_ns()
+    t_ready_ns = time.monotonic_ns()
     deadline = None
     if duration_min > 0:
         deadline = time.monotonic() + duration_min * 60.0
@@ -193,15 +193,15 @@ def run_eval(
         if results and first_result_ns is None:
             first_result_ns = time.monotonic_ns()
 
-    end_ns = time.monotonic_ns()
+    t_end_ns = time.monotonic_ns()
     if first_result_ns is None:
-        first_result_ns = end_ns
+        first_result_ns = t_end_ns
 
-    start_ns = process_start_ns if process_start_ns is not None else t0_ready_ns
-    if first_result_ns < start_ns:
+    start_ref_ns = process_start_ns if process_start_ns is not None else t_ready_ns
+    if start_ref_ns > first_result_ns:
         cold_start_ms = 0.0
     else:
-        cold_start_ms = (first_result_ns - start_ns) / 1e6
+        cold_start_ms = (first_result_ns - start_ref_ns) / 1e6
     cold_start_ms = float(cold_start_ms)
     index_bootstrap_ms = pipeline.bootstrap_time_ms() or 0.0
 
@@ -385,7 +385,10 @@ def run_eval(
     total_eff = max(1, len(latencies_effective))
     metrics.update(
         {
-            "cold_start_ms": cold_start_ms,
+            "cold_start_ms": round(cold_start_ms, 3),
+            "process_start_ns": process_start_ns,
+            "ready_ns": t_ready_ns,
+            "first_result_ns": first_result_ns,
             "index_bootstrap_ms": index_bootstrap_ms,
             "sustained_in_budget": round(in_budget / total_eff, 6),
         }
