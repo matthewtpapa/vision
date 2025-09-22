@@ -150,6 +150,29 @@ def main() -> None:
     manifest = _load_json(ROOT / "bench/fixtures/manifest.json")
     _validate(manifest, "metrics_manifest.schema.json", label="bench/fixtures/manifest.json")
 
+    # Validate each JSONL line in the evidence ledger
+    ledger_path = ROOT / "logs/evidence_ledger.jsonl"
+    if ledger_path.exists():
+        schema = load_schema("evidence_ledger.schema.jsonl")
+        validator = Draft202012Validator(schema)
+        with ledger_path.open("r", encoding="utf-8") as fh:
+            for i, line in enumerate(fh, start=1):
+                line = line.strip()
+                if not line:
+                    continue
+                try:
+                    obj = json.loads(line)
+                except json.JSONDecodeError as exc:  # pragma: no cover - trivial failure
+                    raise SystemExit(f"ledger parse error at line {i}: {exc}") from exc
+                errors = sorted(validator.iter_errors(obj), key=lambda e: list(e.path))
+                if errors:
+                    first = errors[0]
+                    loc = " / ".join(str(p) for p in first.path)
+                    where = f" @ {loc}" if loc else ""
+                    raise SystemExit(
+                        f"ledger schema validation failed at line {i}{where}: {first.message}"
+                    )
+
     print("all schemas validated")
 
 

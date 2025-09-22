@@ -1,0 +1,16 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://latency.vision/schemas/evidence_ledger.schema.jsonl",
+  "title": "Latency Vision Evidence Ledger (per-line JSON object)",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["query_id", "truth_qid", "picked_qid", "score", "accepted", "k"],
+  "properties": {
+    "query_id": { "type": ["string", "null"] },
+    "truth_qid": { "type": ["string", "null"] },
+    "picked_qid": { "type": ["string", "null"] },
+    "score": { "type": "number" },
+    "accepted": { "type": "boolean" },
+    "k": { "type": "integer", "minimum": 1 }
+  }
+}

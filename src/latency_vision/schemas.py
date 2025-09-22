@@ -38,7 +38,10 @@ def available_schemas() -> list[str]:
     directory = _schemas_dir()
     if not directory.exists():
         return []
-    return sorted(str(path.name) for path in directory.glob("*.schema.json"))
+    names: list[str] = []
+    names.extend(str(path.name) for path in directory.glob("*.schema.json"))
+    names.extend(str(path.name) for path in directory.glob("*.schema.jsonl"))
+    return sorted(names)
 
 
 __all__ = ["SCHEMA_VERSION", "available_schemas", "load_schema"]
