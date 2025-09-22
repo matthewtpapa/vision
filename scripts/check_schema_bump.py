@@ -51,16 +51,12 @@ def main() -> int:
     if not schema_changes:
         return 0
     if SCHEMA_SENTINEL.as_posix() not in changed:
-        print(
-            "Schema files changed without updating src/latency_vision/schemas.py"
-        )
+        print("Schema files changed without updating src/latency_vision/schemas.py")
         return 1
     base_version = _schema_version_at(base_ref)
     current_version = _current_schema_version()
     if base_version == current_version:
-        print(
-            "Schema files changed but SCHEMA_VERSION was not updated"
-        )
+        print("Schema files changed but SCHEMA_VERSION was not updated")
         return 1
     return 0
 

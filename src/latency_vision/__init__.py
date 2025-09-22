@@ -23,6 +23,7 @@ from .pipeline_detect_track_embed import DetectTrackEmbedPipeline
 from .ris import ReverseImageSearchStub
 from .telemetry import Telemetry
 from .track_bytetrack_adapter import ByteTrackLikeTracker
+
 __all__ = [
     "__version__",
     "FakeDetector",

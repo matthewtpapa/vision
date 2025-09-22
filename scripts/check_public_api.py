@@ -45,9 +45,7 @@ def _collect_entries(modules: Iterable[str]) -> list[str]:
 
 def _load_golden(path: Path) -> list[str]:
     return sorted(
-        line.strip()
-        for line in path.read_text(encoding="utf-8").splitlines()
-        if line.strip()
+        line.strip() for line in path.read_text(encoding="utf-8").splitlines() if line.strip()
     )
 
 
