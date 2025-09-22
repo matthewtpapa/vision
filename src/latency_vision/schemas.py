@@ -7,7 +7,7 @@ from functools import cache
 from pathlib import Path
 from typing import Any
 
-SCHEMA_VERSION = "1.0.0"
+SCHEMA_VERSION = "1.1.0"
 
 
 def _schemas_dir() -> Path:

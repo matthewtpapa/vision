@@ -9,7 +9,7 @@ from .cli import main as cli_main
 def main() -> int:
     args = sys.argv[1:]
     if args == ["--version"]:
-        print(f"Latency Vision {__version__}")
+        print(__version__)
         return 0
     return cli_main(args)
 

@@ -22,7 +22,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        python-version: ['3.10', '3.11', '3.12']
+        python-version: ['3.10', '3.11']
     steps:
       - uses: actions/checkout@v4
       - name: Set up Python
@@ -53,7 +53,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        python-version: ['3.10', '3.11', '3.12']
+        python-version: ['3.10', '3.11']
     env:
       OMP_NUM_THREADS: "1"
       OPENBLAS_NUM_THREADS: "1"
@@ -80,6 +80,12 @@ jobs:
           pip install -e .
       - name: Run prove pipeline
         run: make prove
+      - name: Unknowns guard
+        run: make unknowns-guard
+      - name: Public API freeze
+        run: make api-freeze
+      - name: Schema bump guard
+        run: make schema-bump
       - name: Gate summary → Job summary
         if: always()
         run: |

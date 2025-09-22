@@ -133,7 +133,7 @@ def main(argv: Sequence[str] | None = None) -> int:
     args = parser.parse_args(argv)
 
     if args.version:
-        print(f"Latency Vision {__version__}")
+        print(__version__)
     elif args.command == "webcam":
         webcam.loop(dry_run=args.dry_run, use_fake=args.use_fake_detector)
     elif args.command == "eval":

@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://vision.local/schemas/metrics.schema.json",
+  "$id": "https://latency.vision/schemas/metrics.schema.json",
   "title": "Vision benchmark metrics schemas",
   "description": "Reusable schema definitions for benchmark metrics emitted by the oracle drills.",
   "$defs": {
@@ -22,6 +22,7 @@
         "p95_ms": {
           "type": "number",
           "minimum": 0.0,
+          "maximum": 1000000000.0,
           "description": "95th percentile latency in milliseconds."
         }
       }
@@ -45,11 +46,13 @@
         "e2e_p95_ms": {
           "type": "number",
           "minimum": 0.0,
+          "maximum": 1000000000.0,
           "description": "95th percentile end-to-end latency in milliseconds."
         },
         "e2e_p99_ms": {
           "type": "number",
           "minimum": 0.0,
+          "maximum": 1000000000.0,
           "description": "99th percentile end-to-end latency in milliseconds."
         }
       }

@@ -7,6 +7,11 @@
 from pathlib import Path
 from collections.abc import Iterable, Sequence
 
+try:
+    from .version import __version__
+except Exception:  # pragma: no cover - fallback for missing version module.
+    __version__ = "0.0.0+unknown"
+
 from .cluster_store import ClusterStore
 from .config import get_config
 from .detect_adapter import FakeDetector
@@ -18,8 +23,6 @@ from .pipeline_detect_track_embed import DetectTrackEmbedPipeline
 from .ris import ReverseImageSearchStub
 from .telemetry import Telemetry
 from .track_bytetrack_adapter import ByteTrackLikeTracker
-
-__version__ = "0.1.0-rc.2"
 __all__ = [
     "__version__",
     "FakeDetector",

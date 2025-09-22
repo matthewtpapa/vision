@@ -3,7 +3,7 @@
 SHELL := /usr/bin/env bash
 .SHELLFLAGS := -eu -o pipefail -c
 
-.PHONY: eval-pack bench slo-check metrics-hash purity supplychain prove
+.PHONY: eval-pack bench slo-check metrics-hash purity supplychain prove unknowns-guard api-freeze schema-bump
 
 FIXTURE_BANK := bench/fixtures/bank.jsonl
 FIXTURE_QUERIES := bench/fixtures/queries.jsonl
@@ -50,3 +50,18 @@ prove:
 	$(MAKE) metrics-hash
 	$(MAKE) supplychain
 	PYTHONPATH="src${PYTHONPATH:+:${PYTHONPATH}}" python scripts/step_summary.py
+
+
+unknowns-guard:
+	set -euo pipefail
+	PYTHONPATH="src${PYTHONPATH:+:${PYTHONPATH}}" python scripts/unknowns_guard.py --samples bench/e2e_samples.jsonl --threshold 0.025
+
+
+api-freeze:
+	set -euo pipefail
+	PYTHONPATH="src${PYTHONPATH:+:${PYTHONPATH}}" python scripts/check_public_api.py
+
+
+schema-bump:
+	set -euo pipefail
+	GIT_DIFF_BASE="${GIT_DIFF_BASE:-HEAD~1}" PYTHONPATH="src${PYTHONPATH:+:${PYTHONPATH}}" python scripts/check_schema_bump.py

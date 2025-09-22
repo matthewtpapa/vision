@@ -15,11 +15,29 @@
     "p99_ms"
   ],
   "properties": {
-    "schema_version": {"type": "string"},
-    "bench": {"type": "string"},
-    "k": {"type": "integer", "minimum": 1},
-    "total_queries": {"type": "integer", "minimum": 0},
-    "known_queries": {"type": "integer", "minimum": 0},
+    "schema_version": {
+      "type": "string",
+      "pattern": "^\d+\.\d+\.\d+(?:[-+][A-Za-z0-9.]+)?$"
+    },
+    "bench": {
+      "type": "string",
+      "pattern": "^[A-Za-z0-9_.-]+$"
+    },
+    "k": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 2147483647
+    },
+    "total_queries": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 2147483647
+    },
+    "known_queries": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 2147483647
+    },
     "candidate_at_k_recall": {
       "type": "number",
       "minimum": 0.0,
@@ -27,15 +45,18 @@
     },
     "p95_ms": {
       "type": "number",
-      "minimum": 0.0
+      "minimum": 0.0,
+      "maximum": 1000000000.0
     },
     "p99_ms": {
       "type": "number",
-      "minimum": 0.0
+      "minimum": 0.0,
+      "maximum": 1000000000.0
     },
     "wall_clock_ms": {
       "type": "number",
-      "minimum": 0.0
+      "minimum": 0.0,
+      "maximum": 1000000000.0
     }
   }
 }
