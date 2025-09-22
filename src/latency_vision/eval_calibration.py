@@ -102,7 +102,11 @@ def evaluate_labelbank_calibration(
         if not batch:
             return np.array([], dtype=np.float64)
         logits_b = np.array([distances_to_logits(e["distances"]) for e in batch], dtype=np.float64)
+        if logits_b.ndim == 1:
+            logits_b = logits_b[np.newaxis, :]
         probs_b = softmax(temperature_scale(logits_b, T))
+        if probs_b.ndim == 1:
+            probs_b = probs_b[np.newaxis, :]
         return np.max(probs_b, axis=1)
 
     known_scores = _scores(known)

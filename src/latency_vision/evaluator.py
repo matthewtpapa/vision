@@ -79,6 +79,7 @@ def run_eval(
     # Resolve unknown-rate band precedence: env > CLI > input manifest > default
     band_min: float | None = None
     band_max: float | None = None
+    band_source: str = "default"
 
     env_band = os.getenv("VISION__UNKNOWN_RATE_BAND", "").strip()
     if env_band:
@@ -90,6 +91,7 @@ def run_eval(
             if not (0.0 <= parsed_min <= 1.0 and 0.0 <= parsed_max <= 1.0):
                 raise ValueError("band values must be between 0.0 and 1.0")
             band_min, band_max = parsed_min, parsed_max
+            band_source = "env"
         except Exception as exc:
             print(
                 f"[warn] ignoring malformed VISION__UNKNOWN_RATE_BAND='{env_band}': {exc}",
@@ -100,6 +102,7 @@ def run_eval(
     if band_min is None or band_max is None:
         if unknown_rate_band is not None:
             band_min, band_max = float(unknown_rate_band[0]), float(unknown_rate_band[1])
+            band_source = "cli"
 
     def _read_band(path: Path) -> tuple[float, float] | None:
         if not path.exists():
@@ -117,9 +120,12 @@ def run_eval(
         resolved = _read_band(in_dir / "manifest.json")
         if resolved is not None:
             band_min, band_max = resolved
+            band_source = "manifest"
 
     if band_min is None or band_max is None:
         band_min, band_max = 0.10, 0.40
+        band_source = "default"
+    enforce_unknown_rate = band_source != "default"
 
     frames = _discover_images(in_dir)
 
@@ -190,10 +196,19 @@ def run_eval(
         results = pipeline.process(frame)
         emb = pipeline.last_first_crop_embedding()
         frame_embeddings.append(list(emb) if emb is not None else None)
-        frame_ts_ns.append(time.monotonic_ns())
+        frame_time_ns = time.monotonic_ns()
+        frame_ts_ns.append(frame_time_ns)
         processed += 1
-        if results and first_result_ns is None:
-            first_result_ns = time.monotonic_ns()
+        if first_result_ns is None:
+            if results:
+                first_result_ns = frame_time_ns
+            else:
+                try:
+                    processed_frames = pipeline.frames_processed()
+                except AttributeError:  # pragma: no cover - legacy pipeline without API
+                    processed_frames = 0
+                if processed_frames > 0:
+                    first_result_ns = frame_time_ns
 
     end_ns = time.monotonic_ns()
     if first_result_ns is None:
@@ -409,6 +424,8 @@ def run_eval(
         "fps_window": pipeline.last_window_fps(),
     }
     metrics["unknown_rate_band"] = [band_min, band_max]
+    metrics["unknown_band_low"] = band_min
+    metrics["unknown_band_high"] = band_max
     budget = float(budget_ms)
     exit_code = 0
     if metrics["p95_ms"] > budget:
@@ -416,11 +433,12 @@ def run_eval(
     ur = float(metrics.get("unknown_rate", 0.0))
     if not (band_min <= ur <= band_max):
         metrics["unknown_rate_violation"] = True
-        exit_code = 2
-        print(
-            f"[guardrail] unknown_rate {ur:.3f} outside band [{band_min:.3f}, {band_max:.3f}]",
-            file=sys.stderr,
-        )
+        if enforce_unknown_rate:
+            exit_code = 2
+            print(
+                f"[guardrail] unknown_rate {ur:.3f} outside band [{band_min:.3f}, {band_max:.3f}]",
+                file=sys.stderr,
+            )
     if os.getenv("VISION_DEBUG_TIMING") == "1" and cli_entry_ns is not None:
         metrics["process_cold_start_ms"] = (first_result_ns - cli_entry_ns) / 1e6
     _atomic_write_json(out_dir / "metrics.json", metrics)

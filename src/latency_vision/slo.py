@@ -1,32 +1,59 @@
-# SPDX-License-Identifier: Apache-2.0
+"""Service level objective gates for latency vision benches."""
+
 from __future__ import annotations
 
+from collections.abc import Mapping
 from dataclasses import dataclass
 
 
 @dataclass(frozen=True)
 class SLOGates:
-    """Latency SLO thresholds (milliseconds)."""
+    """SLO thresholds enforced across offline and e2e benches."""
 
-    p95_ms: float = 33.0
-    p99_ms: float = 66.0
-    cold_start_ms: float = 1100.0
-    index_bootstrap_ms: float = 50.0
+    offline_recall: float = 0.95
+    offline_p95_ms: float = 10.0
+    e2e_p_at_1: float = 0.80
+    e2e_p95_ms: float = 33.0
+
+
+def _coerce_metric(metrics: Mapping[str, float], key: str) -> float:
+    try:
+        value = metrics[key]
+    except KeyError as exc:
+        raise KeyError(f"missing metric: {key}") from exc
+    if isinstance(value, bool) or not isinstance(value, int | float):
+        raise TypeError(f"metric {key!r} must be numeric, received {type(value)!r}")
+    return float(value)
 
 
 def assert_slo(
-    p95: float,
-    p99: float,
     *,
-    cold: float | None = None,
-    boot: float | None = None,
-    g: SLOGates = SLOGates(),
+    offline_stats: Mapping[str, float],
+    e2e_stats: Mapping[str, float],
+    gates: SLOGates = SLOGates(),
 ) -> None:
-    if p95 > g.p95_ms or p99 > g.p99_ms:
-        raise AssertionError(f"SLO fail p95={p95:.3f} p99={p99:.3f}")
-    if cold is not None and cold > g.cold_start_ms:
-        raise AssertionError(f"SLO fail cold_start={cold:.3f}ms > {g.cold_start_ms:.3f}ms")
-    if boot is not None and boot > g.index_bootstrap_ms:
-        raise AssertionError(
-            f"SLO fail index_bootstrap={boot:.3f}ms > {g.index_bootstrap_ms:.3f}ms"
-        )
+    """Assert that measured metrics meet the configured gates."""
+
+    recall = _coerce_metric(offline_stats, "candidate_at_k_recall")
+    lookup_p95 = _coerce_metric(offline_stats, "p95_ms")
+    p_at_1 = e2e_stats.get("p_at_1")
+    if p_at_1 is None and "p@1" in e2e_stats:
+        p_at_1 = e2e_stats["p@1"]
+    if p_at_1 is None:
+        raise KeyError("missing metric: p_at_1")
+    if isinstance(p_at_1, bool) or not isinstance(p_at_1, int | float):
+        raise TypeError("metric 'p_at_1' must be numeric")
+    e2e_p95 = _coerce_metric(e2e_stats, "e2e_p95_ms")
+
+    if recall < gates.offline_recall:
+        raise AssertionError(f"offline recall {recall:.4f} < gate {gates.offline_recall:.4f}")
+    if lookup_p95 > gates.offline_p95_ms:
+        raise AssertionError(f"offline p95 {lookup_p95:.4f}ms > gate {gates.offline_p95_ms:.4f}ms")
+    p_at_1 = float(p_at_1)
+    if p_at_1 < gates.e2e_p_at_1:
+        raise AssertionError(f"p@1 {p_at_1:.4f} < gate {gates.e2e_p_at_1:.4f}")
+    if e2e_p95 > gates.e2e_p95_ms:
+        raise AssertionError(f"e2e p95 {e2e_p95:.4f}ms > gate {gates.e2e_p95_ms:.4f}ms")
+
+
+__all__ = ["SLOGates", "assert_slo"]

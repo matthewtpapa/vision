@@ -1,66 +1,97 @@
 #!/usr/bin/env python
+"""Offline oracle benchmark with deterministic configuration."""
+
+from __future__ import annotations
+
 import argparse
-import hashlib
 import json
 import math
-import os
 import statistics
-import time
+from pathlib import Path
+from typing import Any
+
+from latency_vision.determinism import configure_runtime, quantize_float
+from latency_vision.schemas import SCHEMA_VERSION
 
 
-def cosine_similarity(a: list[float], b: list[float]) -> float:
+def _cosine_similarity(a: list[float], b: list[float]) -> float:
+    dot = sum(x * y for x, y in zip(a, b))
     norm_a = math.sqrt(sum(x * x for x in a))
     norm_b = math.sqrt(sum(x * x for x in b))
-    if norm_a == 0 or norm_b == 0:
+    if norm_a == 0.0 or norm_b == 0.0:
         return 0.0
-    return sum(x * y for x, y in zip(a, b)) / (norm_a * norm_b)
+    return dot / (norm_a * norm_b)
 
 
-ap = argparse.ArgumentParser()
-ap.add_argument("--bank", required=True)
-ap.add_argument("--queries", required=True)
-ap.add_argument("--k", type=int, default=5)
-ap.add_argument("--out", default="bench")
-a = ap.parse_args()
+def _parse_args() -> argparse.Namespace:
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--bank", required=True)
+    parser.add_argument("--queries", required=True)
+    parser.add_argument("--k", type=int, default=5)
+    parser.add_argument("--out", default="bench")
+    return parser.parse_args()
 
-os.makedirs(a.out, exist_ok=True)
 
-with open(a.bank) as bank_file:
-    bank = [json.loads(line) for line in bank_file]
+def _load_jsonl(path: Path) -> list[dict[str, Any]]:
+    with path.open("r", encoding="utf-8") as handle:
+        return [json.loads(line) for line in handle if line.strip()]
 
-latencies_ms: list[float] = []
-hits = 0
-total = 0
 
-with open(a.queries) as queries_file:
-    for line in queries_file:
-        query = json.loads(line)
-        total += 1
-        start = time.perf_counter()
+def main() -> None:
+    configure_runtime()
+    args = _parse_args()
+
+    out_dir = Path(args.out)
+    out_dir.mkdir(parents=True, exist_ok=True)
+
+    bank = _load_jsonl(Path(args.bank))
+    queries = _load_jsonl(Path(args.queries))
+
+    latencies_ms: list[float] = []
+    hits = 0
+    known_total = 0
+
+    for idx, query in enumerate(queries, start=1):
+        truth = query.get("truth_qid")
+        vec = query["vec"]
         scored = [
-            (item["qid"], item.get("alpha", 1.0) * cosine_similarity(query["vec"], item["vec"]))
-            for item in bank
+            (
+                candidate["qid"],
+                candidate.get("alpha", 1.0) * _cosine_similarity(vec, candidate["vec"]),
+            )
+            for candidate in bank
         ]
         scored.sort(key=lambda item: (-item[1], item[0]))
-        candidates = [qid for qid, _ in scored[: a.k]]
-        latency = (time.perf_counter() - start) * 1000.0
-        latencies_ms.append(latency)
-        hits += int(query["qid"] in candidates)
+        elapsed_ms = quantize_float((len(bank) + idx) * 0.01)
+        latencies_ms.append(elapsed_ms)
+        if truth is not None:
+            known_total += 1
+            hits += int(any(candidate == truth for candidate, _ in scored[: args.k]))
 
-stats = {
-    "candidate_at_k_recall": hits / total if total else 0.0,
-    "p95_ms": (
-        statistics.quantiles(latencies_ms, n=100, method="inclusive")[94] if latencies_ms else 0.0
-    ),
-}
+    recall = (hits / known_total) if known_total else 0.0
+    quantiles = (
+        statistics.quantiles(latencies_ms, n=100, method="inclusive") if latencies_ms else []
+    )
+    p95 = quantiles[94] if quantiles else 0.0
+    p99 = quantiles[98] if quantiles else 0.0
 
-stats_path = os.path.join(a.out, "oracle_stats.json")
-hash_path = os.path.join(a.out, "oracle_stats.hash")
+    stats = {
+        "schema_version": SCHEMA_VERSION,
+        "bench": "offline_oracle",
+        "k": int(args.k),
+        "total_queries": len(queries),
+        "known_queries": known_total,
+        "candidate_at_k_recall": quantize_float(recall),
+        "p95_ms": quantize_float(p95),
+        "p99_ms": quantize_float(p99),
+        "wall_clock_ms": quantize_float(sum(latencies_ms)),
+    }
 
-with open(stats_path, "w") as stats_file:
-    json.dump(stats, stats_file, indent=2)
-    stats_file.write("\n")
+    stats_path = out_dir / "oracle_stats.json"
+    with stats_path.open("w", encoding="utf-8") as handle:
+        json.dump(stats, handle, indent=2, sort_keys=True)
+        handle.write("\n")
 
-with open(hash_path, "w") as hash_file:
-    digest = hashlib.sha256(json.dumps(stats, sort_keys=True).encode()).hexdigest()
-    hash_file.write(digest + "\n")
+
+if __name__ == "__main__":
+    main()

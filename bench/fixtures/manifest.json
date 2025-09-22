@@ -1,0 +1,13 @@
+{
+  "schema_version": "1.0.0",
+  "entries": [
+    {
+      "path": "bench/fixtures/bank.jsonl",
+      "sha256": "9a5e9e3d3526a7823262a728b4a007bf7dd40ea4b3ba7a9e49c68f74639878b7"
+    },
+    {
+      "path": "bench/fixtures/queries.jsonl",
+      "sha256": "7eaa4b57e58d88cbb4e4236d7c948696203a3c81f5b10ecae08514068fb861b8"
+    }
+  ]
+}

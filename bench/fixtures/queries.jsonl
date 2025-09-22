@@ -1,0 +1,4 @@
+{"query_id": "q1", "truth_qid": "alpha", "vec": [0.98, 0.05, 0.02], "is_unknown_truth": false}
+{"query_id": "q2", "truth_qid": "bravo", "vec": [0.02, 0.97, 0.03], "is_unknown_truth": false}
+{"query_id": "q3", "truth_qid": "charlie", "vec": [0.01, 0.04, 0.96], "is_unknown_truth": false}
+{"query_id": "q4", "truth_qid": null, "vec": [0.33, 0.33, 0.34], "is_unknown_truth": true}
