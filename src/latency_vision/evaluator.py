@@ -193,8 +193,16 @@ def run_eval(
         frame_time_ns = time.monotonic_ns()
         frame_ts_ns.append(frame_time_ns)
         processed += 1
-        if results and first_result_ns is None:
-            first_result_ns = frame_time_ns
+        if first_result_ns is None:
+            if results:
+                first_result_ns = frame_time_ns
+            else:
+                try:
+                    processed_frames = pipeline.frames_processed()
+                except AttributeError:  # pragma: no cover - legacy pipeline without API
+                    processed_frames = 0
+                if processed_frames > 0:
+                    first_result_ns = frame_time_ns
 
     end_ns = time.monotonic_ns()
     if first_result_ns is None:
