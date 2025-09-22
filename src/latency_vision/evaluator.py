@@ -195,7 +195,10 @@ def run_eval(
 
     end_ns = time.monotonic_ns()
     if first_result_ns is None:
-        first_result_ns = end_ns
+        if frame_ts_ns:
+            first_result_ns = min(frame_ts_ns)
+        else:
+            first_result_ns = end_ns
 
     # Anchor cold start to the later of {process_start_ns, ready_ns}
     anchor_ns = ready_ns if process_start_ns is None else max(ready_ns, int(process_start_ns))
