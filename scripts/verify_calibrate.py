@@ -4,16 +4,29 @@
 from __future__ import annotations
 
 import argparse
+import datetime as _dt
 import json
 import os
 from collections import defaultdict
 from collections.abc import Sequence
-from datetime import datetime, timezone
 
 try:  # Python 3.11+
-    from datetime import UTC
-except ImportError:  # Python <3.11
-    UTC = timezone.utc
+    UTC = _dt.UTC
+except AttributeError:  # Python <3.11
+
+    class _UTC(_dt.tzinfo):
+        """Minimal UTC tzinfo for Python < 3.11."""
+
+        def utcoffset(self, dt: _dt.datetime | None) -> _dt.timedelta:
+            return _dt.timedelta(0)
+
+        def tzname(self, dt: _dt.datetime | None) -> str:
+            return "UTC"
+
+        def dst(self, dt: _dt.datetime | None) -> _dt.timedelta:
+            return _dt.timedelta(0)
+
+    UTC = _UTC()
 
 from latency_vision.telemetry.repro import metrics_hash
 
@@ -70,7 +83,7 @@ def calibrate(manifest_path: str, out_path: str, seed: int) -> None:
         "diversity_min": min(diversity_vals) if diversity_vals else 0,
         "sprt": {"accept": _quantile(r_vals, 0.5), "reject": 0.0},
         "seed": seed,
-        "created_utc": datetime.now(UTC).isoformat().replace("+00:00", "Z"),
+        "created_utc": _dt.datetime.now(UTC).isoformat().replace("+00:00", "Z"),
     }
 
     core = {
