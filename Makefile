@@ -3,7 +3,7 @@
 SHELL := /usr/bin/env bash
 .SHELLFLAGS := -eu -o pipefail -c
 
-.PHONY: eval-pack bench slo-check metrics-hash purity supplychain prove unknowns-guard api-freeze schema-bump
+.PHONY: eval-pack bench slo-check metrics-hash purity supplychain kb-promote prove unknowns-guard api-freeze schema-bump
 
 FIXTURE_BANK := bench/fixtures/bank.jsonl
 FIXTURE_QUERIES := bench/fixtures/queries.jsonl
@@ -39,6 +39,11 @@ purity:
 supplychain:
 	set -euo pipefail
 	PYTHONPATH="src${PYTHONPATH:+:${PYTHONPATH}}" python scripts/supplychain.py
+
+
+kb-promote:
+	set -euo pipefail
+	PYTHONPATH="src${PYTHONPATH:+:${PYTHONPATH}}" python scripts/kb_promote.py
 
 
 prove:
