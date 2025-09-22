@@ -108,7 +108,17 @@ def render_plot(
     lat_line = ax.plot(range(len(latencies)), latencies, label="Latency")[0]
     slo_line = ax.axhline(budget_ms, color="red", linestyle="--", label="SLO")
 
-    warmup_span = ax.axvspan(0, warmup, color="gray", alpha=0.1)
+    from matplotlib import transforms
+    from matplotlib.patches import Polygon
+
+    def _add_vspan(x0: float, x1: float, **kwargs) -> Polygon:
+        transform = transforms.blended_transform_factory(ax.transData, ax.transAxes)
+        verts = [(x0, 0.0), (x0, 1.0), (x1, 1.0), (x1, 0.0)]
+        patch = Polygon(verts, closed=True, transform=transform, **kwargs)
+        ax.add_patch(patch)
+        return patch
+
+    warmup_span = _add_vspan(0, warmup, color="gray", alpha=0.1)
     warmup_span.set_label("Warm-up")
 
     breaches: list[tuple[int, int]] = []
@@ -124,14 +134,9 @@ def render_plot(
                 breaches.append((start, i - 1))
         if in_breach:
             breaches.append((start, len(rolling_p95) - 1))
-        breach_spans: list = []
+        breach_spans: list[Polygon] = []
         for s, e in breaches:
-            span = ax.axvspan(
-                warmup + s,
-                warmup + e + 1,
-                color="red",
-                alpha=0.1,
-            )
+            span = _add_vspan(warmup + s, warmup + e + 1, color="red", alpha=0.1)
             breach_spans.append(span)
         if breach_spans:
             breach_spans[0].set_label("p95>budget windows")
