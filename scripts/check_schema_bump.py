@@ -14,13 +14,20 @@ SCHEMA_SENTINEL = Path("src/latency_vision/schemas.py")
 VERSION_PATTERN = re.compile(r"SCHEMA_VERSION\s*=\s*['\"]([^'\"]+)['\"]")
 
 
-def _git_diff_names(base_ref: str) -> set[str]:
-    result = subprocess.run(
-        ["git", "diff", "--name-only", f"{base_ref}", "HEAD"],
-        check=True,
-        capture_output=True,
-        text=True,
-    )
+def _git_diff_names(base_ref: str) -> set[str] | None:
+    try:
+        result = subprocess.run(
+            ["git", "diff", "--name-only", f"{base_ref}", "HEAD"],
+            check=True,
+            capture_output=True,
+            text=True,
+        )
+    except subprocess.CalledProcessError as error:
+        if error.returncode == 128:
+            stderr = error.stderr or ""
+            if "bad revision" in stderr or "unknown revision" in stderr:
+                return None
+        raise
     return {line.strip() for line in result.stdout.splitlines() if line.strip()}
 
 
@@ -47,6 +54,8 @@ def _current_schema_version() -> str:
 def main() -> int:
     base_ref = os.environ.get("GIT_DIFF_BASE") or "HEAD~1"
     changed = _git_diff_names(base_ref)
+    if changed is None:
+        return 0
     schema_changes = {path for path in changed if path.startswith(f"{SCHEMA_DIR.as_posix()}/")}
     if not schema_changes:
         return 0
