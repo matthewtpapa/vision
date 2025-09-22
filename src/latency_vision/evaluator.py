@@ -12,7 +12,7 @@ import sys
 import time
 from collections.abc import Iterable, Sequence
 from pathlib import Path
-from typing import Any, Literal, Optional, cast
+from typing import Any, Literal, cast
 
 from . import __version__
 from .config import get_config
@@ -63,7 +63,7 @@ def run_eval(
     budget_ms: int = 33,
     duration_min: int = 0,
     unknown_rate_band: tuple[float, float] | None = None,
-    process_start_ns: Optional[int] = None,
+    process_start_ns: int | None = None,
     cli_entry_ns: int | None = None,
 ) -> int:
     """Run the evaluation pipeline over frames in *input_dir*."""
