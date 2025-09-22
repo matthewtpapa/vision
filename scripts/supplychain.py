@@ -62,10 +62,28 @@ def wheels_hashes() -> None:
     """Download wheels for the environment and produce deterministic hashes."""
 
     with tempfile.TemporaryDirectory() as tmp:
-        run([sys.executable, "-m", "pip", "download", "--only-binary", ":all:", "-d", tmp])
+        req_file = Path(tmp) / "requirements.txt"
+        freeze = run([sys.executable, "-m", "pip", "freeze", "--all"]).stdout
+        write(req_file, freeze)
+        run(
+            [
+                sys.executable,
+                "-m",
+                "pip",
+                "download",
+                "--only-binary",
+                ":all:",
+                "-r",
+                str(req_file),
+                "-d",
+                tmp,
+            ]
+        )
         lines: list[str] = []
         directory = Path(tmp)
         for wheel in sorted(directory.iterdir()):
+            if wheel.suffix != ".whl":
+                continue
             digest = hashlib.sha256(wheel.read_bytes()).hexdigest()
             lines.append(f"{wheel.name}  sha256:{digest}")
         write(ART / "wheels_hashes.txt", "\n".join(lines))
