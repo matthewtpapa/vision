@@ -8,7 +8,16 @@ import json
 import os
 from collections import defaultdict
 from collections.abc import Sequence
-from datetime import UTC, datetime
+from datetime import datetime, tzinfo
+from typing import cast
+from zoneinfo import ZoneInfo
+
+try:  # Python 3.11+
+    from datetime import UTC as _STD_UTC
+except ImportError:  # Python <3.11
+    UTC: tzinfo = ZoneInfo("UTC")
+else:
+    UTC = cast(tzinfo, _STD_UTC)
 
 from latency_vision.telemetry.repro import metrics_hash
 
