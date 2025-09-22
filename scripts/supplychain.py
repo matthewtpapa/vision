@@ -15,7 +15,8 @@ from dataclasses import dataclass
 from functools import cache
 from pathlib import Path
 
-ARTIFACTS = Path(__file__).resolve().parent.parent / "artifacts"
+ROOT = Path(__file__).resolve().parent.parent
+ARTIFACTS = ROOT / "artifacts"
 ALLOWED_LICENSES = {
     "MIT",
     "BSD-2-Clause",
@@ -500,6 +501,7 @@ def _collect_wheel_hashes(context: RuntimeContext) -> None:
         temp_path = Path(tmp)
         freeze_output = _run_module("pip", "freeze").stdout
         requirements: dict[str, str] = {}
+        root_key = _canonicalize_name(context.root_distribution)
         for line in freeze_output.splitlines():
             stripped = line.strip()
             if not stripped or stripped.startswith("#") or stripped.startswith("-e "):
@@ -510,6 +512,8 @@ def _collect_wheel_hashes(context: RuntimeContext) -> None:
                 continue
             name, version = stripped.split("==", 1)
             key = _canonicalize_name(name)
+            if key == root_key:
+                continue
             if key in context.canonical_keys:
                 requirements[key] = f"{name}=={version}"
         requirement_lines = [
@@ -524,24 +528,56 @@ def _collect_wheel_hashes(context: RuntimeContext) -> None:
         requirements_file = temp_path / "requirements.txt"
         if requirement_lines:
             requirements_file.write_text("\n".join(requirement_lines) + "\n", encoding="utf-8")
+            try:
+                subprocess.run(  # noqa: PLW1510
+                    [
+                        sys.executable,
+                        "-m",
+                        "pip",
+                        "download",
+                        "--only-binary",
+                        ":all:",
+                        "--no-deps",
+                        "--dest",
+                        str(temp_path),
+                        "--requirement",
+                        str(requirements_file),
+                    ],
+                    check=True,
+                    capture_output=True,
+                    text=True,
+                )
+            except subprocess.CalledProcessError as exc:
+                message = exc.stderr or exc.stdout or "pip download failed"
+                raise SupplyChainError(
+                    "Failed to download wheels for runtime dependencies: "
+                    f"{message.strip()}"
+                ) from exc
+        try:
             subprocess.run(  # noqa: PLW1510
                 [
                     sys.executable,
                     "-m",
-                    "pip",
-                    "download",
-                    "--only-binary",
-                    ":all:",
-                    "--no-deps",
-                    "--dest",
+                    "build",
+                    "--wheel",
+                    "--no-isolation",
+                    "--outdir",
                     str(temp_path),
-                    "--requirement",
-                    str(requirements_file),
                 ],
                 check=True,
                 capture_output=True,
                 text=True,
+                cwd=str(ROOT),
             )
+        except FileNotFoundError as exc:  # pragma: no cover - depends on environment
+            raise SupplyChainError(
+                "build module is not available to produce the project wheel"
+            ) from exc
+        except subprocess.CalledProcessError as exc:
+            message = exc.stderr or exc.stdout or "python -m build failed"
+            raise SupplyChainError(
+                "Failed to build project wheel for hashing: " + message.strip()
+            ) from exc
         wheel_lines: list[str] = []
         for wheel in sorted(temp_path.glob("*.whl")):
             wheel_lines.append(f"{wheel.name}  sha256:{_hash_file(wheel)}")
