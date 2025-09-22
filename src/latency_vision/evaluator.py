@@ -424,6 +424,8 @@ def run_eval(
         "fps_window": pipeline.last_window_fps(),
     }
     metrics["unknown_rate_band"] = [band_min, band_max]
+    metrics["unknown_band_low"] = band_min
+    metrics["unknown_band_high"] = band_max
     budget = float(budget_ms)
     exit_code = 0
     if metrics["p95_ms"] > budget:
