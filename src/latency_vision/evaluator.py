@@ -198,8 +198,10 @@ def run_eval(
         first_result_ns = t_end_ns
 
     start_ref_ns = process_start_ns if process_start_ns is not None else t_ready_ns
-    cold_start_ns = max(0, first_result_ns - start_ref_ns)
-    cold_start_ms = cold_start_ns / 1_000_000.0
+    if start_ref_ns > first_result_ns:
+        cold_start_ms = 0.0
+    else:
+        cold_start_ms = (first_result_ns - start_ref_ns) / 1_000_000.0
     cold_start_ms_rounded = round(cold_start_ms, 3)
     index_bootstrap_ms = pipeline.bootstrap_time_ms() or 0.0
 
