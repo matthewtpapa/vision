@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 # SPDX-License-Identifier: Apache-2.0
 """Promotion sanity gate to prevent junk from landing in KB."""
+
 from __future__ import annotations
 
 import json

@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 # SPDX-License-Identifier: Apache-2.0
 """Supply-chain guardrail: SBOM, licenses, and wheel hashes."""
+
 from __future__ import annotations
 
 import hashlib
