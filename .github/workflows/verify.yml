@@ -80,6 +80,8 @@ jobs:
           pip install -e .
       - name: Run prove pipeline
         run: make prove
+      - name: Promotion sanity
+        run: make kb-promote
       - name: Unknowns guard
         run: make unknowns-guard
       - name: Public API freeze
@@ -104,9 +106,11 @@ jobs:
             artifacts/metrics_hash.txt
             artifacts/metrics_hash_payload.json
             artifacts/purity_report.json
+            artifacts/purity_offenders.txt
             artifacts/sbom.json
             artifacts/licenses.json
             artifacts/wheels_hashes.txt
+            artifacts/promotion_report.json
             gate_summary.txt
 
   smoke:

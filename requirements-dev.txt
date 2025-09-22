@@ -13,3 +13,6 @@ tomli>=2.0.1 ; python_version < "3.11"
 numpy>=1.26,<3
 pillow>=10,<11
 matplotlib>=3.8,<3.10
+pip-licenses>=4.5
+pipdeptree>=2.13
+cyclonedx-bom>=4.0 ; python_version >= "3.10"

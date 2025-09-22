@@ -4,6 +4,8 @@ set -euo pipefail
 REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "${REPO_ROOT}"
 
+mkdir -p artifacts
+
 if ! command -v strace >/dev/null 2>&1; then
     if [ "$(uname -s)" != "Linux" ]; then
         echo "purity guard requires strace or a POSIX socket hook; aborting." >&2
@@ -13,3 +15,12 @@ fi
 
 PYTHONPATH="${REPO_ROOT}/src${PYTHONPATH:+:${PYTHONPATH}}" \
     python scripts/run_sandboxed.py --report artifacts/purity_report.json -- make bench
+
+jq -r '.offending[]? | "\(.event)  \(.detail)"' artifacts/purity_report.json > artifacts/purity_offenders.txt || true
+
+jq -e '.network_syscalls == true' artifacts/purity_report.json >/dev/null && {
+    echo "network syscalls detected; see artifacts/purity_offenders.txt"
+    exit 1
+}
+
+echo "purity ok"
