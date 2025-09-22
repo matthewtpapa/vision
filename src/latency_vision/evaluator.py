@@ -190,10 +190,11 @@ def run_eval(
         results = pipeline.process(frame)
         emb = pipeline.last_first_crop_embedding()
         frame_embeddings.append(list(emb) if emb is not None else None)
-        frame_ts_ns.append(time.monotonic_ns())
+        frame_time_ns = time.monotonic_ns()
+        frame_ts_ns.append(frame_time_ns)
         processed += 1
         if results and first_result_ns is None:
-            first_result_ns = time.monotonic_ns()
+            first_result_ns = frame_time_ns
 
     end_ns = time.monotonic_ns()
     if first_result_ns is None:
