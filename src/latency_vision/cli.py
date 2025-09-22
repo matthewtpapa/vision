@@ -161,7 +161,7 @@ def main(argv: Sequence[str] | None = None) -> int:
         ret = evaluator.run_eval(
             args.input,
             args.output,
-            args.warmup,
+            warmup=args.warmup,
             budget_ms=args.budget_ms,
             duration_min=args.duration_min,
             unknown_rate_band=band_arg,

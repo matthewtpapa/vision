@@ -58,8 +58,8 @@ def _write_stage_csv(
 def run_eval(
     input_dir: str,
     output_dir: str,
-    warmup: int,
     *,
+    warmup: int = 0,
     budget_ms: int = 33,
     duration_min: int = 0,
     unknown_rate_band: tuple[float, float] | None = None,
