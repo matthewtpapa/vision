@@ -166,9 +166,7 @@ def _parse_dependency_tree(tree: object) -> tuple[dict[str, dict[str, str]], dic
             if not isinstance(child_package, dict):
                 continue
             child_raw_name = str(
-                child_package.get("package_name")
-                or child_package.get("key")
-                or ""
+                child_package.get("package_name") or child_package.get("key") or ""
             ).strip()
             child_key = _canonicalize_name(child_package.get("key") or child_raw_name)
             if not child_key:
@@ -291,11 +289,15 @@ def _filter_cyclonedx(raw_payload: str, context: RuntimeContext) -> dict[str, ob
             if ref_key not in context.canonical_keys:
                 continue
             depends_on = dependency.get("dependsOn")
-            filtered_depends = [
-                dep
-                for dep in depends_on
-                if isinstance(dep, str) and _canonicalize_name(dep) in context.canonical_keys
-            ] if isinstance(depends_on, list) else []
+            filtered_depends = (
+                [
+                    dep
+                    for dep in depends_on
+                    if isinstance(dep, str) and _canonicalize_name(dep) in context.canonical_keys
+                ]
+                if isinstance(depends_on, list)
+                else []
+            )
             filtered_dependencies.append({"ref": ref, "dependsOn": filtered_depends})
         bom["dependencies"] = filtered_dependencies
     else:
