@@ -125,9 +125,28 @@ def _run_with_strace(command: List[str], log_path: Path) -> tuple[int, list[dict
             "--fork",
             "--",
         ] + strace_cmd
+        result = subprocess.run(
+            wrapped,
+            check=False,
+            capture_output=True,
+            text=True,
+        )
+        if result.stdout:
+            sys.stdout.write(result.stdout)
+        if result.stderr:
+            sys.stderr.write(result.stderr)
+        if result.returncode != 0 and (
+            "Operation not permitted" in (result.stderr or "")
+            or "permission denied" in (result.stderr or "").lower()
+        ):
+            sandbox_mode = "strace-only"
+            if log_path.exists():
+                log_path.unlink()
+            result = subprocess.run(strace_cmd, check=False)
+        elif result.returncode != 0:
+            return result.returncode, [], sandbox_mode
     else:
-        wrapped = strace_cmd
-    result = subprocess.run(wrapped, check=False)
+        result = subprocess.run(strace_cmd, check=False)
     events: list[dict[str, str]] = []
     if log_path.exists():
         for line in log_path.read_text(encoding="utf-8").splitlines():
