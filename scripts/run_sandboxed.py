@@ -14,8 +14,21 @@ from typing import Iterable, List
 
 from latency_vision.schemas import SCHEMA_VERSION
 
-FORBIDDEN_EVENTS = {"connect", "socket_connect", "getaddrinfo"}
-STRACE_FORBIDDEN_KEYWORDS = ("connect(", "getaddrinfo")
+FORBIDDEN_EVENTS = {
+    "connect",
+    "socket_connect",
+    "getaddrinfo",
+    "sendto",
+    "recvfrom",
+    "socket",
+}
+STRACE_FORBIDDEN_KEYWORDS = (
+    "connect(",
+    "getaddrinfo",
+    "sendto(",
+    "recvfrom(",
+    "socket(",
+)
 
 
 
@@ -35,6 +48,7 @@ if _LOG:
             handle.write("\\n")
 
     _orig_getaddrinfo = socket.getaddrinfo
+
     def _patched_getaddrinfo(*args, **kwargs):
         host = args[0] if args else kwargs.get("host")
         _record("getaddrinfo", f"host={host}")
@@ -42,13 +56,37 @@ if _LOG:
 
     socket.getaddrinfo = _patched_getaddrinfo
 
-    _orig_connect = socket.socket.connect
+    _orig_socket_class = socket.socket
 
-    def _patched_connect(self, address):
-        _record("socket_connect", f"address={address}")
-        return _orig_connect(self, address)
+    class _PatchedSocket(_orig_socket_class):
+        def __init__(self, *args, **kwargs):
+            family = args[0] if args else kwargs.get("family")
+            type_ = args[1] if len(args) > 1 else kwargs.get("type")
+            proto = args[2] if len(args) > 2 else kwargs.get("proto")
+            detail = f"family={family},type={type_},proto={proto}"
+            _record("socket", detail)
+            super().__init__(*args, **kwargs)
 
-    socket.socket.connect = _patched_connect
+        def connect(self, address):
+            _record("socket_connect", f"address={address}")
+            return _orig_socket_class.connect(self, address)
+
+        def sendto(self, data, *args, **kwargs):
+            address = None
+            if args:
+                address = args[0]
+            elif "address" in kwargs:
+                address = kwargs["address"]
+            _record("sendto", f"address={address}")
+            return _orig_socket_class.sendto(self, data, *args, **kwargs)
+
+        def recvfrom(self, *args, **kwargs):
+            bufsize = args[0] if args else kwargs.get("bufsize")
+            _record("recvfrom", f"bufsize={bufsize}")
+            return _orig_socket_class.recvfrom(self, *args, **kwargs)
+
+    socket.socket = _PatchedSocket
+    socket.SocketType = _PatchedSocket
 """,
         encoding="utf-8",
     )
@@ -115,11 +153,14 @@ def run_sandboxed(command: List[str], report_path: Path) -> int:
         if event.get("event") == "strace"
     )
 
+    network_syscalls = bool(offenders)
+
     report = {
         "schema_version": SCHEMA_VERSION,
         "sandbox_mode": mode,
         "command": command,
         "returncode": returncode,
+        "network_syscalls": network_syscalls,
         "offending": offenders,
     }
     report_path.parent.mkdir(parents=True, exist_ok=True)

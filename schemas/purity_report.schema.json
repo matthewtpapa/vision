@@ -4,7 +4,14 @@
   "title": "Latency Vision Purity Report",
   "type": "object",
   "additionalProperties": false,
-  "required": ["schema_version", "sandbox_mode", "command", "returncode", "offending"],
+  "required": [
+    "schema_version",
+    "sandbox_mode",
+    "command",
+    "returncode",
+    "network_syscalls",
+    "offending"
+  ],
   "properties": {
     "schema_version": {"type": "string"},
     "sandbox_mode": {
@@ -17,6 +24,7 @@
       "minItems": 1
     },
     "returncode": {"type": "integer"},
+    "network_syscalls": {"type": "boolean"},
     "offending": {
       "type": "array",
       "items": {
