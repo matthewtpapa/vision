@@ -171,6 +171,13 @@ def run_eval(
     frame_ts_ns: list[int] = []
 
     t_ready_ns = time.monotonic_ns()
+    # Cold start measurements should anchor from whichever timestamp is later
+    # between the evaluator being ready and the optional external process
+    # start provided by the caller.
+    if process_start_ns is not None:
+        cold_start_origin_ns = max(t_ready_ns, process_start_ns)
+    else:
+        cold_start_origin_ns = t_ready_ns
     deadline = None
     if duration_min > 0:
         deadline = time.monotonic() + duration_min * 60.0
@@ -197,11 +204,10 @@ def run_eval(
     if first_result_ns is None:
         first_result_ns = t_end_ns
 
-    start_ref_ns = process_start_ns if process_start_ns is not None else t_ready_ns
-    if start_ref_ns > first_result_ns:
+    if cold_start_origin_ns > first_result_ns:
         cold_start_ms = 0.0
     else:
-        cold_start_ms = (first_result_ns - start_ref_ns) / 1_000_000.0
+        cold_start_ms = (first_result_ns - cold_start_origin_ns) / 1_000_000.0
     cold_start_ms_rounded = round(cold_start_ms, 3)
     index_bootstrap_ms = pipeline.bootstrap_time_ms() or 0.0
 
