@@ -3,6 +3,7 @@
     "make",
     "bench"
   ],
+  "network_syscalls": false,
   "offending": [],
   "returncode": 0,
   "sandbox_mode": "strace-only",

@@ -16,7 +16,9 @@ def main() -> None:
     offline = _load(Path("bench/oracle_stats.json"))
     e2e = _load(Path("bench/oracle_e2e.json"))
     purity = _load(Path("artifacts/purity_report.json"))
-    metrics_hash = Path("artifacts/metrics_hash.txt").read_text(encoding="utf-8").strip()
+    metrics_hash = (
+        Path("artifacts/metrics_hash.txt").read_text(encoding="utf-8").split()
+    )[-1]
 
     summary = (
         "recall={recall:.4f} lookup_p95_ms={p95:.4f} p@1={p1:.4f} e2e_p95_ms={ep95:.4f} "

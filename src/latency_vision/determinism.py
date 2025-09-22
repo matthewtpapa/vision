@@ -53,6 +53,10 @@ def cap_threads(max_threads: int = 1) -> None:
     # Opt-out of dynamic thread pools when available.
     os.environ.setdefault("OMP_PROC_BIND", "TRUE")
     os.environ.setdefault("OMP_WAIT_POLICY", "PASSIVE")
+    # Silence verbose BLAS output and select a deterministic MKL mode when
+    # available.
+    os.environ.setdefault("OPENBLAS_VERBOSE", "0")
+    os.environ.setdefault("MKL_CBWR", "COMPATIBLE")
 
 
 def configure_runtime(config: DeterminismConfig | None = None) -> None:

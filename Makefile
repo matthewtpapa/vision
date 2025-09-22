@@ -27,6 +27,7 @@ eval-pack:
 
 metrics-hash:
 	set -euo pipefail
+	PYTHONPATH="src${PYTHONPATH:+:${PYTHONPATH}}" python scripts/check_metrics_schema.py
 	PYTHONPATH="src${PYTHONPATH:+:${PYTHONPATH}}" python scripts/write_metrics_hash.py
 
 

@@ -100,10 +100,24 @@ def _run_with_strace(command: List[str], log_path: Path) -> tuple[int, list[dict
         # Fall back to Python sitecustomize hooking.
         with tempfile.TemporaryDirectory() as temp_dir:
             temp_path = Path(temp_dir)
-            sitecustomize = temp_path / "sitecustomize.py"
+            site_dir = (
+                temp_path
+                / "lib"
+                / f"python{sys.version_info.major}.{sys.version_info.minor}"
+                / "site-packages"
+            )
+            site_dir.mkdir(parents=True, exist_ok=True)
+            sitecustomize = site_dir / "sitecustomize.py"
             _write_sitecustomize(sitecustomize)
             env = os.environ.copy()
-            env["PYTHONPATH"] = str(temp_path) + os.pathsep + env.get("PYTHONPATH", "")
+            existing_pythonpath = env.get("PYTHONPATH", "")
+            if existing_pythonpath:
+                env["PYTHONPATH"] = os.pathsep.join(
+                    [str(temp_path), existing_pythonpath]
+                )
+            else:
+                env["PYTHONPATH"] = str(temp_path)
+            env["PYTHONUSERBASE"] = str(temp_path)
             env["PURITY_LOG_PATH"] = str(log_path)
             result = subprocess.run(command, env=env, check=False)
         events = []

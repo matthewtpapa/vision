@@ -120,8 +120,13 @@ def _validate_e2e(data: Mapping[str, Any]) -> None:
 def main() -> None:
     offline = _load_json(ROOT / "bench/oracle_stats.json")
     e2e = _load_json(ROOT / "bench/oracle_e2e.json")
+    purity = _load_json(ROOT / "artifacts/purity_report.json")
     _validate_offline(offline)
     _validate_e2e(e2e)
+    _require_keys(
+        purity,
+        ["sandbox_mode", "network_syscalls", "offending", "returncode", "command"],
+    )
 
     payload = {
         "schema_version": SCHEMA_VERSION,
@@ -142,6 +147,7 @@ def main() -> None:
         "metrics": {
             "offline_oracle": _quantize_structure(offline),
             "oracle_e2e": _quantize_structure(e2e),
+            "purity": purity,
         },
     }
 
@@ -152,7 +158,9 @@ def main() -> None:
     (ARTIFACTS / "metrics_hash_payload.json").write_text(
         json.dumps(payload, indent=2, sort_keys=True) + "\n", encoding="utf-8"
     )
-    (ARTIFACTS / "metrics_hash.txt").write_text(digest + "\n", encoding="utf-8")
+    (ARTIFACTS / "metrics_hash.txt").write_text(
+        f"metrics_hash: {digest}\n", encoding="utf-8"
+    )
 
 if __name__ == "__main__":
     main()

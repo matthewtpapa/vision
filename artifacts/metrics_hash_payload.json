@@ -47,6 +47,17 @@
       "known_queries": 3,
       "p_at_1": 1.0,
       "schema_version": "1.0.0"
+    },
+    "purity": {
+      "command": [
+        "make",
+        "bench"
+      ],
+      "network_syscalls": false,
+      "offending": [],
+      "returncode": 0,
+      "sandbox_mode": "strace-only",
+      "schema_version": "1.0.0"
     }
   },
   "requirements": {
