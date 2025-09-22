@@ -69,6 +69,18 @@ def configure_runtime(config: DeterminismConfig | None = None) -> None:
     cap_threads(config.threads)
 
 
+def set_global_determinism(seed: int = DEFAULT_SEED, threads: int = 1) -> None:
+    """Seed RNGs and cap BLAS/OpenMP thread pools for reproducible runs.
+
+    The helper caps MKL/BLAS/OpenMP thread pools (``MKL_NUM_THREADS``,
+    ``OPENBLAS_NUM_THREADS``, ``OMP_NUM_THREADS``, etc.) to the requested value
+    and seeds Python/NumPy RNGs. Some BLAS libraries may still exhibit
+    nondeterministic kernels despite the caps.
+    """
+
+    configure_runtime(DeterminismConfig(seed=seed, threads=threads))
+
+
 def quantize_float(value: float, places: int = 4) -> float:
     """Quantize floating point values for deterministic serialization."""
 
@@ -120,6 +132,7 @@ __all__ = [
     "blas_fingerprint",
     "cap_threads",
     "configure_runtime",
+    "set_global_determinism",
     "quantize_float",
     "seed_everything",
 ]

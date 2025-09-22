@@ -13,17 +13,27 @@
     "offending"
   ],
   "properties": {
-    "schema_version": {"type": "string"},
+    "schema_version": {
+      "type": "string",
+      "pattern": "^\\d+\\.\\d+\\.\\d+(?:[-+][A-Za-z0-9.]+)?$"
+    },
     "sandbox_mode": {
       "type": "string",
       "enum": ["unshare", "strace-only"]
     },
     "command": {
       "type": "array",
-      "items": {"type": "string"},
+      "items": {
+        "type": "string",
+        "pattern": "^.+$"
+      },
       "minItems": 1
     },
-    "returncode": {"type": "integer"},
+    "returncode": {
+      "type": "integer",
+      "minimum": -2147483648,
+      "maximum": 2147483647
+    },
     "network_syscalls": {"type": "boolean"},
     "offending": {
       "type": "array",
@@ -32,8 +42,14 @@
         "additionalProperties": false,
         "required": ["event", "detail"],
         "properties": {
-          "event": {"type": "string"},
-          "detail": {"type": "string"}
+          "event": {
+            "type": "string",
+            "pattern": "^.+$"
+          },
+          "detail": {
+            "type": "string",
+            "pattern": "^.+$"
+          }
         }
       }
     }
