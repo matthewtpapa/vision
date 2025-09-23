@@ -556,11 +556,7 @@ def _collect_wheel_hashes(context: RuntimeContext) -> None:
         build_env = os.environ.copy()
         build_env.setdefault("PYTHONWARNINGS", "default")
         features_raw = build_env.get("SETUPTOOLS_ENABLE_FEATURES", "")
-        features = {
-            token.strip()
-            for token in features_raw.split(",")
-            if token.strip()
-        }
+        features = {token.strip() for token in features_raw.split(",") if token.strip()}
         features.add("project-config")
         build_env["SETUPTOOLS_ENABLE_FEATURES"] = ",".join(sorted(features))
 
@@ -615,8 +611,7 @@ def _collect_wheel_hashes(context: RuntimeContext) -> None:
                         or "python -m build failed"
                     )
                     raise SupplyChainError(
-                        "Failed to build project wheel for hashing: "
-                        + fallback_message.strip()
+                        "Failed to build project wheel for hashing: " + fallback_message.strip()
                     ) from fallback_exc
             else:
                 raise SupplyChainError(
