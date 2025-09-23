@@ -81,6 +81,10 @@ make prove
 make kb-promote
 ```
 
+- Network forbidden in benches/hot loop; enforced by purity guard.
+- Network allowed only in supply-chain (SBOM/wheel download) stage.
+- Supply-chain is a hard gate on license allowlist; artifacts upload even on red.
+
 Artifacts are written to `artifacts/` (metrics hashes, SBOM, license report, wheel
 hashes, purity outputs, promotion report), and log files land in `logs/`.
 
