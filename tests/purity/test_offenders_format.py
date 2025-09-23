@@ -6,7 +6,5 @@ def test_offenders_are_objects():
     }
     assert isinstance(rep["offending"], list)
     assert all(
-        isinstance(item, dict) and "event" in item and "detail" in item
-        for item in rep["offending"]
+        isinstance(item, dict) and "event" in item and "detail" in item for item in rep["offending"]
     )
-
