@@ -72,6 +72,18 @@ python scripts/plot_latency.py --input bench/out/stage_times.csv
 # Writes bench/out/latency.png
 ```
 
+## Gold Path
+
+Run the hardened CI pipeline locally to reproduce the release gate output:
+
+```bash
+make prove
+make kb-promote
+```
+
+Artifacts are written to `artifacts/` (metrics hashes, SBOM, license report, wheel
+hashes, purity outputs, promotion report), and log files land in `logs/`.
+
 ## Roadmap
 
 - M2-01 LabelBank core — deterministic protocol (done)
