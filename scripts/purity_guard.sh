@@ -23,8 +23,10 @@ offenders_path="artifacts/purity_offenders.txt"
 if [ -f artifacts/purity_report.json ]; then
     # Validate offender shape (array of objects with event/detail)
     jq -e '
-      has("offending") and (.offending | type=="array") and
-      all(.[]; (type=="object") and has("event") and has("detail"))
+      has("offending") and (.offending | type=="array") and (
+        (.offending | length) == 0 or
+        (.offending | map((type=="object") and has("event") and has("detail")) | min)
+      )
     ' artifacts/purity_report.json > /dev/null || {
       echo "Invalid offenders format in purity_report.json" >&2
       exit 1
