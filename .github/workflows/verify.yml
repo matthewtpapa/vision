@@ -26,7 +26,6 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Purge stale site-packages (latency_vision*)
-        shell: bash
         run: |
           python - <<'PY'
           import pathlib, shutil, site, sys
@@ -75,7 +74,6 @@ jobs:
         with:
           fetch-depth: 0
       - name: Purge stale site-packages (latency_vision*)
-        shell: bash
         run: |
           python - <<'PY'
           import pathlib, shutil, site, sys
@@ -110,15 +108,12 @@ jobs:
         run: make unknowns-guard
       - name: Public API freeze
         run: make api-freeze
-      - name: Compute schema diff base
+      - name: Compute GIT_DIFF_BASE (PRs)
         if: ${{ github.event_name == 'pull_request' }}
-        shell: bash
         run: |
-          set -euo pipefail
           BASE_SHA="${{ github.event.pull_request.base.sha }}"
           HEAD_SHA="${{ github.sha }}"
-          GIT_DIFF_BASE="$(git merge-base "$BASE_SHA" "$HEAD_SHA")"
-          echo "GIT_DIFF_BASE=$GIT_DIFF_BASE" >> "$GITHUB_ENV"
+          echo "GIT_DIFF_BASE=$(git merge-base "$BASE_SHA" "$HEAD_SHA")" >> $GITHUB_ENV
       - name: Schema bump guard
         run: make schema-bump
       - name: Gate summary → Job summary
@@ -144,5 +139,6 @@ jobs:
             artifacts/licenses.json
             artifacts/wheels_hashes.txt
             artifacts/promotion_report.json
+
             gate_summary.txt
 
