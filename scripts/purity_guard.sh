@@ -20,11 +20,18 @@ status=$?
 set -e
 
 offenders_path="artifacts/purity_offenders.txt"
+: >"${offenders_path}"
 if [ -f artifacts/purity_report.json ]; then
-    jq -r '.offending[]? | "\(.event)  \(.detail)"' artifacts/purity_report.json \
-        >"${offenders_path}" || true
-else
-    : >"${offenders_path}"
+    jq -e '
+      .offending | (type=="array") and
+      all(.[]; (type=="object") and has("event") and has("detail"))
+    ' artifacts/purity_report.json > /dev/null || {
+      echo "Invalid offenders format"; exit 1; }
+
+    jq -e '.offending | length == 0' artifacts/purity_report.json > /dev/null || {
+      jq -r '.offending[] | "\(.event): \(.detail)"' artifacts/purity_report.json \
+        > "${offenders_path}"
+      echo "Network offenders detected"; exit 1; }
 fi
 
 if [ "$status" -ne 0 ]; then
