@@ -1,10 +1,11 @@
 def test_offenders_are_objects():
-    rep = {
+    report = {
         "sandbox_mode": "strace-only",
         "network_syscalls": True,
-        "offending": [{"event": "strace", "detail": "socket()=3"}],
+        "offending": [{"event": "strace", "detail": "socket(...)=3"}],
     }
-    assert isinstance(rep["offending"], list)
+    assert isinstance(report["offending"], list)
     assert all(
-        isinstance(item, dict) and "event" in item and "detail" in item for item in rep["offending"]
+        isinstance(offender, dict) and {"event", "detail"} <= set(offender)
+        for offender in report["offending"]
     )
