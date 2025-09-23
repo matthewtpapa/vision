@@ -7,6 +7,7 @@ import hashlib
 import importlib
 import importlib.metadata as md
 import json
+import os
 import re
 import subprocess
 import sys
@@ -552,21 +553,35 @@ def _collect_wheel_hashes(context: RuntimeContext) -> None:
                 raise SupplyChainError(
                     f"Failed to download wheels for runtime dependencies: {message.strip()}"
                 ) from exc
+        build_env = os.environ.copy()
+        build_env.setdefault("PYTHONWARNINGS", "default")
+        features_raw = build_env.get("SETUPTOOLS_ENABLE_FEATURES", "")
+        features = {
+            token.strip()
+            for token in features_raw.split(",")
+            if token.strip()
+        }
+        features.add("project-config")
+        build_env["SETUPTOOLS_ENABLE_FEATURES"] = ",".join(sorted(features))
+
+        build_command = [
+            sys.executable,
+            "-m",
+            "build",
+            "--wheel",
+            "--no-isolation",
+            "--outdir",
+            str(temp_path),
+        ]
+
         try:
             subprocess.run(  # noqa: PLW1510
-                [
-                    sys.executable,
-                    "-m",
-                    "build",
-                    "--wheel",
-                    "--no-isolation",
-                    "--outdir",
-                    str(temp_path),
-                ],
+                build_command,
                 check=True,
                 capture_output=True,
                 text=True,
                 cwd=str(ROOT),
+                env=build_env,
             )
         except FileNotFoundError as exc:  # pragma: no cover - depends on environment
             raise SupplyChainError(
@@ -574,9 +589,39 @@ def _collect_wheel_hashes(context: RuntimeContext) -> None:
             ) from exc
         except subprocess.CalledProcessError as exc:
             message = exc.stderr or exc.stdout or "python -m build failed"
-            raise SupplyChainError(
-                "Failed to build project wheel for hashing: " + message.strip()
-            ) from exc
+            if "[tool.setuptools]" in message:
+                fallback_command = [
+                    sys.executable,
+                    "-m",
+                    "build",
+                    "--wheel",
+                    "--outdir",
+                    str(temp_path),
+                ]
+                try:
+                    subprocess.run(  # noqa: PLW1510
+                        fallback_command,
+                        check=True,
+                        capture_output=True,
+                        text=True,
+                        cwd=str(ROOT),
+                        env=build_env,
+                    )
+                except subprocess.CalledProcessError as fallback_exc:
+                    fallback_message = (
+                        fallback_exc.stderr
+                        or fallback_exc.stdout
+                        or message
+                        or "python -m build failed"
+                    )
+                    raise SupplyChainError(
+                        "Failed to build project wheel for hashing: "
+                        + fallback_message.strip()
+                    ) from fallback_exc
+            else:
+                raise SupplyChainError(
+                    "Failed to build project wheel for hashing: " + message.strip()
+                ) from exc
         wheel_lines: list[str] = []
         for wheel in sorted(temp_path.glob("*.whl")):
             wheel_lines.append(f"{wheel.name}  sha256:{_hash_file(wheel)}")
