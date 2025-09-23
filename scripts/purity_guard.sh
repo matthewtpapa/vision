@@ -19,15 +19,20 @@ PYTHONPATH="${REPO_ROOT}/src${PYTHONPATH:+:${PYTHONPATH}}" \
 status=$?
 set -e
 
-jq -r '.offending[]? | "\(.event)  \(.detail)"' artifacts/purity_report.json \
-    > artifacts/purity_offenders.txt || true
+offenders_path="artifacts/purity_offenders.txt"
+if [ -f artifacts/purity_report.json ]; then
+    jq -r '.offending[]? | "\(.event)  \(.detail)"' artifacts/purity_report.json \
+        >"${offenders_path}" || true
+else
+    : >"${offenders_path}"
+fi
 
 if [ "$status" -ne 0 ]; then
     exit "$status"
 fi
 
 if jq -e '.network_syscalls == true' artifacts/purity_report.json >/dev/null 2>&1; then
-    echo "network syscalls detected; see artifacts/purity_offenders.txt" >&2
+    echo "network syscalls detected; see ${offenders_path}" >&2
     exit 1
 fi
 

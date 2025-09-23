@@ -15,6 +15,12 @@ import tempfile
 from dataclasses import dataclass
 from functools import cache
 from pathlib import Path
+from typing import Any
+
+try:  # Python >=3.11
+    import tomllib  # type: ignore[attr-defined]
+except ModuleNotFoundError:  # pragma: no cover - Python 3.10 fallback
+    import tomli as tomllib  # type: ignore[import-not-found]
 
 ROOT = Path(__file__).resolve().parent.parent
 ARTIFACTS = ROOT / "artifacts"
@@ -51,6 +57,20 @@ LICENSE_ALIASES = {
     "HISTORICAL PERMISSION NOTICE AND DISCLAIMER": "HPND",
 }
 UNKNOWN_LICENSE = "UNKNOWN"
+
+
+def _load_project_metadata() -> dict[str, Any]:
+    path = ROOT / "pyproject.toml"
+    try:
+        with path.open("rb") as handle:
+            payload = tomllib.load(handle)
+    except FileNotFoundError:
+        return {}
+    project = payload.get("project")
+    return project if isinstance(project, dict) else {}
+
+
+PROJECT_METADATA = _load_project_metadata()
 
 
 class SupplyChainError(RuntimeError):
@@ -134,6 +154,12 @@ def _discover_root_distribution() -> str:
             if meta_name:
                 return meta_name
 
+    metadata_name = PROJECT_METADATA.get("name")
+    if isinstance(metadata_name, str) and metadata_name:
+        raise SupplyChainError(
+            "latency_vision is not installed; run `pip install -e .` "
+            "before executing the supply-chain guard."
+        )
     raise SupplyChainError("Unable to determine runtime distribution for latency_vision")
 
 
@@ -245,7 +271,10 @@ def _build_runtime_context() -> RuntimeContext:
     try:
         result = _run_module("pipdeptree", "--packages", root_distribution, "--json-tree")
     except subprocess.CalledProcessError as exc:
-        raise SupplyChainError("pipdeptree failed to resolve runtime dependencies") from exc
+        raise SupplyChainError(
+            "pipdeptree failed to resolve runtime dependencies; ensure "
+            "latency_vision is installed in the active environment."
+        ) from exc
 
     try:
         tree = json.loads(result.stdout)
@@ -279,6 +308,10 @@ def _build_runtime_context() -> RuntimeContext:
             version = getattr(distribution, "version", "") or distribution.metadata.get("Version")
             if version:
                 entry["version"] = version
+        if not entry.get("version"):
+            meta_version = PROJECT_METADATA.get("version")
+            if isinstance(meta_version, str) and meta_version:
+                entry["version"] = meta_version
         entry.setdefault("version", "")
     dependencies.setdefault(root_key, set())
 
@@ -458,7 +491,13 @@ def _licenses_from_classifiers(name: str) -> set[str]:
 
 
 def _collect_licenses(context: RuntimeContext) -> None:
-    result = _run_module("piplicenses", "--format=json", "--packages", *context.package_names)
+    try:
+        result = _run_module("piplicenses", "--format=json", "--packages", *context.package_names)
+    except subprocess.CalledProcessError as exc:
+        raise SupplyChainError(
+            "pip-licenses is required to audit licenses; install it via "
+            "requirements-dev.txt before running the supply-chain guard."
+        ) from exc
     data = json.loads(result.stdout)
     if not isinstance(data, list):  # pragma: no cover - sanity guard
         raise SupplyChainError("pip-licenses returned unexpected payload")
