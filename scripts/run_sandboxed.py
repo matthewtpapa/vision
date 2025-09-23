@@ -179,15 +179,20 @@ def run_sandboxed(command: list[str], report_path: Path) -> int:
         log_path.unlink()
     returncode, events, mode = _run_with_strace(command, log_path)
 
-    offenders = [event for event in events if event.get("event") in FORBIDDEN_EVENTS]
-    offenders.extend(
-        {
-            "event": "strace",
-            "detail": event["detail"],
-        }
-        for event in events
-        if event.get("event") == "strace"
-    )
+    offenders: list[dict[str, str]] = []
+    for event in events:
+        if not isinstance(event, dict):
+            continue
+        event_name = event.get("event")
+        if event_name not in FORBIDDEN_EVENTS and event_name != "strace":
+            continue
+        detail = event.get("detail")
+        offenders.append(
+            {
+                "event": str(event_name),
+                "detail": "" if detail is None else str(detail),
+            }
+        )
 
     network_syscalls = bool(offenders)
 
