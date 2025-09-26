@@ -20,6 +20,10 @@ def main() -> None:
     purity = _load(Path("artifacts/purity_report.json"))
     metrics_hash = (Path("artifacts/metrics_hash.txt").read_text(encoding="utf-8").split())[-1]
 
+    offenders = purity.get("offenders")
+    if offenders is None:
+        offenders = purity.get("offending", [])
+
     summary = (
         "recall={recall:.4f} lookup_p95_ms={p95:.4f} p@1={p1:.4f} e2e_p95_ms={ep95:.4f} "
         "purity={purity} hash={digest}"
@@ -28,7 +32,7 @@ def main() -> None:
         p95=float(offline.get("p95_ms", 0.0)),
         p1=float(e2e.get("p_at_1") or e2e.get("p@1", 0.0)),
         ep95=float(e2e.get("e2e_p95_ms", 0.0)),
-        purity="pass" if not purity.get("offending") else "fail",
+        purity="pass" if not offenders else "fail",
         digest=metrics_hash,
     )
 

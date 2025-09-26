@@ -3,9 +3,12 @@ def test_offenders_are_objects():
         "sandbox_mode": "strace-only",
         "network_syscalls": True,
         "offending": [{"event": "strace", "detail": "socket(...)=3"}],
+        "offenders": [{"event": "strace", "detail": "socket(...)=3"}],
     }
     assert isinstance(report["offending"], list)
+    assert isinstance(report["offenders"], list)
     assert all(
         isinstance(offender, dict) and {"event", "detail"} <= set(offender)
         for offender in report["offending"]
     )
+    assert report["offending"] == report["offenders"]

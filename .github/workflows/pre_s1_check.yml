@@ -44,8 +44,18 @@ PY
         run: |
           test -s artifacts/purity_report.json
           python - <<'PY'
-import json; d=json.load(open('artifacts/purity_report.json'))
-assert d['network_syscalls']==0 and d['offenders']==[] and d['sandbox_mode'] in ('none','unshare','strace-only')
+import json
+
+with open('artifacts/purity_report.json', 'r', encoding='utf-8') as handle:
+    d = json.load(handle)
+
+offenders = d.get('offenders')
+if offenders is None:
+    offenders = d.get('offending', [])
+
+assert d['network_syscalls'] == 0
+assert offenders == []
+assert d['sandbox_mode'] in ('none', 'unshare', 'strace-only')
 print('purity_ok')
 PY
 

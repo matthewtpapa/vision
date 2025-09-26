@@ -25,10 +25,10 @@
       "sha256": "baab1785d5453fc2ddfdd1985c1d30b686c9aa1a2c7c9373ec1ad625b532f114"
     },
     {
-      "bytes": 1863,
+      "bytes": 2016,
       "mode": 420,
       "path": ".github/workflows/pre_s1_check.yml",
-      "sha256": "b6a101ec22321cf66a8298300c436ca4ef36b6ccb5ad24d2eca0560633370973"
+      "sha256": "d1761990ba1b714ca6f5fcf3769c140989cf8036266c74177264f8047ed10fe7"
     },
     {
       "bytes": 4391,
@@ -292,7 +292,7 @@
       "bytes": 91,
       "mode": 420,
       "path": "roadmap.lock.json",
-      "sha256": "984af1bd9d4fa62dc72efc7abc7da53a21b0c58ccf88b44600697d0ebbbba422"
+      "sha256": "2963375c5ba6e372c06498ce7800fd7db48affbdb105c434945b687d4f8ca669"
     },
     {
       "bytes": 160,
@@ -331,10 +331,10 @@
       "sha256": "b63aef63f8b91cb37eae4a9b6fa709b859244002080f88a08899e7ae269a597e"
     },
     {
-      "bytes": 1300,
+      "bytes": 1702,
       "mode": 420,
       "path": "schemas/purity_report.schema.json",
-      "sha256": "cf7352bf210af748ae4af9d769242115d8431bda90c68efb99688f453c647517"
+      "sha256": "08f3c972e2d85e4bf51baa82aa859a7d1c7544ef9f114f285aa95f51820b7f9a"
     },
     {
       "bytes": 1405,
@@ -475,10 +475,10 @@
       "sha256": "71469bc6bd6f64a857bec0cac0bd54246c579179fa4f2765d3f675755a480144"
     },
     {
-      "bytes": 1818,
+      "bytes": 1938,
       "mode": 493,
       "path": "scripts/purity_guard.sh",
-      "sha256": "3bec5410f0c0571118569a13dddaa1cd0d901217c6e6f31f7dc9a7bd98b9a2b4"
+      "sha256": "678c70c2c041980dfee0876bfbec611946e65411cbe409e343ae09ce4b72600f"
     },
     {
       "bytes": 1243,
@@ -487,10 +487,10 @@
       "sha256": "21a803a4d59bc588fcb20b4b6065e1e47747731615858187c91098d571f5ea27"
     },
     {
-      "bytes": 7682,
+      "bytes": 7714,
       "mode": 493,
       "path": "scripts/run_sandboxed.py",
-      "sha256": "28ebd49576aadbeef030556a7f221e27492814d9be8aa8d7d6eeb0fc70c4696c"
+      "sha256": "e63d7f9938a08297d478ac4a22bcf9ee115104376f28893b257d318da37293dd"
     },
     {
       "bytes": 1114,
@@ -505,10 +505,10 @@
       "sha256": "f0a79f8acae89c4aad3f719e400236c54a23b22a9065d2044ee68d72afcffc05"
     },
     {
-      "bytes": 1354,
+      "bytes": 1455,
       "mode": 493,
       "path": "scripts/step_summary.py",
-      "sha256": "161c2a21aaa90262a8a5db69ed013c5a71d19cd7f6f180cd39b34a255ec4fe6d"
+      "sha256": "852669b1dd27b6ec39d97e82cf814d07dd4c2c8c9906c61a84fd6d2974707477"
     },
     {
       "bytes": 23534,
@@ -967,10 +967,10 @@
       "sha256": "d285ed692e2330adfea62b0c068a78f25636fb71342a7a05d3679fc7982ecb4d"
     },
     {
-      "bytes": 390,
+      "bytes": 564,
       "mode": 420,
       "path": "tests/purity/test_offenders_format.py",
-      "sha256": "342e1545f45ffdd4a94c8da7fc153b5fbc9d932cc8f7c4d29758bc133204bf79"
+      "sha256": "dbed60106ed6c6a91df155d2d3d5b8b362c41e57aa0317affb488bdb1c38d3b5"
     },
     {
       "bytes": 962,
@@ -1291,5 +1291,5 @@
       "sha256": "0cd29bf16a3df89cb5fe6dc6ab888b8fad4c66f4d142fa4eb2af500ae2d29bf0"
     }
   ],
-  "fileset_sha256": "35a8ae2592a5ce63ea083a7bdef0fdf8908bc0100a16e5ad68ce81c18a45eb84"
+  "fileset_sha256": "6ebb63eecec9ae9f51a742e334a1c3f3df765e826722382f78c27ccf12e7d5b1"
 }
