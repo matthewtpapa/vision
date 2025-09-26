@@ -7,7 +7,6 @@ import hashlib
 import json
 from pathlib import Path
 
-
 LEDGER_PATH = Path("artifacts/stage_ledger.jsonl")
 TIP_PATH = Path("artifacts/ledger_tip.txt")
 
