@@ -67,8 +67,7 @@ def main() -> None:
     )
 
     (REPO_ROOT / "roadmap.lock.json").write_text(
-        json.dumps({"fileset_sha256": bundle["fileset_sha256"]}, indent=2, sort_keys=True)
-        + "\n",
+        json.dumps({"fileset_sha256": bundle["fileset_sha256"]}, indent=2, sort_keys=True) + "\n",
         encoding="utf-8",
     )
 

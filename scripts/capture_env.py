@@ -32,9 +32,7 @@ def main() -> None:
     artifacts_dir.mkdir(exist_ok=True)
 
     output_path = artifacts_dir / "seeds_applied.json"
-    output_path.write_text(
-        json.dumps(snapshot, indent=2, sort_keys=True) + "\n", encoding="utf-8"
-    )
+    output_path.write_text(json.dumps(snapshot, indent=2, sort_keys=True) + "\n", encoding="utf-8")
 
     print("ok")
 
