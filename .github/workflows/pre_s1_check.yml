@@ -32,7 +32,7 @@ import json,sys
 s=json.load(open('bench/oracle_stats.json'))
 e=json.load(open('bench/oracle_e2e.json'))
 assert s['candidate_at_k_recall']>=0.95 and s['p95_ms']<=5.0
-assert e['e2e_p95_ms']<=33.0 and e['p@1']>=0.80
+assert e['e2e_p95_ms']<=33.0 and e['p_at_1']>=0.80
 print('m2_ok')
 PY
 
@@ -68,6 +68,50 @@ m=json.load(open('artifacts/manifest.json')); l=json.load(open('roadmap.lock.jso
 assert m['fileset_sha256']==l['fileset_sha256']; print('fileset_ok')
 PY
 
+      - name: Enforce manifest path set equality
+        run: |
+          python - <<'PY'
+import json
+import subprocess
+from pathlib import Path
+from difflib import unified_diff
+
+manifest = json.loads(Path("artifacts/manifest.json").read_text(encoding="utf-8"))["files"]
+manifest_paths = sorted(entry["path"] for entry in manifest)
+
+out = subprocess.check_output(["git", "ls-files", "-z"]).decode().split("\x00")
+paths = sorted(
+    path
+    for path in out
+    if path
+    and not (
+        path.startswith("artifacts/")
+        or path.startswith("bench/")
+        or path == "roadmap.lock.json"
+        or path.endswith(".pyc")
+        or "/__pycache__/" in path
+    )
+)
+
+print(f"fileset_count_git={len(paths)}")
+print(f"fileset_count_manifest={len(manifest_paths)}")
+
+diff = list(unified_diff(paths, manifest_paths, fromfile="git", tofile="manifest", lineterm=""))
+if diff:
+    raise SystemExit("path-set mismatch:\n" + "\n".join(diff[:20]))
+
+print("path_set_equal")
+PY
+
       - name: Sign manifest
         env: { SOT_DEV_SIGNING_KEY: ${{ secrets.SOT_DEV_SIGNING_KEY }}, SOT_KID: dev }
         run: python scripts/sign_json.py artifacts/manifest.json
+
+      - name: Verify ledger tip stability
+        run: |
+          set -euo pipefail
+          python scripts/ledger_tip.py > /dev/null
+          cmp -s artifacts/ledger_tip.txt <(python scripts/ledger_tip.py) || {
+            echo "ledger tip mismatch";
+            exit 1;
+          }

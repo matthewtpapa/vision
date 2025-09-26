@@ -1,7 +1,7 @@
 {
   "alg": "HMAC-SHA256",
-  "created_at": "2025-09-26T21:44:06.822891Z",
+  "created_at": "2025-09-26T22:01:52.698313Z",
   "kid": "dev",
-  "payload_sha256": "b7f5fde4cd13b6a73ae991220e7dd97d64a29b93f45d0e63e11a6999703ed3bc",
-  "sig": "7218b7d48d7f1a923177b0fded873f8069d29ac55d7d08a46635e7b94e67a5ed"
+  "payload_sha256": "b4b35888d03f58521beb6c7e8d6703623e52bcad29a49118630237396fbf0df9",
+  "sig": "872b31f3147e27843cabbfe30c43b3da2f017d76301ac3fc360cb9626c288915"
 }

@@ -43,6 +43,7 @@ def _iter_files() -> Iterable[str]:
         if not (
             path.startswith("artifacts/")
             or path.startswith("bench/")
+            or path == "roadmap.lock.json"
             or path.endswith(".pyc")
             or "/__pycache__/" in path
         )
