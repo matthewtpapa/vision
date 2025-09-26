@@ -45,14 +45,13 @@
       "evaluated_queries": 4,
       "k": 5,
       "known_queries": 3,
-      "p@1": 1.0,
       "p_at_1": 1.0,
       "schema_version": "1.1.0"
     },
     "purity": {
-      "network_syscalls": 0,
+      "network_syscalls": false,
       "offenders": [],
-      "sandbox_mode": "none"
+      "sandbox_mode": "strace-only"
     }
   },
   "requirements": {

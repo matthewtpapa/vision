@@ -1,1 +1,12 @@
-{"network_syscalls": 0, "offending": [], "offenders": [], "sandbox_mode": "none"}
+{
+  "command": [
+    "make",
+    "bench"
+  ],
+  "network_syscalls": false,
+  "offending": [],
+  "offenders": [],
+  "returncode": 0,
+  "sandbox_mode": "strace-only",
+  "schema_version": "1.1.0"
+}

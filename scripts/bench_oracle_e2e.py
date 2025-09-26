@@ -130,7 +130,6 @@ def main() -> None:
         "evaluated_queries": len(queries),
         "known_queries": known_total,
         "p_at_1": p_at_1,
-        "p@1": p_at_1,
         "e2e_p95_ms": quantize_float(p95),
         "e2e_p99_ms": quantize_float(p99),
     }
