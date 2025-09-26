@@ -1,0 +1,81 @@
+{
+  "environment": {
+    "blas": {
+      "numpy": {
+        "available": false
+      },
+      "thread_env": {
+        "BLIS_NUM_THREADS": "unset",
+        "MKL_NUM_THREADS": "1",
+        "NUMEXPR_NUM_THREADS": "1",
+        "OMP_NUM_THREADS": "1",
+        "OPENBLAS_NUM_THREADS": "1"
+      }
+    },
+    "libc": [
+      "glibc",
+      "2.39"
+    ],
+    "platform": {
+      "machine": "x86_64",
+      "release": "6.12.13",
+      "system": "Linux"
+    },
+    "python": {
+      "implementation": "CPython",
+      "version": "3.12.10"
+    }
+  },
+  "metrics": {
+    "offline_oracle": {
+      "bench": "offline_oracle",
+      "candidate_at_k_recall": 1.0,
+      "k": 5,
+      "known_queries": 3,
+      "p95_ms": 0.0785,
+      "p99_ms": 0.0797,
+      "schema_version": "1.1.0",
+      "total_queries": 4,
+      "wall_clock_ms": 0.26
+    },
+    "oracle_e2e": {
+      "bench": "oracle_e2e",
+      "e2e_p95_ms": 0.0981,
+      "e2e_p99_ms": 0.0996,
+      "evaluated_queries": 4,
+      "k": 5,
+      "known_queries": 3,
+      "p@1": 1.0,
+      "p_at_1": 1.0,
+      "schema_version": "1.1.0"
+    },
+    "purity": {
+      "network_syscalls": 0,
+      "offenders": [],
+      "sandbox_mode": "none"
+    }
+  },
+  "requirements": {
+    "requirements-dev.txt": [
+      "# Copyright (c) 2025 The Vision Authors",
+      "# SPDX-License-Identifier: Apache-2.0",
+      "build",
+      "cibuildwheel",
+      "cyclonedx-bom>=4.0 ; python_version >= \"3.10\"",
+      "jsonschema>=4.21",
+      "matplotlib>=3.8,<3.10",
+      "mypy~=1.10",
+      "numpy>=1.26,<3",
+      "pillow>=10,<11",
+      "pip-licenses>=4.5",
+      "pipdeptree>=2.13",
+      "pre-commit>=3.7,<4",
+      "pytest-cov~=4.1",
+      "pytest~=8.3",
+      "ruff~=0.4",
+      "setuptools>=61,<70",
+      "tomli>=2.0.1 ; python_version < \"3.11\""
+    ]
+  },
+  "schema_version": "1.1.0"
+}

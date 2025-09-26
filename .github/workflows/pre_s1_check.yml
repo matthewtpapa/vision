@@ -1,0 +1,63 @@
+name: PRE-S1 Check
+on:
+  push: { branches: [ main ] }
+  pull_request: { branches: [ main ] }
+  workflow_dispatch:
+
+concurrency:
+  group: pre-s1-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  pre_s1:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: { python-version: '3.11' }
+
+      - name: Apply seeds & capture env
+        run: |
+          set -euo pipefail
+          if [ -f seeds.env ]; then set -a; . seeds.env; set +a; fi
+          python scripts/capture_env.py
+          test -s artifacts/seeds_applied.json
+
+      - name: Prove M2 benches
+        run: |
+          test -s bench/oracle_stats.json
+          test -s bench/oracle_e2e.json
+          python - <<'PY'
+import json,sys
+s=json.load(open('bench/oracle_stats.json'))
+e=json.load(open('bench/oracle_e2e.json'))
+assert s['candidate_at_k_recall']>=0.95 and s['p95_ms']<=5.0
+assert e['e2e_p95_ms']<=33.0 and e['p@1']>=0.80
+print('m2_ok')
+PY
+
+      - name: Determinism witness
+        run: |
+          test -s artifacts/metrics_hash.txt
+
+      - name: Purity witness
+        run: |
+          test -s artifacts/purity_report.json
+          python - <<'PY'
+import json; d=json.load(open('artifacts/purity_report.json'))
+assert d['network_syscalls']==0 and d['offenders']==[] and d['sandbox_mode'] in ('none','unshare','strace-only')
+print('purity_ok')
+PY
+
+      - name: Build unified lock+manifest
+        run: |
+          python scripts/fileset.py
+          python - <<'PY'
+import json
+m=json.load(open('artifacts/manifest.json')); l=json.load(open('roadmap.lock.json'))
+assert m['fileset_sha256']==l['fileset_sha256']; print('fileset_ok')
+PY
+
+      - name: Sign manifest
+        env: { SOT_DEV_SIGNING_KEY: ${{ secrets.SOT_DEV_SIGNING_KEY }}, SOT_KID: dev }
+        run: python scripts/sign_json.py artifacts/manifest.json

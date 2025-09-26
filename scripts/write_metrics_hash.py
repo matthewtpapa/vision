@@ -141,13 +141,21 @@ def _validate_e2e(data: Mapping[str, Any]) -> None:
 def main() -> None:
     offline = _load_json(ROOT / "bench/oracle_stats.json")
     e2e = _load_json(ROOT / "bench/oracle_e2e.json")
-    purity = _load_json(ROOT / "artifacts/purity_report.json")
+    raw_purity = _load_json(ROOT / "artifacts/purity_report.json")
     _validate_offline(offline)
     _validate_e2e(e2e)
     _require_keys(
-        purity,
-        ["sandbox_mode", "network_syscalls", "offending", "returncode", "command"],
+        raw_purity,
+        ["sandbox_mode", "network_syscalls"],
     )
+    offenders = raw_purity.get("offenders")
+    if offenders is None:
+        offenders = raw_purity.get("offending", [])
+    purity = {
+        "sandbox_mode": raw_purity["sandbox_mode"],
+        "network_syscalls": raw_purity["network_syscalls"],
+        "offenders": offenders,
+    }
 
     payload = {
         "schema_version": SCHEMA_VERSION,

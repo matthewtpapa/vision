@@ -121,13 +121,16 @@ def main() -> None:
     p95 = quantiles[94] if quantiles else 0.0
     p99 = quantiles[98] if quantiles else 0.0
 
+    p_at_1 = quantize_float((correct / known_total) if known_total else 0.0)
+
     metrics = {
         "schema_version": SCHEMA_VERSION,
         "bench": "oracle_e2e",
         "k": int(args.k),
         "evaluated_queries": len(queries),
         "known_queries": known_total,
-        "p_at_1": quantize_float((correct / known_total) if known_total else 0.0),
+        "p_at_1": p_at_1,
+        "p@1": p_at_1,
         "e2e_p95_ms": quantize_float(p95),
         "e2e_p99_ms": quantize_float(p99),
     }

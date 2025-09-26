@@ -1,0 +1,4 @@
+{"accepted": true, "is_unknown_truth": false, "qid_pred": "alpha", "qid_truth": "alpha", "score": 0.9985}
+{"accepted": true, "is_unknown_truth": false, "qid_pred": "bravo", "qid_truth": "bravo", "score": 0.9993}
+{"accepted": true, "is_unknown_truth": false, "qid_pred": "charlie", "qid_truth": "charlie", "score": 0.9991}
+{"accepted": false, "is_unknown_truth": true, "qid_pred": "delta", "qid_truth": null, "score": 0.7274}

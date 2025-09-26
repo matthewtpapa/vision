@@ -1,0 +1,11 @@
+{
+  "bench": "offline_oracle",
+  "candidate_at_k_recall": 1.0,
+  "k": 5,
+  "known_queries": 3,
+  "p95_ms": 0.0785,
+  "p99_ms": 0.0797,
+  "schema_version": "1.1.0",
+  "total_queries": 4,
+  "wall_clock_ms": 0.26
+}

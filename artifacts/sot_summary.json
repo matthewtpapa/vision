@@ -1,0 +1,13 @@
+{
+  "stage": "S1",
+  "commit": "UNSET",
+  "gates": {
+    "lock_ok": false,
+    "manifest_ok": false,
+    "signature_valid": false,
+    "seeds_applied": false,
+    "purity_clean": false,
+    "ledger_chain_ok": false,
+    "pdf_deterministic": false
+  }
+}
