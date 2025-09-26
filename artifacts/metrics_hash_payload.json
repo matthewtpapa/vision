@@ -34,7 +34,7 @@
       "known_queries": 3,
       "p95_ms": 0.0785,
       "p99_ms": 0.0797,
-      "schema_version": "1.1.0",
+      "schema_version": "1.2.0",
       "total_queries": 4,
       "wall_clock_ms": 0.26
     },
@@ -46,7 +46,7 @@
       "k": 5,
       "known_queries": 3,
       "p_at_1": 1.0,
-      "schema_version": "1.1.0"
+      "schema_version": "1.2.0"
     },
     "purity": {
       "network_syscalls": false,
@@ -76,5 +76,5 @@
       "tomli>=2.0.1 ; python_version < \"3.11\""
     ]
   },
-  "schema_version": "1.1.0"
+  "schema_version": "1.2.0"
 }
