@@ -289,10 +289,10 @@
       "sha256": "d155d7f684cefab82c38b2dbdf4363b75682abccc3e850b568c84165581f1fe7"
     },
     {
-      "bytes": 91,
+      "bytes": 120,
       "mode": 420,
       "path": "roadmap.lock.json",
-      "sha256": "2963375c5ba6e372c06498ce7800fd7db48affbdb105c434945b687d4f8ca669"
+      "sha256": "5142ae836da33aa88c1edbd72fc5ca8b7df2b2e47267e57c8f57c563a995f665"
     },
     {
       "bytes": 160,
@@ -355,10 +355,10 @@
       "sha256": "18d0393187964d16da4857692f75b311736480c9e5a420029c2e6e07a8c4fe20"
     },
     {
-      "bytes": 4923,
+      "bytes": 4900,
       "mode": 493,
       "path": "scripts/bench_oracle_e2e.py",
-      "sha256": "66e8a10bfb0a7d5451d3ce53a1472d245a302396e4b478823e20659841291305"
+      "sha256": "3311c983a523b5bedaff8157fde2440dc5e4fd1ffe19ed797aac0c775a34e423"
     },
     {
       "bytes": 2621,
@@ -379,10 +379,10 @@
       "sha256": "74a97c4d9ca925d98b9e65e193b45ba9af8971dad9d75f0917f9c60689dddbbc"
     },
     {
-      "bytes": 539,
+      "bytes": 913,
       "mode": 493,
       "path": "scripts/capture_env.py",
-      "sha256": "d95aace8c431618b4c0385de28afc3a76cd18ab87b4650a8b82776e7e343e7f6"
+      "sha256": "e2f9bd6e09f96280270ef74622a97e4106dd8feacf50ee9ca701362da346c792"
     },
     {
       "bytes": 360,
@@ -433,10 +433,10 @@
       "sha256": "1145b8cf0b3bcf09bd5d4f4aa29860ab1f2df4ec758580c704a572347f8dd0e2"
     },
     {
-      "bytes": 2210,
+      "bytes": 3265,
       "mode": 420,
       "path": "scripts/fileset.py",
-      "sha256": "1afc99ecce95dac1bb3cc420c06e91be47488e3f788e29260f3305dcab690137"
+      "sha256": "5d5f0e492392d507ad389c1000fe46e28e117e04c17832510a110e87d312fef9"
     },
     {
       "bytes": 285,
@@ -451,10 +451,10 @@
       "sha256": "71c26cc8932dec0357601f7f4221a8a6bcca338ddd0f5bfb78d9daddfaf4987f"
     },
     {
-      "bytes": 981,
+      "bytes": 980,
       "mode": 493,
       "path": "scripts/ledger_tip.py",
-      "sha256": "285dbde8a431c56a52fae6f66396f395e81460dcbb06bf979e493be52b90a8e6"
+      "sha256": "d00af59b023366583e06ad7c5064674c612ae9a09212f2dc1a538a57369cb24a"
     },
     {
       "bytes": 6210,
@@ -850,7 +850,7 @@
       "bytes": 1257,
       "mode": 420,
       "path": "src/latency_vision/schemas.py",
-      "sha256": "2de6a5d00e83ac7c63a588b3b994dba7a801239fd7958c5768b68ea76d6e9174"
+      "sha256": "a2272e0aaa599427bb9fbf793c98565d79f95bcd43f605324b3d97e689777807"
     },
     {
       "bytes": 2070,
@@ -1291,5 +1291,6 @@
       "sha256": "0cd29bf16a3df89cb5fe6dc6ab888b8fad4c66f4d142fa4eb2af500ae2d29bf0"
     }
   ],
-  "fileset_sha256": "6ebb63eecec9ae9f51a742e334a1c3f3df765e826722382f78c27ccf12e7d5b1"
+  "fileset_sha256": "909bf57911f78d7a311fe956ab48b25f4889a8b22a5adb132ad34b43030db033",
+  "schema_version": "1.2.0"
 }

@@ -4,12 +4,34 @@
 from __future__ import annotations
 
 import hashlib
+import importlib.util
 import json
 import subprocess
 from collections.abc import Iterable
 from pathlib import Path
+from types import ModuleType
+from typing import cast
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
+
+
+def _load_schema_version() -> str:
+    spec = importlib.util.spec_from_file_location(
+        "latency_vision.schemas", REPO_ROOT / "src" / "latency_vision" / "schemas.py"
+    )
+    if spec is None or spec.loader is None:
+        raise RuntimeError("unable to load latency_vision.schemas module")
+    module = importlib.util.module_from_spec(spec)
+    if not isinstance(module, ModuleType):
+        raise RuntimeError("unable to create latency_vision.schemas module")
+    spec.loader.exec_module(module)
+    try:
+        return cast(str, getattr(module, "SCHEMA_VERSION"))
+    except AttributeError as exc:  # pragma: no cover - defensive guard
+        raise RuntimeError("SCHEMA_VERSION missing from latency_vision.schemas") from exc
+
+
+SCHEMA_VERSION = _load_schema_version()
 
 
 def _iter_files() -> Iterable[str]:
@@ -58,7 +80,11 @@ def main() -> None:
         catalog.update(str(record["bytes"]).encode())
         catalog.update(record["sha256"].encode())
 
-    bundle = {"files": records, "fileset_sha256": catalog.hexdigest()}
+    bundle = {
+        "schema_version": SCHEMA_VERSION,
+        "files": records,
+        "fileset_sha256": catalog.hexdigest(),
+    }
     artifacts_dir = REPO_ROOT / "artifacts"
     artifacts_dir.mkdir(parents=True, exist_ok=True)
 
@@ -67,7 +93,15 @@ def main() -> None:
     )
 
     (REPO_ROOT / "roadmap.lock.json").write_text(
-        json.dumps({"fileset_sha256": bundle["fileset_sha256"]}, indent=2, sort_keys=True) + "\n",
+        json.dumps(
+            {
+                "schema_version": SCHEMA_VERSION,
+                "fileset_sha256": bundle["fileset_sha256"],
+            },
+            indent=2,
+            sort_keys=True,
+        )
+        + "\n",
         encoding="utf-8",
     )
 
