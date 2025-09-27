@@ -25,10 +25,16 @@
       "sha256": "baab1785d5453fc2ddfdd1985c1d30b686c9aa1a2c7c9373ec1ad625b532f114"
     },
     {
-      "bytes": 3282,
+      "bytes": 3425,
       "mode": 420,
       "path": ".github/workflows/pre_s1_check.yml",
-      "sha256": "9a0215f19aa47632a8add65e4ce6b69991ab914d0cb8f86ed98bb0a0b20a402d"
+      "sha256": "677767a3bf0c0684539cfb181379516a443b2d2f65156e0fa142481d0c123075"
+    },
+    {
+      "bytes": 7181,
+      "mode": 420,
+      "path": ".github/workflows/s1.yml",
+      "sha256": "138a758190f48f0b3a7971aa8d54233f720f1b1b1f86398453e477a461037c38"
     },
     {
       "bytes": 4391,
@@ -163,10 +169,16 @@
       "sha256": "d5a051757b44e6d5fe38802de5d720ee769b9318ea219c3ba23e224561d41313"
     },
     {
+      "bytes": 276,
+      "mode": 420,
+      "path": "docs/BLOCKED.S1.md",
+      "sha256": "78bb0b380fb4808a79963d65cb606c015c976ea23e8f0d4c19050a7ceeb8f254"
+    },
+    {
       "bytes": 2712,
       "mode": 420,
       "path": "docs/Vision_v1_Investor_SoT.html",
-      "sha256": "940d08ff5d0d11ed1818f94a14e8384f28c33e615737ef9821b61458819401c7"
+      "sha256": "fbbba111f847fa890d44ab65fbe39abb2c4598028621b1041c22cb73a6c8720f"
     },
     {
       "bytes": 1602,
@@ -253,10 +265,10 @@
       "sha256": "f8a34c4ddd6e11fe35df0044cb79429fbf43b7b0c3ce7dc8f1b64d817236622c"
     },
     {
-      "bytes": 1290,
+      "bytes": 430,
       "mode": 420,
       "path": "logs/evidence_ledger.jsonl",
-      "sha256": "cd66db3b390bb95d7b11381fa217018359e05669d50c9a9696ab64148b232534"
+      "sha256": "b26a8d6d726b881a1a318dbb9ec515c905b2c233780dd5a860b6b85d060a1a98"
     },
     {
       "bytes": 220,
@@ -1285,6 +1297,6 @@
       "sha256": "0cd29bf16a3df89cb5fe6dc6ab888b8fad4c66f4d142fa4eb2af500ae2d29bf0"
     }
   ],
-  "fileset_sha256": "9170e983e33aecf27f87c2633406f7939be21ea545055cd2c81f65218698c5a7",
+  "fileset_sha256": "85a247c1cb3adcefdfb7d146df668d3de3eb1f8e0abaff3a857ef4061972b334",
   "schema_version": "1.2.0"
 }
