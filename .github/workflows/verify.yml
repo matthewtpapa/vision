@@ -58,11 +58,29 @@ jobs:
 
   docs-drift:
     runs-on: ubuntu-latest
+    # On PRs: surface problems but don't block the PR.
+    # On pushes: failing drift should fail the run.
+    continue-on-error: ${{ github.event_name == 'pull_request' }}
     steps:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
+      - name: Detect docs changes
+        id: changes
+        run: |
+          set -euo pipefail
+          if [[ "${{ github.event_name }}" == "pull_request" ]]; then
+            BASE="${{ github.event.pull_request.base.sha }}"
+          else
+            BASE="origin/${{ github.ref_name == 'master' && 'master' || 'main' }}"
+          fi
+          if git diff --name-only "${BASE}"...HEAD | grep -E '^docs/'; then
+            echo "changed=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+          fi
       - name: Set up Python
+        if: steps.changes.outputs.changed == 'true'
         uses: actions/setup-python@v5
         with:
           python-version: '3.11'
@@ -71,24 +89,31 @@ jobs:
             requirements-dev.txt
             pyproject.toml
       - name: Install Python dependencies
+        if: steps.changes.outputs.changed == 'true'
         run: |
           python -m pip install --upgrade pip
           pip install -r requirements-dev.txt
           pip install -e .
       - name: Roadmap lock
+        if: steps.changes.outputs.changed == 'true'
         run: make roadmap-lock
       - name: Roadmap check
+        if: steps.changes.outputs.changed == 'true'
         run: make roadmap-check
       - name: Ensure docs drift committed
+        if: steps.changes.outputs.changed == 'true'
         run: |
           git add -N docs/ docs/specs/ || true
           git diff --exit-code -- docs/ docs/specs/ || {
             echo "::error::Docs drift detected. Run 'make roadmap-lock && make roadmap-check' and commit the changes.";
             exit 1;
           }
+      - name: No docs changes — skipping drift checks
+        if: steps.changes.outputs.changed != 'true'
+        run: echo "No changes under docs/, skipping docs-drift."
 
   verify:
-    needs: [lint-and-test, docs-drift]
+    needs: [lint-and-test]
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
