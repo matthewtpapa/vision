@@ -6,9 +6,10 @@ from __future__ import annotations
 import hashlib
 import json
 import subprocess
-from pathlib import Path
-from typing import Any, Callable, Iterable
 import xml.etree.ElementTree as ET
+from collections.abc import Callable, Iterable
+from pathlib import Path
+from typing import Any
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
 ROADMAP_PATH = REPO_ROOT / "roadmap.yaml"
@@ -136,8 +137,14 @@ def _load_json(path: Path) -> Any:
 
 def _check_signature_valid() -> bool:
     candidates = [
-        (REPO_ROOT / "artifacts" / "sot_summary.json", REPO_ROOT / "artifacts" / "sot_summary.json.sig"),
-        (REPO_ROOT / "artifacts" / "manifest.json", REPO_ROOT / "artifacts" / "manifest.json.sig"),
+        (
+            REPO_ROOT / "artifacts" / "sot_summary.json",
+            REPO_ROOT / "artifacts" / "sot_summary.json.sig",
+        ),
+        (
+            REPO_ROOT / "artifacts" / "manifest.json",
+            REPO_ROOT / "artifacts" / "manifest.json.sig",
+        ),
     ]
     for payload_path, sig_path in candidates:
         if not payload_path.exists() or not sig_path.exists():
@@ -338,7 +345,11 @@ def main() -> None:
     stage_ids = [str(stage.get("id")) for stage in roadmap["stages"]]
     missing_in_lock = [stage_id for stage_id in stage_ids if stage_id not in lock_stage_map]
     extra_in_lock = [stage_id for stage_id in lock_stage_map if stage_id not in stage_ids]
-    lock_ok = lock.get("fileset_sha256") == fileset_sha and not missing_in_lock and not extra_in_lock
+    lock_ok = (
+        lock.get("fileset_sha256") == fileset_sha
+        and not missing_in_lock
+        and not extra_in_lock
+    )
 
     signals: dict[str, bool] = {"lock_ok": lock_ok}
     for name, check in SIGNAL_CHECKS.items():
