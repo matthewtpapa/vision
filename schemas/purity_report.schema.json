@@ -52,6 +52,24 @@
           }
         }
       }
+    },
+    "offenders": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["event", "detail"],
+        "properties": {
+          "event": {
+            "type": "string",
+            "pattern": "^.+$"
+          },
+          "detail": {
+            "type": "string",
+            "pattern": "^.+$"
+          }
+        }
+      }
     }
   }
 }

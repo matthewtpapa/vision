@@ -203,6 +203,7 @@ def run_sandboxed(command: list[str], report_path: Path) -> int:
         "returncode": returncode,
         "network_syscalls": network_syscalls,
         "offending": offenders,
+        "offenders": offenders,
     }
     report_path.parent.mkdir(parents=True, exist_ok=True)
     report_path.write_text(json.dumps(report, indent=2, sort_keys=True) + "\n", encoding="utf-8")

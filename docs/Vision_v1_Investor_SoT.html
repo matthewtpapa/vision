@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Vision v1 &mdash; Investor Source of Truth</title>
+    <style>
+      body { font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; margin: 2rem; line-height: 1.6; }
+      h1, h2 { color: #1a2a4a; }
+      table { border-collapse: collapse; width: 100%; margin: 1.5rem 0; }
+      th, td { border: 1px solid #b0b8c0; padding: 0.5rem 0.75rem; text-align: left; }
+      th { background-color: #f1f3f5; text-transform: uppercase; font-size: 0.85rem; letter-spacing: 0.05em; }
+      .badge { display: inline-block; padding: 0.25rem 0.5rem; background: #0f766e; color: white; border-radius: 999px; font-size: 0.75rem; font-weight: 600; }
+      ul { list-style: square; }
+      footer { margin-top: 3rem; font-size: 0.85rem; color: #5f6368; }
+    </style>
+  </head>
+  <body>
+    <header>
+      <h1>Vision v1 <span class="badge">Source of Truth</span></h1>
+      <p>
+        The Vision v1 program demonstrates deterministic latency guarantees for
+        investor review. All metrics below are derived from reproducible
+        artifacts within the Vision repository.
+      </p>
+    </header>
+
+    <section>
+      <h2>Performance Snapshot</h2>
+      <table>
+        <thead>
+          <tr><th>Metric</th><th>Value</th><th>Artifact</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>Offline candidate@k recall</td><td>&ge; 0.95</td><td><code>bench/oracle_stats.json</code></td></tr>
+          <tr><td>Offline p95 latency</td><td>&le; 5.0&nbsp;ms</td><td><code>bench/oracle_stats.json</code></td></tr>
+          <tr><td>E2E p@1</td><td>&ge; 0.80</td><td><code>bench/oracle_e2e.json</code></td></tr>
+          <tr><td>E2E p95 latency</td><td>&le; 33.0&nbsp;ms</td><td><code>bench/oracle_e2e.json</code></td></tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section>
+      <h2>Determinism Controls</h2>
+      <ul>
+        <li>Seed anchors captured via <code>scripts/capture_env.py</code>.</li>
+        <li>Ledger integrity enforced by <code>scripts/ledger_tip.py</code>.</li>
+        <li>Manifest and lock synchronized through <code>scripts/fileset.py</code>.</li>
+        <li>Purity witness published at <code>artifacts/purity_report.json</code>.</li>
+      </ul>
+    </section>
+
+    <section>
+      <h2>Review Notes</h2>
+      <p>
+        The PRE-S1 bring-up establishes the evidence chain necessary for the S1
+        deterministic PDF milestone. Subsequent stages will add signed summary
+        artifacts and CI enforcement of the ledger hash chain.
+      </p>
+    </section>
+
+    <footer>
+      &copy; 2025 Vision Program. Confidential investor communication.
+    </footer>
+  </body>
+</html>

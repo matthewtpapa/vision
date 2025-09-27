@@ -22,9 +22,10 @@ set -e
 if [ -f artifacts/purity_report.json ]; then
     # Validate offender shape (array of strings or objects with event/detail)
     jq -e '
-      has("offending") and (.offending | type=="array") and (
-        (.offending | length) == 0 or
-        (.offending | map(((type=="object") and has("event") and has("detail")) or (type=="string")) | min)
+      (has("offenders") or has("offending")) and
+      ((.offenders // .offending) | type=="array") and (
+        ((.offenders // .offending) | length) == 0 or
+        ((.offenders // .offending) | map(((type=="object") and has("event") and has("detail")) or (type=="string")) | min)
       )
     ' artifacts/purity_report.json > /dev/null || {
       echo "Invalid offenders format in purity_report.json" >&2
@@ -34,8 +35,8 @@ if [ -f artifacts/purity_report.json ]; then
     offenders_path="artifacts/purity_offenders.txt"
 
     # Fail if any offenders present; write a human-readable list
-    if ! jq -e '.offending | length == 0' artifacts/purity_report.json > /dev/null; then
-      jq -r '.offending[]? | (if type=="object" and (.event? and .detail?) then "\(.event)  \(.detail)" else tostring end)' \
+    if ! jq -e '(.offenders // .offending // []) | length == 0' artifacts/purity_report.json > /dev/null; then
+      jq -r '(.offenders // .offending // [])[]? | (if type=="object" and (.event? and .detail?) then "\(.event)  \(.detail)" else tostring end)' \
         artifacts/purity_report.json > "${offenders_path}"
       echo "Network offenders detected" >&2
       exit 1
