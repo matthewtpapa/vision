@@ -36,9 +36,7 @@ def main() -> None:
             "docs/Vision_v1_Investor_SoT.html": {
                 "sha256": sha256(DOCS / "Vision_v1_Investor_SoT.html")
             },
-            "artifacts/vision_v1_SoT.pdf": {
-                "sha256": sha256(ART / "vision_v1_SoT.pdf")
-            },
+            "artifacts/vision_v1_SoT.pdf": {"sha256": sha256(ART / "vision_v1_SoT.pdf")},
             "roadmap.lock.json": {"sha256": sha256(ROOT / "roadmap.lock.json")},
         },
         "metrics_hash": maybe_txt(ART / "metrics_hash.txt"),
