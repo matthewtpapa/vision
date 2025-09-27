@@ -6,7 +6,7 @@ on:
     branches: ['**']
   push:
     branches: [main, master, release/*]
-  workflow_dispatch:
+  workflow_dispatch: {}
 
 permissions:
   contents: read
@@ -17,7 +17,6 @@ concurrency:
 
 jobs:
   lint-and-test:
-    if: github.event_name != 'pull_request' || github.event.pull_request.draft == false
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
@@ -57,9 +56,39 @@ jobs:
       - name: Unit tests
         run: pytest -q
 
+  docs-drift:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+          cache-dependency-path: |
+            requirements-dev.txt
+            pyproject.toml
+      - name: Install Python dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements-dev.txt
+          pip install -e .
+      - name: Roadmap lock
+        run: make roadmap-lock
+      - name: Roadmap check
+        run: make roadmap-check
+      - name: Ensure docs drift committed
+        run: |
+          git add -N docs/ docs/specs/ || true
+          git diff --exit-code -- docs/ docs/specs/ || {
+            echo "::error::Docs drift detected. Run 'make roadmap-lock && make roadmap-check' and commit the changes.";
+            exit 1;
+          }
+
   verify:
-    needs: lint-and-test
-    if: github.event_name != 'pull_request' || github.event.pull_request.draft == false
+    needs: [lint-and-test, docs-drift]
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
