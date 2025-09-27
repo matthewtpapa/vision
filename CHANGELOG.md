@@ -22,6 +22,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/).
 - KB promotion pipeline with capped int8 medoids, promotion ledger, and CI gates.
 - Calibration utilities with temperature fitting, EMA-based oracle abstention,
   offline calibration bench + gates, and syscall purity guard targets.
+- S1: SoT foundation — seeds/fileset/signing/purity/PDF/gates + CI gate (workflow: “SoT-Check (S1)”).
 
 ### Changed
 
