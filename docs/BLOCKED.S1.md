@@ -15,7 +15,11 @@ Attempted to configure branch protection on `main` with the following settings s
 * Require review from Code Owners
 * Require the status check `SoT-Check (S1)`
 
-The GitHub API responded with `403 Resource not accessible by integration` because this environment does not have administrative access to modify branch protection. The CODEOWNERS entries for the SoT surfaces have been updated in-repo as required:
+The GitHub API responded with `403 Resource not accessible by integration` because this environment does not have administrative access to modify branch protection. Branch protection must be configured manually in GitHub once sufficient permissions are granted.
+
+## Intended CODEOWNERS
+
+The repository does not yet have the required GitHub teams created, so the entries below could not be committed to `CODEOWNERS` without breaking reviewer routing. Once the teams exist, add the following lines to `CODEOWNERS`:
 
 ```
 /docs/vision_v1_single_source_of_truth.md   @yourorg/pm-team @yourorg/eng-leads
