@@ -13,7 +13,7 @@ Attempted to configure branch protection on `main` with the following settings s
 
 * Require pull request reviews
 * Require review from Code Owners
-* Require the status check `SoT-Check (S1)`
+* Require the status check `verify`
 
 The GitHub API responded with `403 Resource not accessible by integration` because this environment does not have administrative access to modify branch protection. Branch protection must be configured manually in GitHub once sufficient permissions are granted.
 

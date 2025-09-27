@@ -2,64 +2,287 @@
 <html lang="en">
   <head>
     <meta charset="utf-8" />
-    <title>Vision v1 &mdash; Investor Source of Truth</title>
+    <title>Vision v1.0 — Investor Single Source of Truth</title>
     <style>
-      body { font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; margin: 2rem; line-height: 1.6; }
-      h1, h2 { color: #1a2a4a; }
-      table { border-collapse: collapse; width: 100%; margin: 1.5rem 0; }
-      th, td { border: 1px solid #b0b8c0; padding: 0.5rem 0.75rem; text-align: left; }
-      th { background-color: #f1f3f5; text-transform: uppercase; font-size: 0.85rem; letter-spacing: 0.05em; }
-      .badge { display: inline-block; padding: 0.25rem 0.5rem; background: #0f766e; color: white; border-radius: 999px; font-size: 0.75rem; font-weight: 600; }
-      ul { list-style: square; }
-      footer { margin-top: 3rem; font-size: 0.85rem; color: #5f6368; }
+      :root {
+        color-scheme: light dark;
+      }
+      body {
+        font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+        margin: 2.5rem auto;
+        padding: 0 1.5rem 3rem;
+        max-width: 960px;
+        line-height: 1.6;
+        color: #1c1f23;
+        background: #ffffff;
+      }
+      header {
+        border-bottom: 2px solid #d9dee3;
+        padding-bottom: 1rem;
+        margin-bottom: 2rem;
+      }
+      h1 {
+        font-size: 2.5rem;
+        margin-bottom: 0.5rem;
+        color: #102a43;
+      }
+      .status {
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        color: #334e68;
+      }
+      .confidential {
+        font-size: 0.85rem;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: #9aa5b1;
+      }
+      h2 {
+        color: #173f5f;
+        margin-top: 2.25rem;
+      }
+      h3 {
+        color: #1c5d99;
+        margin-top: 1.5rem;
+      }
+      ul {
+        padding-left: 1.5rem;
+      }
+      table {
+        border-collapse: collapse;
+        width: 100%;
+        margin: 1.5rem 0;
+        font-size: 0.95rem;
+      }
+      th,
+      td {
+        border: 1px solid #cbd2d9;
+        padding: 0.6rem 0.75rem;
+        vertical-align: top;
+        text-align: left;
+      }
+      th {
+        background: #e0e8f9;
+        text-transform: uppercase;
+        font-size: 0.8rem;
+        letter-spacing: 0.05em;
+        color: #243b53;
+      }
+      footer {
+        margin-top: 3rem;
+        padding-top: 1.5rem;
+        border-top: 1px solid #d9dee3;
+        font-size: 0.9rem;
+        color: #52606d;
+      }
+      code {
+        background: #f4f5f7;
+        border-radius: 4px;
+        padding: 0.1rem 0.3rem;
+        font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace;
+        font-size: 0.9rem;
+      }
     </style>
   </head>
   <body>
     <header>
-      <h1>Vision v1 <span class="badge">Source of Truth</span></h1>
+      <h1>Vision v1.0 — Investor Single Source of Truth</h1>
+      <p class="status">Status: Planning Locked • Release: v1.0 GA</p>
+      <p class="confidential">CONFIDENTIAL</p>
       <p>
-        The Vision v1 program demonstrates deterministic latency guarantees for
-        investor review. All metrics below are derived from reproducible
-        artifacts within the Vision repository.
+        Vision is an offline, deterministic AR identification SDK for enterprises. It recognizes products and parts on-device
+        with auditable performance, no cloud dependency in the recognition path, and a governed knowledge base. This document is
+        the single source of truth: milestones, quantitative targets, and how we prove them.
       </p>
     </header>
 
     <section>
-      <h2>Performance Snapshot</h2>
+      <h2>Investor-Grade Guarantees</h2>
+      <h3>Deterministic &amp; Private</h3>
+      <p>Identical inputs → identical outputs; no data leaves device.</p>
+      <h3>Operational Guarantees</h3>
+      <p>End-to-end p95 ≤ 33 ms; unknown false-accept ≤ 2.5%.</p>
+      <h3>Governed Knowledge</h3>
+      <p>Explainable accept/reject and reversible knowledge updates.</p>
+      <p>
+        What ships at v1.0: SDKs for Ubuntu (CPU), Jetson Orin (CUDA), and Android (NNAPI/CPU); a replay demo (video + event log)
+        produced by CI; and a due-diligence evidence pack validated by CI.
+      </p>
+    </section>
+
+    <section>
+      <h2>Scope &amp; Non-Goals</h2>
+      <p>
+        <strong>In scope:</strong> on-device detection, deterministic cropping, embedding, multi-signal fusion, verification,
+        governed knowledge, reproducible builds, pilot kit.
+      </p>
+      <p>
+        <strong>Out of scope (v1.0):</strong> online services, training/fine-tuning on customer data, rich UI, tracking.
+      </p>
+    </section>
+
+    <section>
+      <h2>Product Overview</h2>
+      <p><strong>Inputs:</strong> RGB frames (camera or replay)</p>
+      <p>
+        <strong>Pipeline:</strong> Decode → Detect → Crop → Embed → Fuse (vision + text + logo/OCR + context) → Verify → Evidence →
+        Promotion
+      </p>
+      <p>
+        <strong>Outputs:</strong> ranked IDs with labels &amp; scores, unknown flag, per-stage timings, provenance (crop IDs, boxes).
+        All results are verified by CI using reproducible media packs.
+      </p>
+    </section>
+
+    <section>
+      <h2>Milestones &amp; Quantitative Acceptance (S1–S17)</h2>
+      <p>CI evaluates every gate below. Numbers are hard targets, not aspirations.</p>
       <table>
         <thead>
-          <tr><th>Metric</th><th>Value</th><th>Artifact</th></tr>
+          <tr>
+            <th>Stage</th>
+            <th>Milestone</th>
+            <th>Quantitative acceptance (CI-verified)</th>
+          </tr>
         </thead>
         <tbody>
-          <tr><td>Offline candidate@k recall</td><td>&ge; 0.95</td><td><code>bench/oracle_stats.json</code></td></tr>
-          <tr><td>Offline p95 latency</td><td>&le; 5.0&nbsp;ms</td><td><code>bench/oracle_stats.json</code></td></tr>
-          <tr><td>E2E p@1</td><td>&ge; 0.80</td><td><code>bench/oracle_e2e.json</code></td></tr>
-          <tr><td>E2E p95 latency</td><td>&le; 33.0&nbsp;ms</td><td><code>bench/oracle_e2e.json</code></td></tr>
+          <tr id="S01">
+            <td>S1</td>
+            <td>Single Source of Truth foundation</td>
+            <td>Executable roadmap &amp; lock; seeds applied; integrity &amp; purity checks green; signed artifact summary.</td>
+          </tr>
+          <tr id="S02">
+            <td>S2</td>
+            <td>Prove baseline loop</td>
+            <td>Two identical CI runs on same commit; offline accuracy ≥ 0.95; e2e p@1 ≥ 0.80; e2e p95 ≤ 33 ms; unknown FA ≤ 2.5%; evidence ledger &amp; promotion report present.</td>
+          </tr>
+          <tr id="S03">
+            <td>S3</td>
+            <td>Real embedder (CLIP)</td>
+            <td>Per-frame p95 ≤ 8.0 ms; output stability within 1e-6 across runs on same runner; licensing cleared.</td>
+          </tr>
+          <tr id="S04">
+            <td>S4</td>
+            <td>Real detector (YOLO)</td>
+            <td>Per-frame p95 ≤ 12.0 ms @720p; mAP@0.5 ≥ 0.45; boxes stable within 1e-6 across runs.</td>
+          </tr>
+          <tr id="S05">
+            <td>S5</td>
+            <td>Deterministic cropper</td>
+            <td>Policy: 10% expand, 256×256, fixed padding, bilinear, single BGR→RGB; cropper p95 ≤ 1.2 ms; crop bytes identical across runs.</td>
+          </tr>
+          <tr id="S06">
+            <td>S6</td>
+            <td>Caption → Linker</td>
+            <td>Candidate recall ≥ 0.85; ≤ 3 candidates per span; output variance within documented tolerance.</td>
+          </tr>
+          <tr id="S07">
+            <td>S7</td>
+            <td>OCR/Logo priors</td>
+            <td>Logo precision ≥ 0.95; text false-accept ≤ 2.5%; strict source caps; deterministic outputs.</td>
+          </tr>
+          <tr id="S08">
+            <td>S8</td>
+            <td>Fusion learner</td>
+            <td>Candidate recall@10 ≥ 0.95; fusion p95 ≤ 5.0 ms; weights serialized with provenance.</td>
+          </tr>
+          <tr id="S09">
+            <td>S9</td>
+            <td>E2E with real models</td>
+            <td>p@1 ≥ 0.80; e2e p95 ≤ 33 ms; unknown FA ≤ 2.5%; decode/crop/timing hashes identical across two CI runs; tracker OFF.</td>
+          </tr>
+          <tr id="S10">
+            <td>S10</td>
+            <td>Footprint &amp; scale</td>
+            <td>Cold-start ≤ 1.1 s; memory ≤ 400 MB @ 1M IDs; shard manifest &amp; order locked.</td>
+          </tr>
+          <tr id="S11">
+            <td>S11</td>
+            <td>Platforms &amp; parity</td>
+            <td>Ubuntu, Orin, Android meet e2e p95 ≤ 33 ms; output parity within documented tolerances; purity green on each.</td>
+          </tr>
+          <tr id="S12">
+            <td>S12</td>
+            <td>SDK surface &amp; CLIs</td>
+            <td>Public API freeze + CLI contract validated by CI; examples run using only the public surface.</td>
+          </tr>
+          <tr id="S13">
+            <td>S13</td>
+            <td>Diagnostics &amp; builds</td>
+            <td>Error taxonomy in place; pure-Python wheels identical across two builds; metadata captured for native artifacts.</td>
+          </tr>
+          <tr id="S14">
+            <td>S14</td>
+            <td>Updates &amp; configuration</td>
+            <td>Signed update → verify → rollback passes; configuration precedence frozen (CLI &gt; ENV &gt; config.yaml &gt; defaults).</td>
+          </tr>
+          <tr id="S15">
+            <td>S15</td>
+            <td>Demo &amp; assets</td>
+            <td>Deterministic replay demo (video + event log); media rights documented; assets manifest verified by CI.</td>
+          </tr>
+          <tr id="S16">
+            <td>S16</td>
+            <td>Pilot evidence pack</td>
+            <td>Customer-ready bundle meeting S9 thresholds on pilot media; pack integrity verified.</td>
+          </tr>
+          <tr id="S17">
+            <td>S17</td>
+            <td>Compliance &amp; sales kit</td>
+            <td>SBOM, license audit, hash manifests pass; pricing and sales deck finalized.</td>
+          </tr>
         </tbody>
       </table>
     </section>
 
     <section>
-      <h2>Determinism Controls</h2>
+      <h2>Operating Model</h2>
+      <p>
+        A single CI entrypoint executes the roadmap twice in clean workspaces, checks targets, and publishes a signed summary. All
+        claims in this document are supported by downloadable evidence in the build artifacts. If a target regresses, the release
+        halts at that stage until corrected.
+      </p>
+    </section>
+
+    <section>
+      <h2>Pilot &amp; Go-To-Market</h2>
+      <p>
+        Pilot: one vertical (e.g., retail shelf or industrial parts) with a curated knowledge shard (≤10k IDs). Success mirrors
+        the end-to-end thresholds above.
+      </p>
+      <p>
+        Packaging: Ubuntu wheel, Jetson container, and Android AAR — each with a 10-line quickstart.
+      </p>
+      <p>
+        Commercial model: per-device annual license with support tiers; private knowledge curation available separately.
+      </p>
+      <p>
+        Evidence: zipped evidence pack (demo, event log, benches, purity, SBOM/licenses, promotion report, metrics hash).
+      </p>
+    </section>
+
+    <section>
+      <h2>Key Risks &amp; Mitigations</h2>
       <ul>
-        <li>Seed anchors captured via <code>scripts/capture_env.py</code>.</li>
-        <li>Ledger integrity enforced by <code>scripts/ledger_tip.py</code>.</li>
-        <li>Manifest and lock synchronized through <code>scripts/fileset.py</code>.</li>
-        <li>Purity witness published at <code>artifacts/purity_report.json</code>.</li>
+        <li>Coverage gaps in text/linking → alias banks and logo/text priors blended by a learned fusion model.</li>
+        <li>Domain shift across cameras/scenes → calibration guards and vertical-specific medoids.</li>
+        <li>Build drift or unreliable tests → locked inputs, deterministic seeds, double-run verification.</li>
+        <li>License compliance → tracked model/data provenance and automated audits in CI.</li>
       </ul>
     </section>
 
     <section>
-      <h2>Review Notes</h2>
+      <h2>Definition of Done (v1.0 GA)</h2>
       <p>
-        The PRE-S1 bring-up establishes the evidence chain necessary for the S1
-        deterministic PDF milestone. Subsequent stages will add signed summary
-        artifacts and CI enforcement of the ledger hash chain.
+        All S1–S17 milestones validated in CI; SDKs built for Ubuntu, Jetson Orin, and Android; pilot evidence meets thresholds
+        (p@1 ≥ 0.80, e2e p95 ≤ 33 ms, unknown false-accept ≤ 2.5%); compliance checks clean; pricing and sales materials
+        committed.
       </p>
     </section>
 
     <footer>
-      &copy; 2025 Vision Program. Confidential investor communication.
+      © Vision — Confidential. This roadmap is verified by continuous integration; claims are backed by build artifacts.
     </footer>
   </body>
 </html>

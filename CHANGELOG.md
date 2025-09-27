@@ -22,7 +22,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/).
 - KB promotion pipeline with capped int8 medoids, promotion ledger, and CI gates.
 - Calibration utilities with temperature fitting, EMA-based oracle abstention,
   offline calibration bench + gates, and syscall purity guard targets.
-- S1: SoT foundation — seeds/fileset/signing/purity/PDF/gates + CI gate (workflow: “SoT-Check (S1)”).
+- S1: SoT foundation — seeds/fileset/signing/purity/PDF/gates + CI gate (workflow: `verify`).
+- Docs: Stage specs **S01–S17** (SoT-anchored) + UTF-8 normalized SoT HTML; added docs drift check (non-gating).
+
+### Removed
+
+- CI: retire legacy workflows `pre_s1_check.yml`, `s1.yml`, `s2.yml`, `sot_check.yml`
+  (all checks covered by `verify` + Docs Drift Check).
 
 ### Changed
 

@@ -88,6 +88,9 @@ make kb-promote
 Artifacts are written to `artifacts/` (metrics hashes, SBOM, license report, wheel
 hashes, purity outputs, promotion report), and log files land in `logs/`.
 
+## How CI proves claims
+Jobs: **verify** (gated) and **Docs Drift Check** (non-gating).
+
 ## Roadmap
 
 - M2-01 LabelBank core — deterministic protocol (done)
