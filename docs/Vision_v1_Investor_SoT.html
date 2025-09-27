@@ -160,77 +160,77 @@
           <tr id="S03">
             <td><strong>S03</strong></td>
             <td>Real embedder (CLIP)</td>
-            <td>Per-frame p95 ≤ 8.0 ms; output stability within 1e-6 across runs on same runner; licensing cleared.</td>
+            <td>Roadmap lock passes (no drift in tracked files, stage catalog updated). Metrics determinism holds (twin `metrics_hash_run*.txt` digests match and consolidate into `artifacts/metrics_hash.txt`). Embedder accuracy and latency stay within investor bounds (recall ≥ 0.95, p@1 ≥ 0.80, p95 ≤ 8.0 ms captured in `artifacts/metrics_summary.json`). Evidence ledger updated with calibration proof (non-empty `logs/evidence_ledger.jsonl`).</td>
           </tr>
           <tr id="S04">
             <td><strong>S04</strong></td>
             <td>Real detector (YOLO)</td>
-            <td>Per-frame p95 ≤ 12.0 ms @720p; mAP@0.5 ≥ 0.45; boxes stable within 1e-6 across runs.</td>
+            <td>Roadmap lock passes (tracked fileset fingerprint unchanged, stage list aligned). Detector recall and coverage meet the investor baseline (candidate recall ≥ 0.45 on `artifacts/oracle_bench.json`). Latency p95 ≤ 12.0 ms @720p captured in `artifacts/oracle_bench.json`. Evidence ledger updated with detector bench context (non-empty `gate_summary.txt` + ledger entries).</td>
           </tr>
           <tr id="S05">
             <td><strong>S05</strong></td>
             <td>Deterministic cropper</td>
-            <td>Policy: 10% expand, 256×256, fixed padding, bilinear, single BGR→RGB; cropper p95 ≤ 1.2 ms; crop bytes identical across runs.</td>
+            <td>Roadmap lock passes (tracked fileset fingerprint unchanged, stage catalog updated). Promotion wiring produces deterministic review output (promotion report JSON + JSONL rendered with stable hashes). Promotion thresholds met (CI asserts P@1 / coverage gates before emitting the promotion report). Evidence ledger updated for verifier chain (stage ledger + gate summary include S05 decision record).</td>
           </tr>
           <tr id="S06">
             <td><strong>S06</strong></td>
             <td>Caption → Linker</td>
-            <td>Candidate recall ≥ 0.85; ≤ 3 candidates per span; output variance within documented tolerance.</td>
+            <td>Roadmap lock passes (tracked fileset fingerprint unchanged, stage catalog updated). SLO controller validates caption-link latency and recall budget (`artifacts/slo_report.json` gates). Evidence ledger updated with controller decision (stage ledger + gate summary contain S06 entry).</td>
           </tr>
           <tr id="S07">
             <td><strong>S07</strong></td>
             <td>OCR/Logo priors</td>
-            <td>Logo precision ≥ 0.95; text false-accept ≤ 2.5%; strict source caps; deterministic outputs.</td>
+            <td>Roadmap lock passes (tracked fileset fingerprint unchanged, stage catalog updated). Metrics schema validated (`schemas/metrics.schema.json` matches generated telemetry and passes schema guard). Metrics determinism holds (twin metrics hashes identical, canonical digest recorded in `artifacts/metrics_hash.txt`).</td>
           </tr>
           <tr id="S08">
             <td><strong>S08</strong></td>
             <td>Fusion learner</td>
-            <td>Candidate recall@10 ≥ 0.95; fusion p95 ≤ 5.0 ms; weights serialized with provenance.</td>
+            <td>Roadmap lock passes (tracked fileset fingerprint unchanged, stage catalog updated). CI hygiene matrix recorded in `artifacts/ci_matrix_summary.json` and shows all required platforms exercised/uploaded.</td>
           </tr>
           <tr id="S09">
             <td><strong>S09</strong></td>
             <td>E2E with real models</td>
-            <td>p@1 ≥ 0.80; e2e p95 ≤ 33 ms; unknown FA ≤ 2.5%; decode/crop/timing hashes identical across two CI runs; tracker OFF.</td>
+            <td>Roadmap lock passes (tracked fileset fingerprint unchanged, stage catalog updated). Purity guard reports zero offenders and no network syscalls (`artifacts/purity_report.json`). SBOM + licenses inventories present and validated (non-empty `artifacts/sbom.json` and `artifacts/licenses.json`). Evidence ledger updated with supply-chain posture (stage ledger + gate summary include S09 entry).</td>
           </tr>
           <tr id="S10">
             <td><strong>S10</strong></td>
             <td>Footprint &amp; scale</td>
-            <td>Cold-start ≤ 1.1 s; memory ≤ 400 MB @ 1M IDs; shard manifest &amp; order locked.</td>
+            <td>Roadmap lock passes (tracked fileset fingerprint unchanged, stage catalog updated). LabelBank scale bench meets recall guardrails (`artifacts/labelbank_scale_bench.json` shows recall ≥ investor target). Latency p95 stays within scale budget recorded in `artifacts/labelbank_scale_bench.json`.</td>
           </tr>
           <tr id="S11">
             <td><strong>S11</strong></td>
             <td>Platforms &amp; parity</td>
-            <td>Ubuntu, Orin, Android meet e2e p95 ≤ 33 ms; output parity within documented tolerances; purity green on each.</td>
+            <td>Roadmap lock passes (tracked fileset fingerprint unchanged, stage catalog updated). Promotion thresholds (P@1 / coverage) pass with documented summary in `artifacts/promotion_report.json`. Evidence ledger records the promotion decision (stage ledger + gate summary include S11 record).</td>
           </tr>
           <tr id="S12">
             <td><strong>S12</strong></td>
             <td>SDK surface &amp; CLIs</td>
-            <td>Public API freeze + CLI contract validated by CI; examples run using only the public surface.</td>
+            <td>Roadmap lock passes (tracked fileset fingerprint unchanged, stage catalog updated). Public API freeze report generated and clean (CI verifies exported surface in `artifacts/public_api_report.json`). Evidence ledger updated with API freeze outcome (stage ledger + gate summary include S12 entry).</td>
           </tr>
           <tr id="S13">
             <td><strong>S13</strong></td>
             <td>Diagnostics &amp; builds</td>
-            <td>Error taxonomy in place; pure-Python wheels identical across two builds; metadata captured for native artifacts.</td>
+            <td>Roadmap lock passes (tracked fileset fingerprint unchanged, stage catalog updated). Config precedence contract generated and validated (CI checks `artifacts/config_precedence.json`). Evidence ledger updated with configuration precedence summary (stage ledger + gate summary include S13 entry).</td>
           </tr>
           <tr id="S14">
             <td><strong>S14</strong></td>
             <td>Updates &amp; configuration</td>
-            <td>Signed update → verify → rollback passes; configuration precedence frozen (CLI &gt; ENV &gt; config.yaml &gt; defaults).</td>
+            <td>Roadmap lock passes (tracked fileset fingerprint unchanged, stage catalog updated). Gallery dedupe audit produced (CI emits `artifacts/gallery_dedupe_audit.json` summarising duplicates removed / reviewed). Evidence ledger updated with gallery audit context (stage ledger + gate summary include S14 record).</td>
           </tr>
           <tr id="S15">
             <td><strong>S15</strong></td>
             <td>Demo &amp; assets</td>
-            <td>Deterministic replay demo (video + event log); media rights documented; assets manifest verified by CI.</td>
+            <td>Roadmap lock passes (tracked fileset fingerprint unchanged, stage catalog updated). Promotion thresholds satisfied with documented JSON report (CI enforces gates before release promotion). Ledger tip recomputed and matches `artifacts/ledger_tip.txt` to prove append-only EvidenceLedger.</td>
           </tr>
           <tr id="S16">
             <td><strong>S16</strong></td>
             <td>Pilot evidence pack</td>
-            <td>Customer-ready bundle meeting S9 thresholds on pilot media; pack integrity verified.</td>
+            <td>Roadmap lock passes (tracked fileset fingerprint unchanged, stage catalog updated). Release hygiene checklist generated and clean (`artifacts/release_checklist.json` confirms changelog, tags, wheels). Evidence ledger updated with release readiness (stage ledger + gate summary include S16 entry).</td>
           </tr>
           <tr id="S17">
             <td><strong>S17</strong></td>
             <td>Compliance &amp; sales kit</td>
-            <td>SBOM, license audit, hash manifests pass; pricing and sales deck finalized.</td>
+            <td>Roadmap lock passes (tracked fileset fingerprint unchanged, stage catalog updated). Exit gate summary generated and green (`artifacts/exit_gate_summary.json` documents investor-grade thresholds met). Evidence ledger updated with exit readiness (stage ledger + gate summary include S17 entry).</td>
           </tr>
         </tbody>
       </table>

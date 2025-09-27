@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import re
+from html import escape, unescape
 from html.parser import HTMLParser
 from pathlib import Path
 
@@ -11,7 +12,8 @@ STAGES = ROOT / "docs" / "specs" / "stages"
 
 
 def normalize(value: str) -> str:
-    return re.sub(r"\s+", " ", value.replace("\xa0", " ").replace("**", " ")).strip()
+    cleaned = unescape(value).replace("\xa0", " ").replace("**", "")
+    return re.sub(r"\s+", " ", cleaned).strip()
 
 
 def extract_acceptance(markdown: str) -> str:
@@ -104,7 +106,7 @@ def main() -> None:
         )
 
         def repl(match: re.Match[str]) -> str:
-            return f"{match.group(1)}{spec_text}{match.group(3)}"
+            return f"{match.group(1)}{escape(spec_text)}{match.group(3)}"
 
         updated, count = pattern.subn(repl, updated, count=1)
         if count == 0:
