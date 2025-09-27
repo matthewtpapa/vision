@@ -346,9 +346,7 @@ def main() -> None:
     missing_in_lock = [stage_id for stage_id in stage_ids if stage_id not in lock_stage_map]
     extra_in_lock = [stage_id for stage_id in lock_stage_map if stage_id not in stage_ids]
     lock_ok = (
-        lock.get("fileset_sha256") == fileset_sha
-        and not missing_in_lock
-        and not extra_in_lock
+        lock.get("fileset_sha256") == fileset_sha and not missing_in_lock and not extra_in_lock
     )
 
     signals: dict[str, bool] = {"lock_ok": lock_ok}
