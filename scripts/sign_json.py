@@ -3,22 +3,24 @@
 
 from __future__ import annotations
 
+import argparse
 import datetime as _dt
 import hashlib
 import hmac
 import json
 import os
-import sys
 from pathlib import Path
 
 
-def main() -> None:
-    if len(sys.argv) != 2:
-        raise SystemExit("usage: sign_json.py <path>")
+def main(argv: list[str] | None = None) -> None:
+    parser = argparse.ArgumentParser(description="Sign JSON payload with dev key")
+    parser.add_argument("path", help="JSON file to sign")
+    parser.add_argument("--key", dest="key", help="Signing key override")
+    args = parser.parse_args(argv)
 
-    path = sys.argv[1]
+    path = args.path
     kid = os.getenv("SOT_KID", "dev")
-    key = os.getenv("SOT_DEV_SIGNING_KEY")
+    key = args.key or os.getenv("SOT_DEV_SIGNING_KEY")
     if not key:
         raise SystemExit("SOT_DEV_SIGNING_KEY missing")
 

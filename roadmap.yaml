@@ -7,6 +7,8 @@ stages:
       - roadmap.lock.json
       - artifacts/manifest.json
       - artifacts/manifest.json.sig
+      - artifacts/sot_summary.json
+      - artifacts/sot_summary.json.sig
       - artifacts/seeds_applied.json
       - artifacts/purity_report.json
       - artifacts/vision_v1_SoT.pdf
@@ -47,3 +49,172 @@ stages:
       - tests_green
       - append_only_ok
       - evidence_present
+  - id: S3
+    name: Calibration & wiring verified
+    artifacts:
+      - artifacts/metrics_summary.json
+      - artifacts/metrics_hash.txt
+      - artifacts/stage_ledger.jsonl
+      - logs/evidence_ledger.jsonl
+      - gate_summary.txt
+    pass_when:
+      - lock_ok
+      - determinism_ok
+      - thresholds_met
+      - evidence_present
+    skip_reason: "pre-S3"
+  - id: S4
+    name: CandidateOracle fixture & bench (offline)
+    artifacts:
+      - artifacts/oracle_fixture.jsonl
+      - artifacts/oracle_bench.json
+      - artifacts/stage_ledger.jsonl
+      - gate_summary.txt
+    pass_when:
+      - lock_ok
+      - candidate_recall_ok
+      - p95_ms_ok
+      - evidence_present
+    skip_reason: "pre-S3"
+  - id: S5
+    name: Oracle→Verify→Ledger wiring + promotion report
+    artifacts:
+      - artifacts/promotion_report.json
+      - artifacts/promotion_report.jsonl
+      - artifacts/stage_ledger.jsonl
+      - gate_summary.txt
+    pass_when:
+      - lock_ok
+      - promotion_thresholds_met
+      - evidence_present
+    skip_reason: "pre-S3"
+  - id: S6
+    name: SLO controller gates
+    artifacts:
+      - artifacts/slo_report.json
+      - artifacts/stage_ledger.jsonl
+      - gate_summary.txt
+    pass_when:
+      - lock_ok
+      - slo_thresholds_met
+    skip_reason: "pre-S3"
+  - id: S7
+    name: Reproducibility & telemetry schema
+    artifacts:
+      - artifacts/metrics_summary.json
+      - artifacts/metrics_hash.txt
+      - schemas/metrics.schema.json
+      - artifacts/stage_ledger.jsonl
+      - gate_summary.txt
+    pass_when:
+      - lock_ok
+      - metrics_schema_valid
+      - determinism_ok
+    skip_reason: "pre-S3"
+  - id: S8
+    name: CI hygiene & artifacts upload matrix
+    artifacts:
+      - artifacts/ci_matrix_summary.json
+      - artifacts/stage_ledger.jsonl
+      - gate_summary.txt
+    pass_when:
+      - lock_ok
+      - ci_matrix_ok
+    skip_reason: "pre-S3"
+  - id: S9
+    name: Purity & supply-chain hardening
+    artifacts:
+      - artifacts/purity_report.json
+      - artifacts/sbom.json
+      - artifacts/licenses.json
+      - artifacts/stage_ledger.jsonl
+      - gate_summary.txt
+    pass_when:
+      - lock_ok
+      - purity_clean
+      - sbom_ok
+      - licenses_ok
+    skip_reason: "pre-S3"
+  - id: S10
+    name: LabelBank shard scaling gate
+    artifacts:
+      - artifacts/labelbank_scale_bench.json
+      - artifacts/stage_ledger.jsonl
+      - gate_summary.txt
+    pass_when:
+      - lock_ok
+      - p95_ms_ok
+      - recall_ok
+    skip_reason: "pre-S3"
+  - id: S11
+    name: Promotion thresholds (P@1 / coverage) enforced
+    artifacts:
+      - artifacts/promotion_report.json
+      - artifacts/stage_ledger.jsonl
+      - gate_summary.txt
+    pass_when:
+      - lock_ok
+      - promotion_thresholds_met
+    skip_reason: "pre-S3"
+  - id: S12
+    name: Public API freeze + check
+    artifacts:
+      - artifacts/public_api_report.json
+      - artifacts/stage_ledger.jsonl
+      - gate_summary.txt
+    pass_when:
+      - lock_ok
+      - public_api_ok
+    skip_reason: "pre-S3"
+  - id: S13
+    name: Config precedence artifact
+    artifacts:
+      - artifacts/config_precedence.json
+      - artifacts/stage_ledger.jsonl
+      - gate_summary.txt
+    pass_when:
+      - lock_ok
+      - config_precedence_ok
+    skip_reason: "pre-S3"
+  - id: S14
+    name: Gallery dedupe audit (stub OK)
+    artifacts:
+      - artifacts/gallery_dedupe_audit.json
+      - artifacts/stage_ledger.jsonl
+      - gate_summary.txt
+    pass_when:
+      - lock_ok
+      - gallery_audit_ok
+    skip_reason: "pre-S3"
+  - id: S15
+    name: KB promotion + EvidenceLedger integration
+    artifacts:
+      - artifacts/promotion_report.json
+      - artifacts/ledger_tip.txt
+      - artifacts/stage_ledger.jsonl
+      - gate_summary.txt
+    pass_when:
+      - lock_ok
+      - promotion_thresholds_met
+      - ledger_tip_ok
+    skip_reason: "pre-S3"
+  - id: S16
+    name: Release hygiene (CHANGELOG, tags, wheels)
+    artifacts:
+      - artifacts/release_checklist.json
+      - artifacts/stage_ledger.jsonl
+      - gate_summary.txt
+    pass_when:
+      - lock_ok
+      - release_hygiene_ok
+    skip_reason: "pre-S3"
+  - id: S17
+    name: Exit criteria (investor-grade gates met)
+    artifacts:
+      - artifacts/exit_gate_summary.json
+      - artifacts/stage_ledger.jsonl
+      - gate_summary.txt
+    pass_when:
+      - lock_ok
+      - exit_gates_ok
+    skip_reason: "pre-S3"

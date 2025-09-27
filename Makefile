@@ -3,7 +3,7 @@
 SHELL := /usr/bin/env bash
 .SHELLFLAGS := -eu -o pipefail -c
 
-.PHONY: eval-pack bench slo-check metrics-hash purity supplychain kb-promote prove unknowns-guard api-freeze schema-bump
+.PHONY: eval-pack bench slo-check metrics-hash purity supplychain kb-promote prove unknowns-guard api-freeze schema-bump roadmap-lock roadmap-check
 
 FIXTURE_BANK := bench/fixtures/bank.jsonl
 FIXTURE_QUERIES := bench/fixtures/queries.jsonl
@@ -70,3 +70,9 @@ api-freeze:
 schema-bump:
 	set -euo pipefail
 	GIT_DIFF_BASE="$${GIT_DIFF_BASE:-HEAD~1}" PYTHONPATH="src${PYTHONPATH:+:${PYTHONPATH}}" python scripts/check_schema_bump.py
+
+roadmap-lock:
+	python scripts/gen_roadmap_lock.py
+
+roadmap-check:
+	python scripts/check_roadmap.py
