@@ -1,0 +1,158 @@
+name: docs-gate
+
+on:
+  pull_request_target:
+    types: [opened, synchronize, reopened, ready_for_review]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: docs-gate-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  filter:
+    runs-on: ubuntu-latest
+    outputs:
+      docs: ${{ steps.filter.outputs.docs }}
+    steps:
+      - uses: dorny/paths-filter@v3
+        id: filter
+        with:
+          filters: |
+            docs:
+              - 'docs/**'
+              - 'docs.specs/**'
+              - 'docs/specs/**'
+              - 'roadmap.yaml'
+              - '.github/workflows/**'
+
+  drift:
+    needs: filter
+    if: ${{ needs.filter.outputs.docs == 'true' && github.event.pull_request.draft != true }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: refs/pull/${{ github.event.pull_request.number }}/merge
+          persist-credentials: false
+          fetch-depth: 0
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: SoT table ↔ stage specs parity (stdlib only)
+        run: |
+          python - <<'PY'
+          from __future__ import annotations
+          import re
+          from html.parser import HTMLParser
+          from pathlib import Path
+
+          class StageTableParser(HTMLParser):
+              def __init__(self):
+                  super().__init__()
+                  self.in_table = False
+                  self.in_tr = False
+                  self.in_cell = False
+                  self.current_id = None
+                  self.current_cell: list[str] = []
+                  self.current_row: list[str] = []
+                  self.rows: dict[str, list[str]] = {}
+
+              def handle_starttag(self, tag, attrs):
+                  if tag == 'table':
+                      self.in_table = True
+                  elif self.in_table and tag == 'tr':
+                      self.in_tr = True
+                      self.current_id = None
+                      self.current_row = []
+                      for key, value in attrs:
+                          if key == 'id' and value:
+                              self.current_id = value
+                  elif self.in_tr and tag in {'td', 'th'}:
+                      self.in_cell = True
+                      self.current_cell = []
+
+              def handle_endtag(self, tag):
+                  if tag == 'table':
+                      self.in_table = False
+                  elif self.in_table and tag == 'tr':
+                      if self.current_id and self.current_row:
+                          self.rows[self.current_id] = self.current_row
+                      self.in_tr = False
+                      self.current_id = None
+                  elif self.in_tr and tag in {'td', 'th'}:
+                      if self.in_cell:
+                          self.current_row.append("".join(self.current_cell).strip())
+                      self.in_cell = False
+
+              def handle_data(self, data):
+                  if self.in_cell:
+                      self.current_cell.append(data)
+
+          def normalize(value: str) -> str:
+              return re.sub(r"\s+", " ", value.replace("\xa0", " ").replace("**", "")).strip()
+
+          sot_html = Path("docs/Vision_v1_Investor_SoT.html").read_text(encoding="utf-8")
+          parser = StageTableParser()
+          parser.feed(sot_html)
+          expected = {f"S{index:02d}" for index in range(1, 18)}
+          missing = expected - parser.rows.keys()
+          if missing:
+              raise SystemExit(f"Missing rows in SoT: {sorted(missing)}")
+
+          errors: list[str] = []
+          stages_dir = Path("docs/specs/stages")
+          for md_path in sorted(stages_dir.glob("S*.md")):
+              code = md_path.stem
+              if code not in parser.rows:
+                  errors.append(f"{code} missing in SoT table")
+                  continue
+              lines = md_path.read_text(encoding="utf-8").splitlines()
+              acceptance: list[str] = []
+              in_block = False
+              for line in lines:
+                  stripped = line.strip()
+                  if stripped == "## Acceptance (CI-verified)":
+                      in_block = True
+                      continue
+                  if in_block:
+                      if line.startswith("## "):
+                          break
+                      if stripped.startswith("- "):
+                          acceptance.append(stripped[2:])
+                      elif line.startswith(("  ", "\t")) and acceptance:
+                          acceptance[-1] += " " + stripped
+                      elif not stripped:
+                          continue
+                      else:
+                          break
+              if not acceptance:
+                  errors.append(f"{code} missing acceptance block")
+                  continue
+              spec_text = normalize(" ".join(acceptance))
+              sot_text = normalize(parser.rows[code][2])
+              if spec_text != sot_text:
+                  errors.append(
+                      f"{code} acceptance mismatch:\n  SoT: {sot_text}\n  Spec: {spec_text}"
+                  )
+              anchor = f"docs/Vision_v1_Investor_SoT.html#{code}"
+              if anchor not in md_path.read_text(encoding="utf-8"):
+                  errors.append(f"{code} missing SoT anchor link")
+          if errors:
+              raise SystemExit("\n".join(errors))
+          PY
+
+      - name: SoT anchors exist (stdlib only)
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+
+          html = Path('docs/Vision_v1_Investor_SoT.html').read_text(encoding='utf-8')
+          missing = [f"S{index:02d}" for index in range(1, 18) if f'id="S{index:02d}"' not in html]
+          if missing:
+              raise SystemExit(f"Missing stage anchors: {missing}")
+          PY

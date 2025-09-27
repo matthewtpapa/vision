@@ -144,7 +144,7 @@ jobs:
           assert st > 10_000, f"vision_v1_SoT.pdf too small: {st}"
           print("sot_pdf_ok=1")
           PY
-      - name: sign-sot
+      - name: sign-sot (with key)
         if: ${{ secrets.SOT_DEV_SIGNING_KEY != '' && (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository) }}
         run: |
           python scripts/sign_json.py artifacts/sot_summary.json --key "${{ secrets.SOT_DEV_SIGNING_KEY }}"
