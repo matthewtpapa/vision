@@ -89,8 +89,7 @@ Artifacts are written to `artifacts/` (metrics hashes, SBOM, license report, whe
 hashes, purity outputs, promotion report), and log files land in `logs/`.
 
 ## How CI proves claims
-
-Jobs: **“SoT-Check (S1)”**, **“SoT-Check (S2)”**.
+Jobs: **verify** (gated) and **Docs Drift Check** (non-gating).
 
 ## Roadmap
 
