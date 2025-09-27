@@ -23,6 +23,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/).
 - Calibration utilities with temperature fitting, EMA-based oracle abstention,
   offline calibration bench + gates, and syscall purity guard targets.
 - S1: SoT foundation — seeds/fileset/signing/purity/PDF/gates + CI gate (workflow: “SoT-Check (S1)”).
+- Docs: Stage specs **S01–S17** (SoT-anchored) + UTF-8 normalized SoT HTML; added docs drift check (non-gating).
 
 ### Changed
 
