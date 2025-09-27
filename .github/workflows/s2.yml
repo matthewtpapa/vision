@@ -1,0 +1,255 @@
+name: SoT-Check (S2)
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+
+concurrency:
+  group: sot-s2-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  s2:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install tools
+        run: |
+          set -euo pipefail
+          python -m pip install --upgrade pip
+          python -m pip install jsonschema
+          sudo apt-get update -y
+          sudo apt-get install -y wkhtmltopdf jq
+
+      - name: Capture seeds
+        run: |
+          set -euo pipefail
+          if [ -f seeds.env ]; then
+            set -a
+            . seeds.env
+            set +a
+            while IFS= read -r line; do
+              if [ -n "${line}" ] && [ "${line#\#}" = "${line}" ]; then
+                echo "${line}" >> "${GITHUB_ENV}"
+              fi
+            done < seeds.env
+          fi
+          echo "PURITY_ALLOW_WEAK_FALLBACK=1" >> "${GITHUB_ENV}"
+          python scripts/capture_env.py
+          test -s artifacts/seeds_applied.json
+          python - <<'PY'
+import json
+from pathlib import Path
+required = {"PYTHONHASHSEED", "VISION_SEED", "TZ"}
+seeds = json.loads(Path("artifacts/seeds_applied.json").read_text(encoding="utf-8"))
+missing = sorted(required - seeds.keys())
+if missing:
+    raise SystemExit(f"missing seed variables: {', '.join(missing)}")
+PY
+
+      - name: Record S2 START
+        run: |
+          python - <<'PY'
+import json
+from pathlib import Path
+p = Path("artifacts/stage_ledger.jsonl")
+p.parent.mkdir(parents=True, exist_ok=True)
+p.touch(exist_ok=True)
+rec = {"stage":"S2","event":"START"}
+with p.open("a", encoding="utf-8") as h:
+    h.write(json.dumps(rec, separators=(",",":"))+"\n")
+PY
+
+      - name: Purity guard
+        run: |
+          set -euo pipefail
+          bash scripts/purity_guard.sh
+          python - <<'PY'
+import json
+from pathlib import Path
+from jsonschema import validate
+report_path = Path("artifacts/purity_report.json")
+schema_path = Path("schemas/purity_report.schema.json")
+report = json.loads(report_path.read_text(encoding="utf-8"))
+schema = json.loads(schema_path.read_text(encoding="utf-8"))
+validate(instance=report, schema=schema)
+if report.get("network_syscalls") not in (False, 0):
+    raise SystemExit("network syscalls detected")
+offenders = report.get("offenders") or report.get("offending", [])
+if offenders:
+    raise SystemExit("purity offenders present")
+PY
+
+      - name: Baseline loop determinism
+        run: |
+          set -euo pipefail
+          rm -rf bench
+          git checkout -- bench/fixtures
+          rm -f logs/evidence_ledger.jsonl artifacts/metrics_run1.json artifacts/metrics_run2.json artifacts/metrics_summary.json
+          mkdir -p logs
+          make bench
+          PYTHONPATH="src${PYTHONPATH:+:${PYTHONPATH}}" python scripts/collect_metrics.py \
+            --run-output artifacts/metrics_run1.json
+          rm -f bench/oracle_e2e.json bench/oracle_stats.json bench/e2e_samples.jsonl
+          rm -f logs/evidence_ledger.jsonl
+          mkdir -p logs
+          make bench
+          PYTHONPATH="src${PYTHONPATH:+:${PYTHONPATH}}" python scripts/collect_metrics.py \
+            --run-output artifacts/metrics_run2.json \
+            --summary-output artifacts/metrics_summary.json
+          cmp artifacts/metrics_run1.json artifacts/metrics_run2.json
+
+      - name: Evidence presence
+        run: |
+          set -euo pipefail
+          test -s artifacts/promotion_report.jsonl
+          test -s logs/evidence_ledger.jsonl
+
+      - name: Threshold check
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+import json
+from pathlib import Path
+summary = json.loads(Path("artifacts/metrics_summary.json").read_text(encoding="utf-8"))
+if summary["candidate_at_k_recall"] < 0.95:
+    raise SystemExit("offline accuracy below threshold")
+if summary["p_at_1"] < 0.80:
+    raise SystemExit("p@1 below threshold")
+if summary["e2e_p95_ms"] > 33.0:
+    raise SystemExit("e2e p95 latency above threshold")
+if summary["unknown_false_accept_rate"] > 0.025:
+    raise SystemExit("unknown false accept rate above threshold")
+PY
+
+      - name: Tests
+        run: |
+          set -euo pipefail
+          mkdir -p artifacts/pytest
+          pytest --junitxml=artifacts/pytest/pytest_s2_junit.xml | tee artifacts/pytest/pytest_s2_summary.txt
+
+      - name: Fileset parity
+        run: |
+          set -euo pipefail
+          python scripts/fileset.py
+          python - <<'PY'
+import json
+from pathlib import Path
+manifest = json.loads(Path("artifacts/manifest.json").read_text(encoding="utf-8"))
+lock = json.loads(Path("roadmap.lock.json").read_text(encoding="utf-8"))
+if manifest.get("fileset_sha256") != lock.get("fileset_sha256"):
+    raise SystemExit("fileset_sha256 mismatch")
+PY
+          python - <<'PY'
+import json
+import subprocess
+from pathlib import Path
+from difflib import unified_diff
+entries = json.loads(Path("artifacts/manifest.json").read_text(encoding="utf-8"))["files"]
+manifest_paths = sorted(entry["path"] for entry in entries)
+out = subprocess.check_output(["git", "ls-files", "-z"]).decode().split("\x00")
+git_paths = sorted(
+    path for path in out if path and not (
+        path.startswith("artifacts/")
+        or path.startswith("bench/")
+        or path == "roadmap.lock.json"
+        or path.endswith(".pyc")
+        or "/__pycache__/" in path
+    )
+)
+diff = list(unified_diff(git_paths, manifest_paths, fromfile="git", tofile="manifest", lineterm=""))
+if diff:
+    raise SystemExit("path-set mismatch:\n" + "\n".join(diff[:20]))
+PY
+
+      - name: Sign manifest
+        if: ${{ secrets.SOT_DEV_SIGNING_KEY }}
+        env:
+          SOT_DEV_SIGNING_KEY: ${{ secrets.SOT_DEV_SIGNING_KEY }}
+          SOT_KID: dev
+        run: |
+          set -euo pipefail
+          python scripts/sign_json.py artifacts/manifest.json
+          python - <<'PY'
+import hashlib
+import hmac
+import json
+import os
+from pathlib import Path
+key = os.environ["SOT_DEV_SIGNING_KEY"].encode()
+manifest_path = Path("artifacts/manifest.json")
+signature_path = manifest_path.with_suffix(manifest_path.suffix + ".sig")
+manifest_bytes = manifest_path.read_bytes()
+expected_payload_sha = hashlib.sha256(manifest_bytes).hexdigest()
+signature = json.loads(signature_path.read_text(encoding="utf-8"))
+if signature.get("payload_sha256") != expected_payload_sha:
+    raise SystemExit("payload_sha256 mismatch")
+expected_sig = hmac.new(key, manifest_bytes, hashlib.sha256).hexdigest()
+if signature.get("sig") != expected_sig:
+    raise SystemExit("signature mismatch")
+PY
+
+      - name: Signing blocked documentation
+        if: ${{ !secrets.SOT_DEV_SIGNING_KEY }}
+        run: |
+          set -euo pipefail
+          test -f docs/BLOCKED.S2.md
+
+      - name: Ensure ledger PASS recorded
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+import json
+from pathlib import Path
+ledger = Path("artifacts/stage_ledger.jsonl")
+ledger.parent.mkdir(parents=True, exist_ok=True)
+ledger.touch(exist_ok=True)
+records = []
+with ledger.open("r", encoding="utf-8") as handle:
+    for line in handle:
+        line = line.strip()
+        if line:
+            records.append(json.loads(line))
+pass_event = {"stage": "S2", "event": "PASS"}
+if not any(entry == pass_event for entry in records):
+    with ledger.open("a", encoding="utf-8") as handle:
+        handle.write(json.dumps(pass_event, separators=(",", ":")) + "\n")
+PY
+          printf 'stage=S2 PASS\n' > gate_summary.txt
+
+      - name: Ledger tip
+        run: |
+          set -euo pipefail
+          python scripts/ledger_tip.py
+          cmp -s artifacts/ledger_tip.txt <(python scripts/ledger_tip.py)
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: sot-s2-artifacts
+          path: |
+            artifacts/metrics_run1.json
+            artifacts/metrics_run2.json
+            artifacts/metrics_summary.json
+            artifacts/pytest/pytest_s2_junit.xml
+            artifacts/pytest/pytest_s2_summary.txt
+            artifacts/promotion_report.jsonl
+            logs/evidence_ledger.jsonl

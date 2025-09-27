@@ -1,0 +1,49 @@
+schema_version: "1.0.0"
+stages:
+  - id: S1
+    name: Deterministic investor summary
+    artifacts:
+      - roadmap.yaml
+      - roadmap.lock.json
+      - artifacts/manifest.json
+      - artifacts/manifest.json.sig
+      - artifacts/seeds_applied.json
+      - artifacts/purity_report.json
+      - artifacts/vision_v1_SoT.pdf
+      - artifacts/stage_ledger.jsonl
+      - artifacts/ledger_tip.txt
+      - gate_summary.txt
+    pass_when:
+      - lock_ok
+      - signature_valid_or_blocked
+      - purity_clean
+      - pdf_deterministic
+      - append_only_ok
+      - ledger_tip_ok
+  - id: S2
+    name: Prove baseline loop
+    artifacts:
+      - roadmap.yaml
+      - roadmap.lock.json
+      - artifacts/manifest.json
+      - artifacts/manifest.json.sig
+      - artifacts/seeds_applied.json
+      - artifacts/purity_report.json
+      - artifacts/metrics_run1.json
+      - artifacts/metrics_run2.json
+      - artifacts/metrics_summary.json
+      - artifacts/promotion_report.jsonl
+      - logs/evidence_ledger.jsonl
+      - artifacts/stage_ledger.jsonl
+      - artifacts/pytest/pytest_s2_junit.xml
+      - artifacts/pytest/pytest_s2_summary.txt
+      - gate_summary.txt
+    pass_when:
+      - lock_ok
+      - signature_valid_or_blocked
+      - purity_clean
+      - determinism_ok
+      - thresholds_met
+      - tests_green
+      - append_only_ok
+      - evidence_present

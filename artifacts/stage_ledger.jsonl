@@ -2,3 +2,5 @@
 {"stage":"PRE-S1","event":"M2_PROOF_READY"}
 {"stage":"PRE-S1","event":"LEDGER_UPDATE"}
 {"stage":"PRE-S1","event":"S1_BOOTSTRAP_READY"}
+{"stage":"S2","event":"START"}
+{"stage":"S2","event":"PASS"}
