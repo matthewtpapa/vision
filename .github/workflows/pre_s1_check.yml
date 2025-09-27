@@ -4,6 +4,9 @@ on:
   pull_request: { branches: [ main ] }
   workflow_dispatch:
 
+permissions:
+  contents: read
+
 concurrency:
   group: pre-s1-${{ github.ref }}
   cancel-in-progress: true
@@ -104,6 +107,8 @@ print("path_set_equal")
 PY
 
       - name: Sign manifest
+        # Skip on forked PRs where secrets are unavailable
+        if: ${{ secrets.SOT_DEV_SIGNING_KEY != '' }}
         env: { SOT_DEV_SIGNING_KEY: ${{ secrets.SOT_DEV_SIGNING_KEY }}, SOT_KID: dev }
         run: python scripts/sign_json.py artifacts/manifest.json
 
