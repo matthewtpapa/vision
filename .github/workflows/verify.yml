@@ -112,14 +112,12 @@ import os
 st = os.stat("artifacts/vision_v1_SoT.pdf").st_size
 assert st > 10_000, f"vision_v1_SoT.pdf too small: {st}"
 print("sot_pdf_ok=1")
-with open("gate_summary.txt", "a", encoding="utf-8") as handle:
-    handle.write("sot_pdf_ok=1\n")
 PY
-      - name: sign-sot
+      - name: sign-sot (manifest)
         run: |
           if [[ -n "${{ secrets.SOT_DEV_SIGNING_KEY }}" ]]; then
-            python scripts/sign_json.py artifacts/sot_summary.json --key "${{ secrets.SOT_DEV_SIGNING_KEY }}"
-            echo "signature_valid_or_blocked=1" | tee -a gate_summary.txt
+            python scripts/sign_json.py artifacts/manifest.json --key "${{ secrets.SOT_DEV_SIGNING_KEY }}"
+            echo "signature_valid_or_blocked=1"
           else
             echo "NO_SIGNING_KEY for S1 signing gate" >&2
             exit 1
@@ -135,8 +133,6 @@ if a != b:
     raise SystemExit(f"Determinism breach: {a} != {b}")
 open("artifacts/metrics_hash.txt", "w", encoding="utf-8").write(a + "\n")
 print("determinism_ok=1")
-with open("gate_summary.txt", "a", encoding="utf-8") as handle:
-    handle.write("determinism_ok=1\n")
 PY
       - name: purity-enforce
         run: |
@@ -149,8 +145,6 @@ offenders = report.get("offenders") or []
 if offenders:
     raise SystemExit(f"Purity offenders present: {offenders}")
 print("purity_clean=1")
-with open("gate_summary.txt", "a", encoding="utf-8") as handle:
-    handle.write("purity_clean=1\n")
 PY
       - name: roadmap-lock
         run: make roadmap-lock
