@@ -143,7 +143,7 @@ jobs:
           st = os.stat("artifacts/vision_v1_SoT.pdf").st_size
           assert st > 10_000, f"vision_v1_SoT.pdf too small: {st}"
           print("sot_pdf_ok=1")
-PY
+          PY
       - name: sign-sot
         if: ${{ secrets.SOT_DEV_SIGNING_KEY != '' && (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository) }}
         run: |
@@ -163,7 +163,7 @@ PY
               raise SystemExit(f"Determinism breach: {a} != {b}")
           open("artifacts/metrics_hash.txt", "w", encoding="utf-8").write(a + "\n")
           print("determinism_ok=1")
-PY
+          PY
       - name: purity-enforce
         run: |
           python - <<'PY'
@@ -176,7 +176,7 @@ PY
           if offenders:
               raise SystemExit(f"Purity offenders present: {offenders}")
           print("purity_clean=1")
-PY
+          PY
       - name: roadmap-lock
         run: make roadmap-lock
       - name: roadmap-check
