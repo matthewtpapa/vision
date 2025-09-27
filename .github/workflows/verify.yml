@@ -3,13 +3,13 @@ name: verify
 on:
   pull_request:
     types: [opened, synchronize, reopened, ready_for_review]
-    branches: ['**']
   push:
     branches: [main, master, release/*]
   workflow_dispatch: {}
 
 permissions:
   contents: read
+  actions: write
 
 concurrency:
   group: verify-${{ github.ref }}
