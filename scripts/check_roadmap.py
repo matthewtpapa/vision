@@ -46,6 +46,13 @@ def _iter_tracked_files() -> Iterable[str]:
 
 
 def _parse_roadmap(path: Path) -> dict[str, Any]:
+    """Parse the constrained roadmap YAML using a lightweight reader.
+
+    We intentionally avoid PyYAML so this script can run in environments where
+    only the Python standard library is available (for example, minimal CI
+    runners). The parser supports the subset of YAML used by roadmap.yaml and
+    is covered by the roadmap-lock checks.
+    """
     schema_version: str | None = None
     stages: list[dict[str, Any]] = []
     current: dict[str, Any] | None = None
@@ -282,9 +289,11 @@ def _check_tests_green() -> bool:
     else:
         suites = [root]
     for suite in suites:
-        failures = suite.attrib.get("failures", "0")
-        errors = suite.attrib.get("errors", "0")
-        if int(failures) != 0 or int(errors) != 0:
+        failures = suite.attrib.get("failures")
+        errors = suite.attrib.get("errors")
+        failures_count = int(failures or 0)
+        errors_count = int(errors or 0)
+        if failures_count != 0 or errors_count != 0:
             return False
     return True
 

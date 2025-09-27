@@ -124,6 +124,8 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install -y strace jq wkhtmltopdf
+          mkdir -p artifacts
+          wkhtmltopdf --version | tee artifacts/wkhtmltopdf-version.txt
       - name: Install Python dependencies
         run: |
           python -m pip install --upgrade pip
@@ -137,11 +139,35 @@ jobs:
           wkhtmltopdf docs/Vision_v1_Investor_SoT.html artifacts/vision_v1_SoT.pdf
           test -s artifacts/vision_v1_SoT.pdf
           python - <<'PY'
-          import os
+          from __future__ import annotations
 
-          st = os.stat("artifacts/vision_v1_SoT.pdf").st_size
+          import hashlib
+          import os
+          from pathlib import Path
+
+          artifacts_dir = Path("artifacts")
+          pdf_path = artifacts_dir / "vision_v1_SoT.pdf"
+          html_path = Path("docs/Vision_v1_Investor_SoT.html")
+
+          st = os.stat(pdf_path).st_size
           assert st > 10_000, f"vision_v1_SoT.pdf too small: {st}"
+
+          def sha256(path: Path) -> str:
+              digest = hashlib.sha256()
+              with path.open("rb") as handle:
+                  for chunk in iter(lambda: handle.read(1 << 20), b""):
+                      digest.update(chunk)
+              return digest.hexdigest()
+
+          pdf_hash = sha256(pdf_path)
+          html_hash = sha256(html_path)
+          (artifacts_dir / "vision_v1_SoT.pdf.sha256").write_text(pdf_hash + "\n", encoding="utf-8")
+          (artifacts_dir / "Vision_v1_Investor_SoT.html.sha256").write_text(
+              html_hash + "\n", encoding="utf-8"
+          )
           print("sot_pdf_ok=1")
+          print(f"vision_v1_SoT.pdf.sha256={pdf_hash}")
+          print(f"Vision_v1_Investor_SoT.html.sha256={html_hash}")
           PY
       - name: detect signing key
         id: sigkey
@@ -233,6 +259,11 @@ jobs:
             artifacts/vision_v1_SoT.pdf
             artifacts/metrics_hash_run1.txt
             artifacts/metrics_hash_run2.txt
+            artifacts/wkhtmltopdf-version.txt
+            artifacts/vision_v1_SoT.pdf.sha256
+            artifacts/Vision_v1_Investor_SoT.html.sha256
+            artifacts/sot_summary.json
+            artifacts/sot_summary.json.sig
 
             gate_summary.txt
 

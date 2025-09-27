@@ -39,6 +39,12 @@ def _iter_tracked_files() -> Iterable[str]:
 
 
 def _parse_roadmap(path: Path) -> dict[str, object]:
+    """Parse roadmap.yaml without third-party dependencies.
+
+    The CI environment that consumes this script is intentionally stdlib-only,
+    so we implement a small YAML subset reader instead of depending on PyYAML.
+    The roadmap checker exercises the same parser to ensure coverage.
+    """
     schema_version: str | None = None
     stages: list[dict[str, object]] = []
     current: dict[str, object] | None = None

@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 """Generate a canonical metrics hash and payload artifact."""
 
 from __future__ import annotations
@@ -198,6 +198,8 @@ def main(argv: list[str] | None = None) -> None:
         out_path = Path(args.out)
         out_path.parent.mkdir(parents=True, exist_ok=True)
         out_path.write_text(digest + "\n", encoding="utf-8")
+
+    print(f"metrics_hash={digest}")
 
 
 if __name__ == "__main__":
