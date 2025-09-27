@@ -94,7 +94,7 @@ jobs:
       - name: Install system dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y strace jq
+          sudo apt-get install -y strace jq wkhtmltopdf
       - name: Install Python dependencies
         run: |
           python -m pip install --upgrade pip
@@ -102,6 +102,60 @@ jobs:
           pip install -e .
       - name: Run prove pipeline
         run: make prove
+      - name: sot-pdf
+        run: |
+          mkdir -p artifacts
+          wkhtmltopdf docs/Vision_v1_Investor_SoT.html artifacts/vision_v1_SoT.pdf
+          test -s artifacts/vision_v1_SoT.pdf
+          python - <<'PY'
+import os
+st = os.stat("artifacts/vision_v1_SoT.pdf").st_size
+assert st > 10_000, f"vision_v1_SoT.pdf too small: {st}"
+print("sot_pdf_ok=1")
+with open("gate_summary.txt", "a", encoding="utf-8") as handle:
+    handle.write("sot_pdf_ok=1\n")
+PY
+      - name: sign-sot
+        run: |
+          if [[ -n "${{ secrets.SOT_DEV_SIGNING_KEY }}" ]]; then
+            python scripts/sign_json.py artifacts/sot_summary.json --key "${{ secrets.SOT_DEV_SIGNING_KEY }}"
+            echo "signature_valid_or_blocked=1" | tee -a gate_summary.txt
+          else
+            echo "NO_SIGNING_KEY for S1 signing gate" >&2
+            exit 1
+          fi
+      - name: determinism-check
+        run: |
+          python scripts/write_metrics_hash.py --out artifacts/metrics_hash_run1.txt
+          python scripts/write_metrics_hash.py --out artifacts/metrics_hash_run2.txt
+          python - <<'PY'
+a = open("artifacts/metrics_hash_run1.txt", encoding="utf-8").read().strip()
+b = open("artifacts/metrics_hash_run2.txt", encoding="utf-8").read().strip()
+if a != b:
+    raise SystemExit(f"Determinism breach: {a} != {b}")
+open("artifacts/metrics_hash.txt", "w", encoding="utf-8").write(a + "\n")
+print("determinism_ok=1")
+with open("gate_summary.txt", "a", encoding="utf-8") as handle:
+    handle.write("determinism_ok=1\n")
+PY
+      - name: purity-enforce
+        run: |
+          python - <<'PY'
+import json
+report = json.load(open("artifacts/purity_report.json", encoding="utf-8"))
+if report.get("network_syscalls") is not False:
+    raise SystemExit("Network syscalls detected")
+offenders = report.get("offenders") or []
+if offenders:
+    raise SystemExit(f"Purity offenders present: {offenders}")
+print("purity_clean=1")
+with open("gate_summary.txt", "a", encoding="utf-8") as handle:
+    handle.write("purity_clean=1\n")
+PY
+      - name: roadmap-lock
+        run: make roadmap-lock
+      - name: roadmap-check
+        run: make roadmap-check
       - name: KB promote sanity
         run: make kb-promote
       - name: Unknowns guard
@@ -139,6 +193,9 @@ jobs:
             artifacts/licenses.json
             artifacts/wheels_hashes.txt
             artifacts/promotion_report.json
+            artifacts/vision_v1_SoT.pdf
+            artifacts/metrics_hash_run1.txt
+            artifacts/metrics_hash_run2.txt
 
             gate_summary.txt
 

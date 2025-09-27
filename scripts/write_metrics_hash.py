@@ -3,6 +3,7 @@
 
 from __future__ import annotations
 
+import argparse
 import hashlib
 import json
 import platform
@@ -138,7 +139,11 @@ def _validate_e2e(data: Mapping[str, Any]) -> None:
     _ensure_number(normalized["e2e_p99_ms"], min_value=0.0)
 
 
-def main() -> None:
+def main(argv: list[str] | None = None) -> None:
+    parser = argparse.ArgumentParser(description="Generate deterministic metrics hash")
+    parser.add_argument("--out", dest="out", help="Optional additional hash output path")
+    args = parser.parse_args(argv)
+
     offline = _load_json(ROOT / "bench/oracle_stats.json")
     e2e = _load_json(ROOT / "bench/oracle_e2e.json")
     raw_purity = _load_json(ROOT / "artifacts/purity_report.json")
@@ -188,6 +193,11 @@ def main() -> None:
         json.dumps(payload, indent=2, sort_keys=True) + "\n", encoding="utf-8"
     )
     (ARTIFACTS / "metrics_hash.txt").write_text(f"metrics_hash: {digest}\n", encoding="utf-8")
+
+    if args.out:
+        out_path = Path(args.out)
+        out_path.parent.mkdir(parents=True, exist_ok=True)
+        out_path.write_text(digest + "\n", encoding="utf-8")
 
 
 if __name__ == "__main__":
