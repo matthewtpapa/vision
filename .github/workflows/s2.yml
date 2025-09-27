@@ -65,6 +65,19 @@ if missing:
     raise SystemExit(f"missing seed variables: {', '.join(missing)}")
 PY
 
+      - name: Record S2 START
+        run: |
+          python - <<'PY'
+import json
+from pathlib import Path
+p = Path("artifacts/stage_ledger.jsonl")
+p.parent.mkdir(parents=True, exist_ok=True)
+p.touch(exist_ok=True)
+rec = {"stage":"S2","event":"START"}
+with p.open("a", encoding="utf-8") as h:
+    h.write(json.dumps(rec, separators=(",",":"))+"\n")
+PY
+
       - name: Purity guard
         run: |
           set -euo pipefail
@@ -103,6 +116,12 @@ PY
             --run-output artifacts/metrics_run2.json \
             --summary-output artifacts/metrics_summary.json
           cmp artifacts/metrics_run1.json artifacts/metrics_run2.json
+
+      - name: Evidence presence
+        run: |
+          set -euo pipefail
+          test -s artifacts/promotion_report.jsonl
+          test -s logs/evidence_ledger.jsonl
 
       - name: Threshold check
         run: |
