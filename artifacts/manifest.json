@@ -271,16 +271,16 @@
       "sha256": "24d856340c4be0ee2f1b13bd219dd6ec2249b8c72051cbbbb959ca69393c694e"
     },
     {
-      "bytes": 638,
+      "bytes": 747,
       "mode": 420,
       "path": "docs/specs/stages/S01.md",
-      "sha256": "bbca34e6262a007e8c717b22d23d0a93e9b0079bf943ca0cd388a3bcf8f05fcd"
+      "sha256": "4cef230c58656e464eb4eebf39f5ab2ca38054454529ab084465c0d729d8b47e"
     },
     {
-      "bytes": 740,
+      "bytes": 741,
       "mode": 420,
       "path": "docs/specs/stages/S02.md",
-      "sha256": "347a956b91aed0f8682d7b3ef8c1ba1e89c1bed3ad72f571f7bcf45af028a26b"
+      "sha256": "58459432eaa3b157ee3191abe6360fda63e87ca2699e744df4fb31a02b9c1fce"
     },
     {
       "bytes": 638,
@@ -337,16 +337,16 @@
       "sha256": "2549d3c6739bba914ee020bffe867a6b09d71d08c10695fbfc81e8b1843d4092"
     },
     {
-      "bytes": 557,
+      "bytes": 589,
       "mode": 420,
       "path": "docs/specs/stages/S12.md",
-      "sha256": "50948542547049f8f0c6ffff28439b964260a33aa33a677f677fdfe08abd3105"
+      "sha256": "3cbc1b4655a99550ce0cf346ab494f60024f4df690341c90e3eac05f4d5751c3"
     },
     {
-      "bytes": 565,
+      "bytes": 629,
       "mode": 420,
       "path": "docs/specs/stages/S13.md",
-      "sha256": "c30e4365a1b2ef0ead131502b8468a0aabdf4302795c15099a638d08f74a9452"
+      "sha256": "3826ecc0c58aae556997c741a2e179d4e21ebcfc74afc68f70d7fd0823ff8c1c"
     },
     {
       "bytes": 603,
@@ -1435,6 +1435,6 @@
       "sha256": "0cd29bf16a3df89cb5fe6dc6ab888b8fad4c66f4d142fa4eb2af500ae2d29bf0"
     }
   ],
-  "fileset_sha256": "03ed1c3958696f59821475f509e5145bccbc4f064a915c898e4d857e3122cb60",
+  "fileset_sha256": "eda91f4598fe7a2c8c15f5f0668bbfff34f1e70b82e704f15fda1ba4aa5c1759",
   "schema_version": "1.2.0"
 }
