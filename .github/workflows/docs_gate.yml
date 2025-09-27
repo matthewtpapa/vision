@@ -23,7 +23,6 @@ jobs:
           filters: |
             docs:
               - 'docs/**'
-              - 'docs.specs/**'
               - 'docs/specs/**'
               - 'roadmap.yaml'
               - '.github/workflows/**'
