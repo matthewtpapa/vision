@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Generate roadmap.lock.json with per-stage artifact hashes."""
+"""Generate roadmap.lock.json using tracked files and stage artifacts."""
 
 from __future__ import annotations
 

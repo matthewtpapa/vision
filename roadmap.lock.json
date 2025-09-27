@@ -1,6 +1,6 @@
 {
   "schema_version": "1.2.0",
-  "fileset_sha256": "94586ac57c11b2e71de1a70ef24c68371ea2c60ce695aeb68cdaf6d06c3ee4a6",
+  "fileset_sha256": "b261d2ba4f6941e9740e4a1ab0c40c8dd2c9b3fc6982736ecd49ee8784163205",
   "stages": [
     {
       "id": "S1",
@@ -9,6 +9,8 @@
         "roadmap.lock.json",
         "artifacts/manifest.json",
         "artifacts/manifest.json.sig",
+        "artifacts/sot_summary.json",
+        "artifacts/sot_summary.json.sig",
         "artifacts/seeds_applied.json",
         "artifacts/purity_report.json",
         "artifacts/vision_v1_SoT.pdf",
@@ -16,7 +18,7 @@
         "artifacts/ledger_tip.txt",
         "gate_summary.txt"
       ],
-      "artifact_sha256": "3e9c5cd3f1031731577a89d7117c691feca5c1bf90153c3774feaf2f74e3da43"
+      "artifact_sha256": "d29baada576f58b8c883ccc7ac55249bfebddb7a6e53bcfc7826d49abd063b01"
     },
     {
       "id": "S2",
@@ -37,7 +39,7 @@
         "artifacts/pytest/pytest_s2_summary.txt",
         "gate_summary.txt"
       ],
-      "artifact_sha256": "c5e1eb07415f47cf8efaa69eecd893543639f280d9e49a7f85a37d3bb9b43000"
+      "artifact_sha256": "c39834276bb334f57f65e851e5fef75114112f7d5df2ba5960558349a023cbfa"
     },
     {
       "id": "S3",

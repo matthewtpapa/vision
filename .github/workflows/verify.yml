@@ -113,11 +113,10 @@ st = os.stat("artifacts/vision_v1_SoT.pdf").st_size
 assert st > 10_000, f"vision_v1_SoT.pdf too small: {st}"
 print("sot_pdf_ok=1")
 PY
-      - name: sign-sot (manifest)
+      - name: sign-sot
         run: |
           if [[ -n "${{ secrets.SOT_DEV_SIGNING_KEY }}" ]]; then
-            python scripts/sign_json.py artifacts/manifest.json --key "${{ secrets.SOT_DEV_SIGNING_KEY }}"
-            echo "signature_valid_or_blocked=1"
+            python scripts/sign_json.py artifacts/sot_summary.json --key "${{ secrets.SOT_DEV_SIGNING_KEY }}"
           else
             echo "NO_SIGNING_KEY for S1 signing gate" >&2
             exit 1

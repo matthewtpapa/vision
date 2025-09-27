@@ -135,22 +135,27 @@ def _load_json(path: Path) -> Any:
 
 
 def _check_signature_valid() -> bool:
-    manifest = REPO_ROOT / "artifacts" / "manifest.json"
-    sig_path = manifest.with_suffix(".json.sig")
-    if not manifest.exists() or not sig_path.exists():
-        return False
-    try:
-        sig_data = _load_json(sig_path)
-    except json.JSONDecodeError:
-        return False
-    payload_hash = sig_data.get("payload_sha256")
-    signature = sig_data.get("sig")
-    if not isinstance(payload_hash, str) or len(payload_hash) != 64:
-        return False
-    if not isinstance(signature, str) or len(signature) != 64:
-        return False
-    actual = _sha256_file(manifest)
-    return actual == payload_hash
+    candidates = [
+        (REPO_ROOT / "artifacts" / "sot_summary.json", REPO_ROOT / "artifacts" / "sot_summary.json.sig"),
+        (REPO_ROOT / "artifacts" / "manifest.json", REPO_ROOT / "artifacts" / "manifest.json.sig"),
+    ]
+    for payload_path, sig_path in candidates:
+        if not payload_path.exists() or not sig_path.exists():
+            continue
+        try:
+            sig_data = _load_json(sig_path)
+        except json.JSONDecodeError:
+            continue
+        payload_hash = sig_data.get("payload_sha256")
+        signature = sig_data.get("sig")
+        if not isinstance(payload_hash, str) or len(payload_hash) != 64:
+            continue
+        if not isinstance(signature, str) or len(signature) != 64:
+            continue
+        actual = _sha256_file(payload_path)
+        if actual == payload_hash:
+            return True
+    return False
 
 
 def _check_purity_clean() -> bool:
@@ -349,6 +354,8 @@ def main() -> None:
     if extra_in_lock:
         failures.append(f"unexpected stages in lock: {extra_in_lock}")
 
+    pre_s3_skips = False
+
     for stage in roadmap["stages"]:
         if not isinstance(stage, dict):
             continue
@@ -356,6 +363,8 @@ def main() -> None:
         skip_reason = stage.get("skip_reason")
         if skip_reason:
             gate_lines.append(f"stage={stage_id} SKIP ({skip_reason})")
+            if skip_reason == "pre-S3":
+                pre_s3_skips = True
             continue
         try:
             _ensure_stage_artifacts(stage)
@@ -393,7 +402,8 @@ def main() -> None:
         else:
             gate_lines.append(f"stage={stage_id} PASS")
 
-    gate_lines.append("EXPECTED: S03–S17 not executed")
+    if pre_s3_skips:
+        gate_lines.append("EXPECTED: S03–S17 not executed")
     _append_gate_summary(gate_lines)
 
     if failures:

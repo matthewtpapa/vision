@@ -7,6 +7,8 @@ stages:
       - roadmap.lock.json
       - artifacts/manifest.json
       - artifacts/manifest.json.sig
+      - artifacts/sot_summary.json
+      - artifacts/sot_summary.json.sig
       - artifacts/seeds_applied.json
       - artifacts/purity_report.json
       - artifacts/vision_v1_SoT.pdf
