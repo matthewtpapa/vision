@@ -144,21 +144,27 @@ jobs:
           assert st > 10_000, f"vision_v1_SoT.pdf too small: {st}"
           print("sot_pdf_ok=1")
           PY
-      - name: sign-sot (with key)
-        if: ${{ github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository }}
+      - name: detect signing key
+        id: sigkey
+        shell: bash
         env:
-          SOT_DEV_SIGNING_KEY: ${{ secrets.SOT_DEV_SIGNING_KEY }}
+          SIGN_KEY: ${{ secrets.SOT_DEV_SIGNING_KEY }}
         run: |
-          if [[ -z "${SOT_DEV_SIGNING_KEY}" ]]; then
-            echo "NO_SIGNING_KEY for S1 signing gate" >&2
-            exit 1
+          if [[ -n "${SIGN_KEY}" ]]; then
+            echo "present=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "present=false" >> "$GITHUB_OUTPUT"
           fi
-          python scripts/sign_json.py artifacts/sot_summary.json --key "${SOT_DEV_SIGNING_KEY}"
-      - name: sign-sot (skipped - no key)
-        if: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name != github.repository }}
+
+      - name: sign-sot
+        if: ${{ steps.sigkey.outputs.present == 'true' && (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository) }}
         run: |
-          echo "NO_SIGNING_KEY - skipping S1 signing gate" >&2
-          exit 0
+          python scripts/sign_json.py artifacts/sot_summary.json --key "${{ secrets.SOT_DEV_SIGNING_KEY }}"
+
+      - name: sign-sot (skipped)
+        if: ${{ !(steps.sigkey.outputs.present == 'true' && (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository)) }}
+        run: |
+          echo "NO_SIGNING_KEY - skipping S1 signing gate (fork or missing key)"
       - name: determinism-check
         run: |
           python scripts/write_metrics_hash.py --out artifacts/metrics_hash_run1.txt
