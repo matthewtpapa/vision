@@ -4,7 +4,7 @@ from __future__ import annotations
 import hashlib
 import json
 import os
-from datetime import UTC, datetime
+from datetime import datetime, timezone
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -28,7 +28,7 @@ def main() -> None:
     ART.mkdir(parents=True, exist_ok=True)
     payload = {
         "schema_version": "1.0",
-        "created_at": datetime.now(UTC).isoformat().replace("+00:00", "Z"),
+        "created_at": datetime.now(timezone.utc).isoformat().replace("+00:00", "Z"),
         "repo": os.getenv("GITHUB_REPOSITORY"),
         "commit": os.getenv("GITHUB_SHA"),
         "run_id": os.getenv("GITHUB_RUN_ID"),
