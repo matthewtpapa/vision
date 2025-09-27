@@ -25,10 +25,10 @@
       "sha256": "baab1785d5453fc2ddfdd1985c1d30b686c9aa1a2c7c9373ec1ad625b532f114"
     },
     {
-      "bytes": 5596,
+      "bytes": 5710,
       "mode": 420,
       "path": ".github/workflows/docs_check.yml",
-      "sha256": "0da559d2f352deefebfef1479e726e43f8e4f228fa33732ddff3a46fc69399c9"
+      "sha256": "5881d97acf7453c45d93897807d932727c1f97e6b127f064b75b3a8f472ed466"
     },
     {
       "bytes": 3425,
@@ -271,16 +271,16 @@
       "sha256": "24d856340c4be0ee2f1b13bd219dd6ec2249b8c72051cbbbb959ca69393c694e"
     },
     {
-      "bytes": 747,
+      "bytes": 777,
       "mode": 420,
       "path": "docs/specs/stages/S01.md",
-      "sha256": "4cef230c58656e464eb4eebf39f5ab2ca38054454529ab084465c0d729d8b47e"
+      "sha256": "01742a2a4588186fb8d865a332bf7e44d1dfcd977c34ef185bd2ec9492e29ef8"
     },
     {
       "bytes": 741,
       "mode": 420,
       "path": "docs/specs/stages/S02.md",
-      "sha256": "58459432eaa3b157ee3191abe6360fda63e87ca2699e744df4fb31a02b9c1fce"
+      "sha256": "df85e4e79a02e611daff400e3893cd2783f3538e9c66bd33d0b922d6f569720f"
     },
     {
       "bytes": 638,
@@ -1435,6 +1435,6 @@
       "sha256": "0cd29bf16a3df89cb5fe6dc6ab888b8fad4c66f4d142fa4eb2af500ae2d29bf0"
     }
   ],
-  "fileset_sha256": "eda91f4598fe7a2c8c15f5f0668bbfff34f1e70b82e704f15fda1ba4aa5c1759",
+  "fileset_sha256": "f9631434640432515bfa30548075cc4d9de25a9a9d9a90171d7f470bfa7dae58",
   "schema_version": "1.2.0"
 }
