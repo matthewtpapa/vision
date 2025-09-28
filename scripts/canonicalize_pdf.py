@@ -44,8 +44,21 @@ def canonicalize_pdf(source: Path) -> bytes:
 
     root = writer._root_object  # type: ignore[attr-defined]
 
-    # Drop external metadata streams and structure maps that carry per-render IDs.
-    for volatile_key in ("/Metadata", "/StructTreeRoot", "/PieceInfo", "/OCProperties"):
+    # Drop external metadata streams, name trees, and structure maps that carry
+    # per-render identifiers.
+    volatile_root_keys = (
+        "/Metadata",
+        "/StructTreeRoot",
+        "/PieceInfo",
+        "/OCProperties",
+        "/Outlines",
+        "/Names",
+        "/OpenAction",
+        "/Threads",
+        "/PageLabels",
+        "/AcroForm",
+    )
+    for volatile_key in volatile_root_keys:
         if volatile_key in root:  # type: ignore[index]
             del root[NameObject(volatile_key)]  # type: ignore[index]
 
@@ -57,8 +70,19 @@ def canonicalize_pdf(source: Path) -> bytes:
         if isinstance(annots, ArrayObject):
             for annot in annots:
                 obj = annot.get_object()
-                if isinstance(obj, DictionaryObject) and "/StructParent" in obj:  # type: ignore[index]
-                    del obj[NameObject("/StructParent")]  # type: ignore[index]
+                if isinstance(obj, DictionaryObject):
+                    for key in ("/StructParent", "/M", "/NM", "/CreationDate", "/ModDate"):
+                        if key in obj:  # type: ignore[index]
+                            del obj[NameObject(key)]  # type: ignore[index]
+
+        resources = page.get("/Resources")  # type: ignore[index]
+        if isinstance(resources, DictionaryObject):
+            fonts = resources.get("/Font")  # type: ignore[index]
+            if isinstance(fonts, DictionaryObject):
+                for font_ref in list(fonts.values()):  # type: ignore[attr-defined]
+                    font = font_ref.get_object()
+                    if isinstance(font, DictionaryObject):
+                        _canonicalize_font(font)
 
     info_dict = DictionaryObject()
     info_dict[NameObject("/Producer")] = TextStringObject(_CANONICAL_PRODUCER)
@@ -77,6 +101,35 @@ def canonicalize_pdf(source: Path) -> bytes:
     buffer = io.BytesIO()
     writer.write(buffer)
     return buffer.getvalue()
+
+
+def _canonicalize_font(font: DictionaryObject) -> None:
+    """Normalise embedded font dictionaries to stable names."""
+
+    def _strip_subset(name: str) -> str:
+        raw = name.lstrip("/")
+        if len(raw) > 7 and raw[6] == "+" and raw[:6].isupper():
+            return raw[7:]
+        return raw
+
+    base_font = font.get("/BaseFont")  # type: ignore[index]
+    if isinstance(base_font, TextStringObject | NameObject):
+        stripped = _strip_subset(str(base_font))
+        font[NameObject("/BaseFont")] = NameObject(f"/{stripped}")
+
+    descriptor = font.get("/FontDescriptor")  # type: ignore[index]
+    if isinstance(descriptor, DictionaryObject):
+        font_name = descriptor.get("/FontName")  # type: ignore[index]
+        if isinstance(font_name, TextStringObject | NameObject):
+            stripped = _strip_subset(str(font_name))
+            descriptor[NameObject("/FontName")] = NameObject(f"/{stripped}")
+
+    descendants = font.get("/DescendantFonts")  # type: ignore[index]
+    if isinstance(descendants, ArrayObject):
+        for descendant_ref in descendants:
+            descendant = descendant_ref.get_object()
+            if isinstance(descendant, DictionaryObject):
+                _canonicalize_font(descendant)
 
 
 def _parse_args() -> argparse.Namespace:
