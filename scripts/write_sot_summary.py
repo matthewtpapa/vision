@@ -4,10 +4,15 @@ from __future__ import annotations
 import hashlib
 import json
 import os
-from datetime import datetime, timezone
+from datetime import datetime
 from pathlib import Path
 
-UTC = datetime.UTC if hasattr(datetime, "UTC") else timezone.utc
+try:
+    from datetime import UTC  # Python 3.11+
+except ImportError:  # pragma: no cover - Python 3.10 fallback
+    from datetime import timezone as _timezone
+
+    UTC = _timezone.utc  # noqa: UP017 - Python 3.10 fallback requires timezone.utc
 
 ROOT = Path(__file__).resolve().parents[1]
 ART = ROOT / "artifacts"
