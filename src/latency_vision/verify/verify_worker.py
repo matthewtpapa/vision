@@ -7,11 +7,19 @@ from typing import Protocol
 
 
 class VerifyResult(Protocol):
-    @property
-    def accepted(self) -> bool: ...
+    """Protocol describing verification outcomes."""
 
     @property
-    def evidence_path(self) -> str: ...
+    def accepted(self) -> bool:
+        """Return whether the candidate passes verification."""
+
+        raise NotImplementedError
+
+    @property
+    def evidence_path(self) -> str:
+        """Return the path to the supporting evidence payload."""
+
+        raise NotImplementedError
 
 
 @dataclass(frozen=True)

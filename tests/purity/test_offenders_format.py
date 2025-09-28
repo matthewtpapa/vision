@@ -2,8 +2,12 @@ def test_offenders_are_objects():
     report = {
         "sandbox_mode": "strace-only",
         "network_syscalls": True,
-        "offending": [{"event": "strace", "detail": "socket(...)=3"}],
-        "offenders": [{"event": "strace", "detail": "socket(...)=3"}],
+        "offending": [
+            {"event": "strace", "detail": "socket(AF_INET, SOCK_STREAM, 0)=3"}
+        ],
+        "offenders": [
+            {"event": "strace", "detail": "socket(AF_INET, SOCK_STREAM, 0)=3"}
+        ],
     }
     assert isinstance(report["offending"], list)
     assert isinstance(report["offenders"], list)

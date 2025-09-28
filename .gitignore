@@ -182,6 +182,7 @@ cython_debug/
 .cursorignore
 .cursorindexingignore
 artifacts/
+!artifacts/.gitkeep
 logs/
 bench/*.json
 bench/*.jsonl

@@ -1,3 +1,0 @@
-...................................................sss...................                                                [100%]
--------------------------- generated xml file: /workspace/vision/artifacts/pytest/pytest_s2_junit.xml --------------------------
-70 passed, 21 skipped, 2 warnings in 1.88s

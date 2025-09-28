@@ -25,8 +25,8 @@ def canonicalize_metrics(obj: dict[str, Any]) -> bytes:
 
     Deep-sort all dict keys; normalize sequences to lists; convert floats to
     strings rounded to 9 decimal places; ensure all numbers serialize
-    deterministically; dump to UTF-8 bytes via ``json.dumps(..., separators=(",",
-    ":"), ensure_ascii=False)``.
+    deterministically; dump to UTF-8 bytes using ``json.dumps`` with compact
+    separators and ``ensure_ascii=False``.
     """
     canonical = _normalize(obj)
     return json.dumps(canonical, separators=(",", ":"), ensure_ascii=False).encode("utf-8")

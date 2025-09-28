@@ -18,7 +18,18 @@ class Embedder:
 
 
 class Runner(Protocol):
-    def __call__(self, crops: list[object], *, dim: int, batch_size: int) -> list[list[float]]: ...
+    """Callable responsible for producing raw embedding vectors."""
+
+    def __call__(
+        self,
+        crops: list[object],
+        *,
+        dim: int,
+        batch_size: int,
+    ) -> list[list[float]]:
+        """Encode *crops* and return a list of vectors."""
+
+        raise NotImplementedError
 
 
 class ClipLikeEmbedder(Embedder):

@@ -5,4 +5,9 @@ from typing import Any, Protocol
 
 
 class EvidenceLedger(Protocol):
-    def append(self, record: Mapping[str, Any]) -> None: ...
+    """Protocol describing append-only evidence loggers."""
+
+    def append(self, record: Mapping[str, Any]) -> None:
+        """Append *record* to the evidence ledger."""
+
+        raise NotImplementedError

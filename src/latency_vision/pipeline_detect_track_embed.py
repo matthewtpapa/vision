@@ -124,7 +124,7 @@ class DetectTrackEmbedPipeline:
                         self._store = store
 
                         def _on_exemplar(item: dict[str, object]) -> None:
-                            # item has keys: "label", "embedding", ...
+                            # item contains fields such as "label", "embedding", and metadata
                             vec = cast(list[float], item["embedding"])
                             lab = str(item["label"])
                             assert self._matcher is not None
