@@ -1,12 +1,18 @@
 #!/usr/bin/env python3
-import json, re, subprocess
+"""Preflight validation for CI tripwire."""
+
+import re
+import subprocess
 from pathlib import Path
 
-def sh(cmd):
+
+def sh(cmd: str) -> str:
     return subprocess.check_output(cmd, shell=True, text=True).strip()
 
 # 1) No tracked artifacts/logs/gate_summary
-tracked = sh("git ls-files 'artifacts/*' 'logs/*' 'bench/*.json' 'bench/*.jsonl' || true").splitlines()
+tracked = sh(
+    "git ls-files 'artifacts/*' 'logs/*' 'bench/*.json' 'bench/*.jsonl' || true"
+).splitlines()
 root_gs = "gate_summary.txt" in sh("git ls-files || true").splitlines()
 errs = []
 if tracked:
@@ -16,10 +22,13 @@ if root_gs:
 
 # 2) No ellipses/theater in code/Make/scripts
 bad = []
-for p in Path('.').rglob('*'):
+for p in Path(".").rglob("*"):
     if not p.is_file():
         continue
-    if not any(str(p).startswith(d) for d in ("src/", "scripts/", "Makefile", ".github/workflows/verify.yml")):
+    if not any(
+        str(p).startswith(d)
+        for d in ("src/", "scripts/", "Makefile", ".github/workflows/verify.yml")
+    ):
         continue
     try:
         txt = p.read_text(encoding="utf-8", errors="ignore")

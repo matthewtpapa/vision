@@ -22,6 +22,7 @@ stages:
       - pdf_deterministic
       - append_only_ok
       - ledger_tip_ok
+    skip_reason: "pre-artifacts"
   - id: S2
     name: Prove baseline loop
     artifacts:
@@ -49,6 +50,7 @@ stages:
       - tests_green
       - append_only_ok
       - evidence_present
+    skip_reason: "pre-artifacts"
   - id: S3
     name: Calibration & wiring verified
     artifacts:

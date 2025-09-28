@@ -9,9 +9,9 @@ import tarfile
 import tempfile
 import textwrap
 import zipfile
+from collections.abc import Iterable
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Iterable
 
 try:
     import tomllib  # Python >=3.11
@@ -228,7 +228,7 @@ def _write_metadata(destination: Path, config: ProjectConfig) -> Path:
     dist_info.mkdir(parents=True, exist_ok=True)
     (dist_info / "METADATA").write_text(_format_metadata(config), encoding="utf-8")
     wheel_text = textwrap.dedent(
-        f"""
+        """
         Wheel-Version: 1.0
         Generator: latency_vision.build_backend
         Root-Is-Purelib: true
