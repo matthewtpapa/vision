@@ -180,8 +180,20 @@ jobs:
 
           import hashlib
           import os
-          import re
           from pathlib import Path
+
+          import sys
+
+          sys.path.insert(0, "scripts")
+
+          from canonicalize_pdf import canonicalize_pdf
+
+
+          def sha256_bytes(data: bytes) -> str:
+              digest = hashlib.sha256()
+              digest.update(data)
+              return digest.hexdigest()
+
 
           artifacts_dir = Path("artifacts")
           run1 = artifacts_dir / "vision_v1_SoT_run1.pdf"
@@ -189,41 +201,10 @@ jobs:
           pdf_path = artifacts_dir / "vision_v1_SoT.pdf"
           html_path = Path("docs/Vision_v1_Investor_SoT.html")
 
-          def sha256(path: Path) -> str:
-              digest = hashlib.sha256()
-              with path.open("rb") as handle:
-                  for chunk in iter(lambda: handle.read(1 << 20), b""):
-                      digest.update(chunk)
-              return digest.hexdigest()
-
-          def canonicalize(pdf_path: Path) -> bytes:
-              data = pdf_path.read_bytes()
-              canonical = data
-              canonical = re.sub(
-                  rb"/CreationDate\s*\(D:\d{14}.*?\)",
-                  b"/CreationDate(D:19700101000000Z)",
-                  canonical,
-                  flags=re.DOTALL,
-              )
-              canonical = re.sub(
-                  rb"/ModDate\s*\(D:\d{14}.*?\)",
-                  b"/ModDate(D:19700101000000Z)",
-                  canonical,
-                  flags=re.DOTALL,
-              )
-              canonical = re.sub(
-                  rb"/ID\s*\[\s*<[^>]+>\s*<[^>]+>\s*\]",
-                  b"/ID[<00000000000000000000000000000000><00000000000000000000000000000000>]",
-                  canonical,
-              )
-              if canonical != data:
-                  pdf_path.write_bytes(canonical)
-              return canonical
-
-          run1_bytes = canonicalize(run1)
-          run2_bytes = canonicalize(run2)
-          run1_hash = hashlib.sha256(run1_bytes).hexdigest()
-          run2_hash = hashlib.sha256(run2_bytes).hexdigest()
+          run1_bytes = canonicalize_pdf(run1)
+          run2_bytes = canonicalize_pdf(run2)
+          run1_hash = sha256_bytes(run1_bytes)
+          run2_hash = sha256_bytes(run2_bytes)
           if run1_hash != run2_hash:
               raise SystemExit(f"PDF nondeterminism: {run1_hash} != {run2_hash}")
 
@@ -232,8 +213,8 @@ jobs:
           st = os.stat(pdf_path).st_size
           assert st > 10_000, f"vision_v1_SoT.pdf too small: {st}"
 
-          pdf_hash = sha256(pdf_path)
-          html_hash = sha256(html_path)
+          pdf_hash = sha256_bytes(pdf_path.read_bytes())
+          html_hash = sha256_bytes(html_path.read_bytes())
           (artifacts_dir / "vision_v1_SoT.pdf.sha256").write_text(pdf_hash + "\n", encoding="utf-8")
           (artifacts_dir / "Vision_v1_Investor_SoT.html.sha256").write_text(
               html_hash + "\n", encoding="utf-8"
