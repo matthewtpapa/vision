@@ -1,6 +1,6 @@
 {
   "schema_version": "1.2.0",
-  "fileset_sha256": "dfd057155a5cb52559874a1c506f0e0e67b4a96cad466a91ef184f7e5c10560e",
+  "fileset_sha256": "223782a13efe117510392aaaebf286c18ae64776c9f8ffeeab3b2544cc3a750d",
   "stages": [
     {
       "id": "S1",
@@ -18,7 +18,7 @@
         "artifacts/ledger_tip.txt",
         "gate_summary.txt"
       ],
-      "artifact_sha256": "d29baada576f58b8c883ccc7ac55249bfebddb7a6e53bcfc7826d49abd063b01"
+      "artifact_sha256": "cc921aa83a9f8d887e10b1cfae3f56a8199aeb7204e36a12759a5eb56b292939"
     },
     {
       "id": "S2",
