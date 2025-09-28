@@ -6,6 +6,7 @@ from __future__ import annotations
 import hashlib
 import json
 import subprocess
+import traceback
 from collections.abc import Iterable
 from pathlib import Path
 
@@ -126,7 +127,7 @@ def _compute_stage_hash(stage: dict[str, object]) -> tuple[list[str], str]:
     return existing, hashlib.sha256(payload).hexdigest()
 
 
-def main() -> None:
+def main() -> int:
     roadmap = _parse_roadmap(ROADMAP_PATH)
     fileset_sha = _compute_fileset_sha()
     stage_entries: list[dict[str, object]] = []
@@ -148,7 +149,14 @@ def main() -> None:
         "stages": stage_entries,
     }
     LOCK_PATH.write_text(json.dumps(payload, indent=2) + "\n", encoding="utf-8")
+    return 0
 
 
 if __name__ == "__main__":
-    main()
+    try:
+        raise SystemExit(main())
+    except SystemExit:
+        raise
+    except Exception:
+        traceback.print_exc()
+        raise SystemExit(1)
