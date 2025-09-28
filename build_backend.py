@@ -198,9 +198,9 @@ def _format_metadata(config: ProjectConfig) -> str:
             dep = dep.strip()
             if ";" in dep:
                 name, marker = dep.split(";", 1)
-                combined = f"{name.strip()}; ({marker.strip()}) and extra == \"{extra}\""
+                combined = f'{name.strip()}; ({marker.strip()}) and extra == "{extra}"'
             else:
-                combined = f"{dep}; extra == \"{extra}\""
+                combined = f'{dep}; extra == "{extra}"'
             message["Requires-Dist"] = combined
     if config.readme_text is not None:
         content_type = config.readme_content_type or "text/plain"
@@ -227,14 +227,17 @@ def _write_metadata(destination: Path, config: ProjectConfig) -> Path:
     dist_info = destination / config.dist_info
     dist_info.mkdir(parents=True, exist_ok=True)
     (dist_info / "METADATA").write_text(_format_metadata(config), encoding="utf-8")
-    wheel_text = textwrap.dedent(
-        """
+    wheel_text = (
+        textwrap.dedent(
+            """
         Wheel-Version: 1.0
         Generator: latency_vision.build_backend
         Root-Is-Purelib: true
         Tag: py3-none-any
         """
-    ).strip() + "\n"
+        ).strip()
+        + "\n"
+    )
     (dist_info / "WHEEL").write_text(wheel_text, encoding="utf-8")
     entry_points_sections = []
     if config.scripts:
@@ -354,27 +357,19 @@ def build_editable(
         return wheel_path.name
 
 
-def get_requires_for_build_wheel(
-    config_settings: dict[str, object] | None = None
-) -> list[str]:
+def get_requires_for_build_wheel(config_settings: dict[str, object] | None = None) -> list[str]:
     return []
 
 
-def get_requires_for_build_editable(
-    config_settings: dict[str, object] | None = None
-) -> list[str]:
+def get_requires_for_build_editable(config_settings: dict[str, object] | None = None) -> list[str]:
     return []
 
 
-def get_requires_for_build_sdist(
-    config_settings: dict[str, object] | None = None
-) -> list[str]:
+def get_requires_for_build_sdist(config_settings: dict[str, object] | None = None) -> list[str]:
     return []
 
 
-def build_sdist(
-    sdist_directory: str, config_settings: dict[str, object] | None = None
-) -> str:
+def build_sdist(sdist_directory: str, config_settings: dict[str, object] | None = None) -> str:
     config = _load_config()
     archive_name = f"{config.normalized_name}-{config.canonical_version}.tar.gz"
     sdist_path = Path(sdist_directory) / archive_name

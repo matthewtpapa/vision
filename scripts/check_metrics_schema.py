@@ -30,9 +30,7 @@ except ImportError:  # pragma: no cover - jsonschema unavailable in sandbox
         def iter_errors(self, instance: Any):  # type: ignore[override]
             yield from _validate_with_schema(instance, self._schema, ())
 
-    def _validate_with_schema(
-        instance: Any, schema: dict[str, Any], path: Sequence[object]
-    ):
+    def _validate_with_schema(instance: Any, schema: dict[str, Any], path: Sequence[object]):
         path_tuple = tuple(path)
         schema_type = schema.get("type")
         if schema_type == "object":
@@ -42,9 +40,7 @@ except ImportError:  # pragma: no cover - jsonschema unavailable in sandbox
             required = schema.get("required", [])
             for key in required:
                 if key not in instance:
-                    yield ValidationError(
-                        f"missing required property '{key}'", path_tuple + (key,)
-                    )
+                    yield ValidationError(f"missing required property '{key}'", path_tuple + (key,))
             properties = schema.get("properties", {})
             if schema.get("additionalProperties", True) is False:
                 for key in instance:
@@ -55,9 +51,7 @@ except ImportError:  # pragma: no cover - jsonschema unavailable in sandbox
                         )
             for key, subschema in properties.items():
                 if key in instance:
-                    yield from _validate_with_schema(
-                        instance[key], subschema, path_tuple + (key,)
-                    )
+                    yield from _validate_with_schema(instance[key], subschema, path_tuple + (key,))
             return
         if schema_type == "array":
             if not isinstance(instance, list):
@@ -65,25 +59,19 @@ except ImportError:  # pragma: no cover - jsonschema unavailable in sandbox
                 return
             min_items = schema.get("minItems")
             if isinstance(min_items, int) and len(instance) < min_items:
-                yield ValidationError(
-                    f"array has fewer than {min_items} items", path_tuple
-                )
+                yield ValidationError(f"array has fewer than {min_items} items", path_tuple)
             if schema.get("uniqueItems"):
                 seen = set()
                 for index, item in enumerate(instance):
                     marker = json.dumps(item, sort_keys=True, separators=(",", ":"))
                     if marker in seen:
-                        yield ValidationError(
-                            "array items are not unique", path_tuple + (index,)
-                        )
+                        yield ValidationError("array items are not unique", path_tuple + (index,))
                     else:
                         seen.add(marker)
             item_schema = schema.get("items")
             if isinstance(item_schema, dict):
                 for index, item in enumerate(instance):
-                    yield from _validate_with_schema(
-                        item, item_schema, path_tuple + (index,)
-                    )
+                    yield from _validate_with_schema(item, item_schema, path_tuple + (index,))
             return
         if schema_type == "string":
             if not isinstance(instance, str):
@@ -91,9 +79,7 @@ except ImportError:  # pragma: no cover - jsonschema unavailable in sandbox
                 return
             pattern = schema.get("pattern")
             if pattern and not re.fullmatch(pattern, instance):
-                yield ValidationError(
-                    "string does not match required pattern", path_tuple
-                )
+                yield ValidationError("string does not match required pattern", path_tuple)
             enum = schema.get("enum")
             if enum and instance not in enum:
                 yield ValidationError("string is not an allowed value", path_tuple)
@@ -127,9 +113,7 @@ except ImportError:  # pragma: no cover - jsonschema unavailable in sandbox
         # Fallback: recurse into properties if provided even without explicit type.
         for key, subschema in schema.get("properties", {}).items():
             if isinstance(instance, dict) and key in instance:
-                yield from _validate_with_schema(
-                    instance[key], subschema, path_tuple + (key,)
-                )
+                yield from _validate_with_schema(instance[key], subschema, path_tuple + (key,))
 
 
 from latency_vision.schemas import load_schema

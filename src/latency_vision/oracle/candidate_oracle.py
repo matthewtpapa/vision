@@ -7,9 +7,7 @@ from typing import Any, Protocol
 class CandidateOracle(Protocol):
     """Protocol describing unknown-candidate orchestration."""
 
-    def enqueue_unknown(
-        self, embedding: Sequence[float], context: Mapping[str, Any]
-    ) -> None:
+    def enqueue_unknown(self, embedding: Sequence[float], context: Mapping[str, Any]) -> None:
         """Add an unknown embedding and associated *context* to the queue."""
 
         raise NotImplementedError

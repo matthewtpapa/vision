@@ -9,6 +9,7 @@ from pathlib import Path
 def sh(cmd: str) -> str:
     return subprocess.check_output(cmd, shell=True, text=True).strip()
 
+
 # 1) No tracked artifacts/logs/gate_summary
 tracked = sh(
     "git ls-files 'artifacts/*' 'logs/*' 'bench/*.json' 'bench/*.jsonl' || true"
@@ -34,7 +35,7 @@ for p in Path(".").rglob("*"):
         txt = p.read_text(encoding="utf-8", errors="ignore")
     except Exception:
         continue
-    if re.search(r'(^|\s)\.\.\.(\s|$)', txt):
+    if re.search(r"(^|\s)\.\.\.(\s|$)", txt):
         bad.append(str(p))
 if bad:
     errs.append(f"Files contain '...': {bad}")
@@ -42,7 +43,7 @@ if bad:
 # 3) Verify required CI targets exist in Makefile
 mk = Path("Makefile").read_text()
 for target in ["bench", "purity", "schema-check", "metrics-hash", "metrics-hash-twice", "prove"]:
-    if not re.search(rf'^{target}:(?:\s|$)', mk, re.M):
+    if not re.search(rf"^{target}:(?:\s|$)", mk, re.M):
         errs.append(f"Missing Make target: {target}")
 
 if errs:
