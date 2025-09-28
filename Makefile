@@ -35,7 +35,7 @@ metrics-hash-twice: metrics-hash
 	mkdir -p artifacts
 	PYTHONPATH="src${PYTHONPATH:+:${PYTHONPATH}}" python scripts/write_metrics_hash.py --out artifacts/metrics_hash_run1.txt
 	PYTHONPATH="src${PYTHONPATH:+:${PYTHONPATH}}" python scripts/write_metrics_hash.py --out artifacts/metrics_hash_run2.txt
-	python -c "from pathlib import Path; run1 = Path('artifacts/metrics_hash_run1.txt').read_text(encoding='utf-8').strip(); run2 = Path('artifacts/metrics_hash_run2.txt').read_text(encoding='utf-8').strip();\nif run1 != run2: raise SystemExit(f'Determinism breach: {run1} != {run2}'); Path('artifacts/metrics_hash.txt').write_text(run1 + '\n', encoding='utf-8'); print('determinism_ok=1')"
+	python -c "from pathlib import Path; run1 = Path('artifacts/metrics_hash_run1.txt').read_text(encoding='utf-8').strip(); run2 = Path('artifacts/metrics_hash_run2.txt').read_text(encoding='utf-8').strip(); assert run1 == run2, f'Determinism breach: {run1} != {run2}'; Path('artifacts/metrics_hash.txt').write_text(run1 + '\n', encoding='utf-8'); print('determinism_ok=1')"
 
 schema-check:
 	set -euo pipefail
