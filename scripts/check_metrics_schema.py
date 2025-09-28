@@ -165,8 +165,9 @@ def main() -> None:
     purity = _load_json(ROOT / "artifacts/purity_report.json")
     _validate(purity, "purity_report.schema.json", label="artifacts/purity_report.json")
 
-    manifest = _load_json(ROOT / "bench/fixtures/manifest.json")
-    _validate(manifest, "metrics_manifest.schema.json", label="bench/fixtures/manifest.json")
+    manifest_path = ROOT / "data/bench/manifest.json"
+    manifest = _load_json(manifest_path)
+    _validate(manifest, "metrics_manifest.schema.json", label="data/bench/manifest.json")
 
     # Validate each JSONL line in the evidence ledger
     ledger_path = ROOT / "logs/evidence_ledger.jsonl"

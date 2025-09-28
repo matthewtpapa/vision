@@ -86,5 +86,5 @@ def validate(path: Path) -> None:
 
 
 if __name__ == "__main__":
-    validate(Path("bench/fixtures/manifest.json"))
+    validate(Path("data/bench/manifest.json"))
     print("manifest ok")

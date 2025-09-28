@@ -3,10 +3,10 @@
 SHELL := /usr/bin/env bash
 .SHELLFLAGS := -eu -o pipefail -c
 
-.PHONY: eval-pack bench slo-check metrics-hash purity supplychain kb-promote prove unknowns-guard api-freeze schema-bump roadmap-lock roadmap-check
+.PHONY: eval-pack bench slo-check metrics-hash purity supplychain kb-promote prove unknowns-guard api-freeze schema-bump roadmap-lock roadmap-check tripwire
 
-FIXTURE_BANK := bench/fixtures/bank.jsonl
-FIXTURE_QUERIES := bench/fixtures/queries.jsonl
+FIXTURE_BANK := data/bench/bank.jsonl
+FIXTURE_QUERIES := data/bench/queries.jsonl
 
 bench:
 	set -euo pipefail
@@ -30,6 +30,29 @@ metrics-hash:
 	PYTHONPATH="src${PYTHONPATH:+:${PYTHONPATH}}" python scripts/check_metrics_schema.py
 	PYTHONPATH="src${PYTHONPATH:+:${PYTHONPATH}}" python scripts/write_metrics_hash.py
 
+metrics-hash-twice: metrics-hash
+	set -euo pipefail
+	mkdir -p artifacts
+	PYTHONPATH="src${PYTHONPATH:+:${PYTHONPATH}}" python scripts/write_metrics_hash.py --out artifacts/metrics_hash_run1.txt
+	PYTHONPATH="src${PYTHONPATH:+:${PYTHONPATH}}" python scripts/write_metrics_hash.py --out artifacts/metrics_hash_run2.txt
+	python - <<-'PY'
+	from pathlib import Path
+	run1 = Path('artifacts/metrics_hash_run1.txt').read_text(encoding='utf-8').strip()
+	run2 = Path('artifacts/metrics_hash_run2.txt').read_text(encoding='utf-8').strip()
+	if run1 != run2:
+	    raise SystemExit(f"Determinism breach: {run1} != {run2}")
+	Path('artifacts/metrics_hash.txt').write_text(run1 + '\n', encoding='utf-8')
+	print('determinism_ok=1')
+	PY
+
+schema-check:
+	set -euo pipefail
+	PYTHONPATH="src${PYTHONPATH:+:${PYTHONPATH}}" python scripts/check_schema_sync.py
+	PYTHONPATH="src${PYTHONPATH:+:${PYTHONPATH}}" python scripts/check_schema_bump.py
+
+tripwire:
+	python scripts/preflight_tripwire.py
+
 
 purity:
 	set -euo pipefail
@@ -52,7 +75,8 @@ prove:
 	$(MAKE) bench
 	$(MAKE) slo-check
 	$(MAKE) purity
-	$(MAKE) metrics-hash
+	$(MAKE) schema-check
+	$(MAKE) metrics-hash-twice
 	$(MAKE) supplychain
 	PYTHONPATH="src${PYTHONPATH:+:${PYTHONPATH}}" python scripts/step_summary.py
 

@@ -65,6 +65,43 @@ jobs:
       - name: Unit tests
         run: pytest -q
 
+  verify:
+    runs-on: ubuntu-latest
+    env:
+      TZ: UTC
+      LC_ALL: C.UTF-8
+      LANG: C.UTF-8
+      PYTHONUTF8: "1"
+    steps:
+      - uses: actions/checkout@v4
+        with: { fetch-depth: 0 }
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: "pip"
+          cache-dependency-path: |
+            requirements-dev.txt
+            pyproject.toml
+      - name: Install deps
+        run: |
+          python -m pip install -U pip
+          pip install -r requirements-dev.txt
+          pip install -e .
+      - name: Tripwire
+        run: make tripwire
+      - name: Prove (S2 scaffolding only)
+        run: |
+          make prove
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: verify-artifacts
+          path: |
+            artifacts/**
+            gate_summary.txt
+          if-no-files-found: error
+
   docs-drift:
     runs-on: ubuntu-latest
     env:
