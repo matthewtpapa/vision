@@ -11,9 +11,13 @@ def sh(cmd: str) -> str:
 
 
 # 1) No tracked artifacts/logs/gate_summary
-tracked = sh(
-    "git ls-files 'artifacts/*' 'logs/*' 'bench/*.json' 'bench/*.jsonl' || true"
-).splitlines()
+tracked = [
+    path
+    for path in sh(
+        "git ls-files 'artifacts/*' 'logs/*' 'bench/*.json' 'bench/*.jsonl' || true"
+    ).splitlines()
+    if path != "artifacts/.gitkeep"
+]
 root_gs = "gate_summary.txt" in sh("git ls-files || true").splitlines()
 errs = []
 if tracked:
