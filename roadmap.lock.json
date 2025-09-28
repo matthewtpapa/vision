@@ -1,4 +1,177 @@
 {
-  "fileset_sha256": "48464ebd7f1c7ea042dd9316cf527709d2edc08bcf82521bd63d60d855866740",
-  "schema_version": "1.2.0"
+  "schema_version": "1.2.0",
+  "fileset_sha256": "bdfa2f07ef162bdacc79494e99ce82a2f0dc0ef138af15d80bec0b3bbc1d62ff",
+  "stages": [
+    {
+      "id": "S1",
+      "artifacts": [
+        "roadmap.yaml",
+        "roadmap.lock.json",
+        "artifacts/manifest.json",
+        "artifacts/manifest.json.sig",
+        "artifacts/sot_summary.json",
+        "artifacts/sot_summary.json.sig",
+        "artifacts/seeds_applied.json",
+        "artifacts/purity_report.json",
+        "artifacts/vision_v1_SoT.pdf",
+        "artifacts/stage_ledger.jsonl",
+        "artifacts/ledger_tip.txt",
+        "gate_summary.txt"
+      ],
+      "artifact_sha256": "cc921aa83a9f8d887e10b1cfae3f56a8199aeb7204e36a12759a5eb56b292939"
+    },
+    {
+      "id": "S2",
+      "artifacts": [
+        "roadmap.yaml",
+        "roadmap.lock.json",
+        "artifacts/manifest.json",
+        "artifacts/manifest.json.sig",
+        "artifacts/seeds_applied.json",
+        "artifacts/purity_report.json",
+        "artifacts/metrics_run1.json",
+        "artifacts/metrics_run2.json",
+        "artifacts/metrics_summary.json",
+        "artifacts/promotion_report.jsonl",
+        "logs/evidence_ledger.jsonl",
+        "artifacts/stage_ledger.jsonl",
+        "artifacts/pytest/pytest_s2_junit.xml",
+        "artifacts/pytest/pytest_s2_summary.txt",
+        "gate_summary.txt"
+      ],
+      "artifact_sha256": "c39834276bb334f57f65e851e5fef75114112f7d5df2ba5960558349a023cbfa"
+    },
+    {
+      "id": "S3",
+      "artifacts": [
+        "artifacts/metrics_summary.json",
+        "artifacts/metrics_hash.txt",
+        "artifacts/stage_ledger.jsonl",
+        "logs/evidence_ledger.jsonl",
+        "gate_summary.txt"
+      ],
+      "artifact_sha256": "2d25db5d07cd6f0419d0c10628a9d2516f7613f3785e4755433348023273f53e"
+    },
+    {
+      "id": "S4",
+      "artifacts": [
+        "artifacts/stage_ledger.jsonl",
+        "gate_summary.txt"
+      ],
+      "artifact_sha256": "9bc2a3c28f81de36dd055c8732514673cf4fc342ff803e6ea26a162402ca36b3"
+    },
+    {
+      "id": "S5",
+      "artifacts": [
+        "artifacts/promotion_report.json",
+        "artifacts/promotion_report.jsonl",
+        "artifacts/stage_ledger.jsonl",
+        "gate_summary.txt"
+      ],
+      "artifact_sha256": "8f69270161eae5cb6210129d68f5b0515e1e98fe6802e4e6181aa9d1c91680e0"
+    },
+    {
+      "id": "S6",
+      "artifacts": [
+        "artifacts/stage_ledger.jsonl",
+        "gate_summary.txt"
+      ],
+      "artifact_sha256": "9bc2a3c28f81de36dd055c8732514673cf4fc342ff803e6ea26a162402ca36b3"
+    },
+    {
+      "id": "S7",
+      "artifacts": [
+        "artifacts/metrics_summary.json",
+        "artifacts/metrics_hash.txt",
+        "schemas/metrics.schema.json",
+        "artifacts/stage_ledger.jsonl",
+        "gate_summary.txt"
+      ],
+      "artifact_sha256": "5232775bd1ca3027420061228824ffe7b128f4d4c09104c7e09a455bd6fa6ae0"
+    },
+    {
+      "id": "S8",
+      "artifacts": [
+        "artifacts/stage_ledger.jsonl",
+        "gate_summary.txt"
+      ],
+      "artifact_sha256": "9bc2a3c28f81de36dd055c8732514673cf4fc342ff803e6ea26a162402ca36b3"
+    },
+    {
+      "id": "S9",
+      "artifacts": [
+        "artifacts/purity_report.json",
+        "artifacts/stage_ledger.jsonl",
+        "gate_summary.txt"
+      ],
+      "artifact_sha256": "2e0921dc283801a2d8f6d66318d123253fe5625788298a2aa31b504e39066509"
+    },
+    {
+      "id": "S10",
+      "artifacts": [
+        "artifacts/stage_ledger.jsonl",
+        "gate_summary.txt"
+      ],
+      "artifact_sha256": "9bc2a3c28f81de36dd055c8732514673cf4fc342ff803e6ea26a162402ca36b3"
+    },
+    {
+      "id": "S11",
+      "artifacts": [
+        "artifacts/promotion_report.json",
+        "artifacts/stage_ledger.jsonl",
+        "gate_summary.txt"
+      ],
+      "artifact_sha256": "7810b01def7740e12e3639c45a1c955c1e0e2273d7d968ef068376f03c6440fb"
+    },
+    {
+      "id": "S12",
+      "artifacts": [
+        "artifacts/stage_ledger.jsonl",
+        "gate_summary.txt"
+      ],
+      "artifact_sha256": "9bc2a3c28f81de36dd055c8732514673cf4fc342ff803e6ea26a162402ca36b3"
+    },
+    {
+      "id": "S13",
+      "artifacts": [
+        "artifacts/stage_ledger.jsonl",
+        "gate_summary.txt"
+      ],
+      "artifact_sha256": "9bc2a3c28f81de36dd055c8732514673cf4fc342ff803e6ea26a162402ca36b3"
+    },
+    {
+      "id": "S14",
+      "artifacts": [
+        "artifacts/stage_ledger.jsonl",
+        "gate_summary.txt"
+      ],
+      "artifact_sha256": "9bc2a3c28f81de36dd055c8732514673cf4fc342ff803e6ea26a162402ca36b3"
+    },
+    {
+      "id": "S15",
+      "artifacts": [
+        "artifacts/promotion_report.json",
+        "artifacts/ledger_tip.txt",
+        "artifacts/stage_ledger.jsonl",
+        "gate_summary.txt"
+      ],
+      "artifact_sha256": "78d44411457bf9c8c56c8e2b842b336514e9db30930144c9435a33993cbdc43c"
+    },
+    {
+      "id": "S16",
+      "artifacts": [
+        "artifacts/stage_ledger.jsonl",
+        "gate_summary.txt"
+      ],
+      "artifact_sha256": "9bc2a3c28f81de36dd055c8732514673cf4fc342ff803e6ea26a162402ca36b3"
+    },
+    {
+      "id": "S17",
+      "artifacts": [
+        "artifacts/stage_ledger.jsonl",
+        "gate_summary.txt"
+      ],
+      "artifact_sha256": "9bc2a3c28f81de36dd055c8732514673cf4fc342ff803e6ea26a162402ca36b3"
+    }
+  ]
 }

@@ -1,1 +1,18 @@
+stage=S1 PASS
 stage=S2 PASS
+stage=S3 SKIP (pre-S3)
+stage=S4 SKIP (pre-S3)
+stage=S5 SKIP (pre-S3)
+stage=S6 SKIP (pre-S3)
+stage=S7 SKIP (pre-S3)
+stage=S8 SKIP (pre-S3)
+stage=S9 SKIP (pre-S3)
+stage=S10 SKIP (pre-S3)
+stage=S11 SKIP (pre-S3)
+stage=S12 SKIP (pre-S3)
+stage=S13 SKIP (pre-S3)
+stage=S14 SKIP (pre-S3)
+stage=S15 SKIP (pre-S3)
+stage=S16 SKIP (pre-S3)
+stage=S17 SKIP (pre-S3)
+EXPECTED: S03–S17 not executed
