@@ -4,10 +4,10 @@ from __future__ import annotations
 import hashlib
 import json
 import os
-from datetime import datetime, timezone
+from datetime import datetime
 from pathlib import Path
 
-UTC = datetime.UTC if hasattr(datetime, "UTC") else timezone.utc
+UTC = datetime.UTC if hasattr(datetime, "UTC") else datetime.timezone.utc
 
 ROOT = Path(__file__).resolve().parents[1]
 ART = ROOT / "artifacts"
