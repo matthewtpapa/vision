@@ -4,6 +4,7 @@ from __future__ import annotations
 import re
 from pathlib import Path
 
+from canonicalize_pdf import canonicalize_pdf
 from reportlab.lib.pagesizes import letter
 from reportlab.lib.units import inch
 from reportlab.pdfbase import pdfdoc
@@ -26,15 +27,16 @@ def html_to_text(html: str) -> str:
 
 def write_pdf(txt: str, out_path: Path) -> None:
     width, height = letter
-    c = canvas.Canvas(str(out_path), pagesize=letter, pageCompression=0)
+    raw_path = out_path.with_suffix(".raw.pdf")
+    c = canvas.Canvas(str(raw_path), pagesize=letter, pageCompression=0)
     c.setCreator(CREATOR)
     c.setProducer(PRODUCER)
-    docinfo = c._doc.info
-    docinfo.producer = PRODUCER
-    docinfo.creator = CREATOR
-    docinfo.creationDate = FIXED_DATE
-    docinfo.modDate = FIXED_DATE
-    c._doc._ID = (b"\x00" * 16, b"\x00" * 16)
+    doc = c._doc
+    info = doc.info
+    info.producer = PRODUCER
+    info.creator = CREATOR
+    info.creationDate = FIXED_DATE
+    info.modDate = FIXED_DATE
 
     left = 0.75 * inch
     top = height - 0.75 * inch
@@ -63,10 +65,21 @@ def write_pdf(txt: str, out_path: Path) -> None:
     if line:
         c.drawString(left, y, " ".join(line))
     c.showPage()
-    cat = c._doc.Catalog
+    cat = doc.Catalog
     if isinstance(cat, pdfdoc.PDFDictionary):
         cat.dict.pop("Metadata", None)
+    doc.ID = [
+        pdfdoc.PDFString(b"\x00" * 16),
+        pdfdoc.PDFString(b"\x00" * 16),
+    ]
     c.save()
+
+    canonical = canonicalize_pdf(raw_path if raw_path.exists() else out_path)
+    out_path.write_bytes(canonical)
+    try:
+        raw_path.unlink()
+    except FileNotFoundError:
+        pass
 
 
 def main() -> None:
