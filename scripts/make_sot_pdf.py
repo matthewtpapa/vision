@@ -29,8 +29,11 @@ def write_pdf(txt: str, out_path: Path) -> None:
     c = canvas.Canvas(str(out_path), pagesize=letter, pageCompression=0)
     c.setCreator(CREATOR)
     c.setProducer(PRODUCER)
-    c._doc.info.created = FIXED_DATE
-    c._doc.info.modified = FIXED_DATE
+    docinfo = c._doc.info
+    docinfo.producer = PRODUCER
+    docinfo.creator = CREATOR
+    docinfo.creationDate = FIXED_DATE
+    docinfo.modDate = FIXED_DATE
     c._doc._ID = (b"\x00" * 16, b"\x00" * 16)
 
     left = 0.75 * inch
@@ -60,8 +63,9 @@ def write_pdf(txt: str, out_path: Path) -> None:
     if line:
         c.drawString(left, y, " ".join(line))
     c.showPage()
-    if "Metadata" in c._doc.Catalog:
-        c._doc.Catalog.remove(pdfdoc.PDFName("Metadata"))
+    cat = c._doc.Catalog
+    if isinstance(cat, pdfdoc.PDFDictionary):
+        cat.dict.pop("Metadata", None)
     c.save()
 
 
