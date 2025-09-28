@@ -42,18 +42,30 @@ def canonicalize_pdf(source: Path) -> bytes:
     writer = PdfWriter()
     writer.clone_document_from_reader(reader)
 
-    # Drop any external metadata stream (typically XMP with volatile timestamps).
-    if "/Metadata" in writer._root_object:  # type: ignore[attr-defined]
-        del writer._root_object[NameObject("/Metadata")]  # type: ignore[index]
+    root = writer._root_object  # type: ignore[attr-defined]
 
-    if writer._info is None:  # type: ignore[attr-defined]
-        writer._info = writer._add_object(DictionaryObject())  # type: ignore[attr-defined]
+    # Drop external metadata streams and structure maps that carry per-render IDs.
+    for volatile_key in ("/Metadata", "/StructTreeRoot", "/PieceInfo", "/OCProperties"):
+        if volatile_key in root:  # type: ignore[index]
+            del root[NameObject(volatile_key)]  # type: ignore[index]
 
-    info = writer._info.get_object()  # type: ignore[attr-defined]
-    info[NameObject("/Producer")] = TextStringObject(_CANONICAL_PRODUCER)
-    info[NameObject("/Creator")] = TextStringObject(_CANONICAL_CREATOR)
-    info[NameObject("/CreationDate")] = TextStringObject(_CANONICAL_DATE)
-    info[NameObject("/ModDate")] = TextStringObject(_CANONICAL_DATE)
+    # Remove volatile struct-parent indices from page and annotation dictionaries.
+    for page in writer.pages:
+        if "/StructParents" in page:  # type: ignore[index]
+            del page[NameObject("/StructParents")]  # type: ignore[index]
+        annots = page.get("/Annots")  # type: ignore[index]
+        if isinstance(annots, ArrayObject):
+            for annot in annots:
+                obj = annot.get_object()
+                if isinstance(obj, DictionaryObject) and "/StructParent" in obj:  # type: ignore[index]
+                    del obj[NameObject("/StructParent")]  # type: ignore[index]
+
+    info_dict = DictionaryObject()
+    info_dict[NameObject("/Producer")] = TextStringObject(_CANONICAL_PRODUCER)
+    info_dict[NameObject("/Creator")] = TextStringObject(_CANONICAL_CREATOR)
+    info_dict[NameObject("/CreationDate")] = TextStringObject(_CANONICAL_DATE)
+    info_dict[NameObject("/ModDate")] = TextStringObject(_CANONICAL_DATE)
+    writer._info = writer._add_object(info_dict)  # type: ignore[attr-defined]
 
     writer._ID = ArrayObject(  # type: ignore[attr-defined]
         [
