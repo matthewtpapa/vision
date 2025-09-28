@@ -13,6 +13,7 @@ CREATOR = "Vision SoT pipeline"
 PRODUCER = "Vision-Deterministic-PDF"
 FIXED_DATE = "D:19700101000000Z"
 
+
 def html_to_text(html: str) -> str:
     text = re.sub(r"<!--.*?-->", " ", html, flags=re.S)
     text = re.sub(r"<script\\b.*?</script>", " ", text, flags=re.S | re.I)
@@ -21,6 +22,7 @@ def html_to_text(html: str) -> str:
     text = text.replace("\xa0", " ")
     text = re.sub(r"\s+", " ", text)
     return text.strip()
+
 
 def write_pdf(txt: str, out_path: Path) -> None:
     width, height = letter
@@ -62,14 +64,17 @@ def write_pdf(txt: str, out_path: Path) -> None:
         c._doc.Catalog.remove(pdfdoc.PDFName("Metadata"))
     c.save()
 
+
 def main() -> None:
     import sys
+
     if len(sys.argv) != 3:
         print("usage: make_sot_pdf.py <input.html> <output.pdf>", file=sys.stderr)
         sys.exit(2)
     html = Path(sys.argv[1]).read_text(encoding="utf-8")
     text = html_to_text(html)
     write_pdf(text, Path(sys.argv[2]))
+
 
 if __name__ == "__main__":
     main()
