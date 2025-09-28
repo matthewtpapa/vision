@@ -89,7 +89,14 @@ Artifacts are written to `artifacts/` (metrics hashes, SBOM, license report, whe
 hashes, purity outputs, promotion report), and log files land in `logs/`.
 
 ## How CI proves claims
-Jobs: **verify** (gated) and **Docs Drift Check** (non-gating).
+Jobs: **tests** (lint + mypy + pytest), **verify** (gated prove pipeline), and **Docs Drift Check** (non-gating).
+
+The `verify` job depends on the `tests` matrix, enforces the temporary Makefile
+tripwire, and then runs `make prove`. The workflow seeds `artifacts/` with a
+`.keep` marker so uploads succeed even if a stage short-circuits. Successful
+runs attach a `verify-artifacts` pack that includes both determinism hashes
+(`artifacts/metrics_hash_run1.txt`, `artifacts/metrics_hash_run2.txt`, and
+`artifacts/metrics_hash.txt`) and the top-level `gate_summary.txt` ledger.
 
 ## Roadmap
 

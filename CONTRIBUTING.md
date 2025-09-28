@@ -20,10 +20,9 @@ The public façade and result schema are frozen. Updates must refresh tests and 
 
 ## CI gates
 
-- ci-matrix
-- latency-gate
-- readme-smoke
-- docs-gate
+- tests — lint, type-check, and run pytest on Python 3.10/3.11
+- verify — tripwire + `make prove` + upload of the verify artifact pack
+- docs-drift — enforces roadmap/doc sync when relevant files change
 
 ## Commit/PR guidance
 

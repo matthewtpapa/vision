@@ -15,7 +15,7 @@ concurrency:
   cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
-  lint-and-test:
+  tests:
     runs-on: ubuntu-latest
     env:
       TZ: UTC
@@ -66,7 +66,10 @@ jobs:
         run: pytest -q
 
   verify:
+    needs: [tests]
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     env:
       TZ: UTC
       LC_ALL: C.UTF-8
@@ -88,6 +91,10 @@ jobs:
           python -m pip install -U pip
           pip install -r requirements-dev.txt
           pip install -e .
+      - name: Ensure artifact dir
+        run: |
+          mkdir -p artifacts
+          : > artifacts/.keep
       - name: Tripwire
         run: make tripwire
       - name: Prove (S2 scaffolding only)
@@ -187,198 +194,4 @@ jobs:
       - name: No docs changes — skipping docs-drift
         if: steps.docs.outputs.changed != 'true'
         run: echo "No docs or workflow changes detected; skipping docs-drift enforcement."
-
-  verify:
-    needs: [lint-and-test, docs-drift]
-    runs-on: ubuntu-latest
-    env:
-      TZ: UTC
-      LC_ALL: C.UTF-8
-      LANG: C.UTF-8
-      PYTHONHASHSEED: "0"
-      OMP_NUM_THREADS: "1"
-      OPENBLAS_NUM_THREADS: "1"
-      MKL_NUM_THREADS: "1"
-      NUMEXPR_NUM_THREADS: "1"
-    strategy:
-      fail-fast: false
-      matrix:
-        python-version: ['3.10', '3.11']
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-      - name: Purge stale site-packages (latency_vision*)
-        run: |
-          python - <<'PY'
-          import pathlib, shutil, site, sys
-          roots = set(site.getsitepackages() + [site.getusersitepackages()])
-          for root in filter(None, roots):
-              for p in pathlib.Path(root).glob("latency_vision*"):
-                  print("removing", p, file=sys.stderr)
-                  shutil.rmtree(p, ignore_errors=True)
-          PY
-      - name: Set up Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: ${{ matrix.python-version }}
-          cache: 'pip'
-          cache-dependency-path: |
-            requirements-dev.txt
-            pyproject.toml
-      - name: Install system dependencies
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y strace jq
-          mkdir -p artifacts
-          echo "wkhtmltopdf: removed (using deterministic Python renderer)" | tee artifacts/wkhtmltopdf-version.txt
-      - name: Install Python dependencies
-        run: |
-          python -m pip install --upgrade pip
-          pip install -r requirements-dev.txt
-          pip install -e .
-      - name: Run prove pipeline
-        run: make prove
-      - name: sot-pdf (deterministic)
-        run: |
-          mkdir -p artifacts
-          python scripts/make_sot_pdf.py docs/Vision_v1_Investor_SoT.html artifacts/vision_v1_SoT_run1.pdf
-          python scripts/make_sot_pdf.py docs/Vision_v1_Investor_SoT.html artifacts/vision_v1_SoT_run2.pdf
-          python - <<'PY'
-          from pathlib import Path
-          import hashlib
-
-          def sha256(p: Path) -> str:
-              h = hashlib.sha256()
-              h.update(p.read_bytes())
-              return h.hexdigest()
-
-
-          a = Path("artifacts/vision_v1_SoT_run1.pdf")
-          b = Path("artifacts/vision_v1_SoT_run2.pdf")
-          ha, hb = sha256(a), sha256(b)
-          if ha != hb:
-              raise SystemExit(f"PDF nondeterminism: {ha} != {hb}")
-
-          out = Path("artifacts/vision_v1_SoT.pdf")
-          out.write_bytes(a.read_bytes())
-          if out.stat().st_size < 10_000:
-              raise SystemExit(f"vision_v1_SoT.pdf too small: {out.stat().st_size}")
-
-          html = Path("docs/Vision_v1_Investor_SoT.html")
-          Path("artifacts/vision_v1_SoT.pdf.sha256").write_text(sha256(out) + "\n", encoding="utf-8")
-          Path("artifacts/Vision_v1_Investor_SoT.html.sha256").write_text(sha256(html) + "\n", encoding="utf-8")
-          print("sot_pdf_ok=1")
-          PY
-      - name: sot-summary
-        run: |
-          python scripts/write_sot_summary.py
-      - name: detect signing key
-        id: sigkey
-        shell: bash
-        env:
-          SIGN_KEY: ${{ secrets.SOT_DEV_SIGNING_KEY }}
-        run: |
-          if [[ -n "${SIGN_KEY}" ]]; then
-            echo "present=true" >> "$GITHUB_OUTPUT"
-          else
-            echo "present=false" >> "$GITHUB_OUTPUT"
-          fi
-
-      - name: sign-sot
-        if: ${{ steps.sigkey.outputs.present == 'true' && (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository) }}
-        run: |
-          rm -f artifacts/NO_SIGNING_KEY
-          python scripts/sign_json.py artifacts/sot_summary.json --key "${{ secrets.SOT_DEV_SIGNING_KEY }}"
-
-      - name: require sot signature artifact
-        if: ${{ steps.sigkey.outputs.present == 'true' && (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository) }}
-        run: |
-          test -s artifacts/sot_summary.json.sig || {
-            echo "Missing artifacts/sot_summary.json.sig" >&2;
-            exit 1;
-          }
-
-      - name: sign-sot (skipped)
-        if: ${{ !(steps.sigkey.outputs.present == 'true' && (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository)) }}
-        run: |
-          mkdir -p artifacts
-          echo "NO_SIGNING_KEY - skipping S1 signing gate (fork or missing key)"
-          : > artifacts/NO_SIGNING_KEY
-      - name: determinism-check
-        run: |
-          python scripts/write_metrics_hash.py --out artifacts/metrics_hash_run1.txt
-          python scripts/write_metrics_hash.py --out artifacts/metrics_hash_run2.txt
-          python - <<'PY'
-          a = open("artifacts/metrics_hash_run1.txt", encoding="utf-8").read().strip()
-          b = open("artifacts/metrics_hash_run2.txt", encoding="utf-8").read().strip()
-          if a != b:
-              raise SystemExit(f"Determinism breach: {a} != {b}")
-          open("artifacts/metrics_hash.txt", "w", encoding="utf-8").write(a + "\n")
-          print("determinism_ok=1")
-          PY
-      - name: purity-enforce
-        run: |
-          python - <<'PY'
-          import json
-
-          report = json.load(open("artifacts/purity_report.json", encoding="utf-8"))
-          if report.get("network_syscalls") is not False:
-              raise SystemExit("Network syscalls detected")
-          offenders = report.get("offenders") or []
-          if offenders:
-              raise SystemExit(f"Purity offenders present: {offenders}")
-          print("purity_clean=1")
-          PY
-      - name: roadmap-lock
-        run: make roadmap-lock
-      - name: roadmap-check
-        run: make roadmap-check
-      - name: KB promote sanity
-        run: make kb-promote
-      - name: Unknowns guard
-        run: make unknowns-guard
-      - name: Public API freeze
-        run: make api-freeze
-      - name: Compute GIT_DIFF_BASE (PRs)
-        if: ${{ github.event_name == 'pull_request' }}
-        run: |
-          BASE_SHA="${{ github.event.pull_request.base.sha }}"
-          HEAD_SHA="${{ github.sha }}"
-          echo "GIT_DIFF_BASE=$(git merge-base "$BASE_SHA" "$HEAD_SHA")" >> $GITHUB_ENV
-      - name: Schema bump guard
-        run: make schema-bump
-      - name: Gate summary → Job summary
-        if: always()
-        run: |
-          test -f gate_summary.txt && cat gate_summary.txt >> "$GITHUB_STEP_SUMMARY" || true
-      - name: Upload artifacts
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: prove-artifacts-${{ matrix.python-version }}
-          if-no-files-found: ignore
-          path: |
-            bench/oracle_stats.json
-            bench/oracle_e2e.json
-            bench/e2e_samples.jsonl
-            logs/evidence_ledger.jsonl
-            artifacts/metrics_hash.txt
-            artifacts/metrics_hash_payload.json
-            artifacts/purity_report.json
-            artifacts/purity_offenders.txt
-            artifacts/sbom.json
-            artifacts/licenses.json
-            artifacts/wheels_hashes.txt
-            artifacts/promotion_report.json
-            artifacts/vision_v1_SoT.pdf
-            artifacts/metrics_hash_run1.txt
-            artifacts/metrics_hash_run2.txt
-            artifacts/wkhtmltopdf-version.txt
-            artifacts/vision_v1_SoT.pdf.sha256
-            artifacts/Vision_v1_Investor_SoT.html.sha256
-            artifacts/sot_summary.json
-            artifacts/sot_summary.json.sig
-
-            gate_summary.txt
 
