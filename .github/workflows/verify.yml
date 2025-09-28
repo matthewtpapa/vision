@@ -186,9 +186,9 @@ jobs:
       - name: Install system dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y strace jq wkhtmltopdf
+          sudo apt-get install -y strace jq
           mkdir -p artifacts
-          wkhtmltopdf --version | tee artifacts/wkhtmltopdf-version.txt
+          echo "wkhtmltopdf: removed (using deterministic Python renderer)" | tee artifacts/wkhtmltopdf-version.txt
       - name: Install Python dependencies
         run: |
           python -m pip install --upgrade pip
@@ -196,60 +196,36 @@ jobs:
           pip install -e .
       - name: Run prove pipeline
         run: make prove
-      - name: sot-pdf
+      - name: sot-pdf (deterministic)
         run: |
           mkdir -p artifacts
-          wkhtmltopdf --dpi 96 --disable-smart-shrinking --margin-top 0 --margin-bottom 0 --margin-left 0 --margin-right 0 --no-outline docs/Vision_v1_Investor_SoT.html artifacts/vision_v1_SoT_run1.pdf
-          wkhtmltopdf --dpi 96 --disable-smart-shrinking --margin-top 0 --margin-bottom 0 --margin-left 0 --margin-right 0 --no-outline docs/Vision_v1_Investor_SoT.html artifacts/vision_v1_SoT_run2.pdf
+          python scripts/make_sot_pdf.py docs/Vision_v1_Investor_SoT.html artifacts/vision_v1_SoT_run1.pdf
+          python scripts/make_sot_pdf.py docs/Vision_v1_Investor_SoT.html artifacts/vision_v1_SoT_run2.pdf
           python - <<'PY'
-          from __future__ import annotations
-
-          import hashlib
-          import os
           from pathlib import Path
+          import hashlib
 
-          import sys
-
-          sys.path.insert(0, "scripts")
-
-          from canonicalize_pdf import canonicalize_pdf
-
-
-          def sha256_bytes(data: bytes) -> str:
-              digest = hashlib.sha256()
-              digest.update(data)
-              return digest.hexdigest()
+          def sha256(p: Path) -> str:
+              h = hashlib.sha256()
+              h.update(p.read_bytes())
+              return h.hexdigest()
 
 
-          artifacts_dir = Path("artifacts")
-          run1 = artifacts_dir / "vision_v1_SoT_run1.pdf"
-          run2 = artifacts_dir / "vision_v1_SoT_run2.pdf"
-          pdf_path = artifacts_dir / "vision_v1_SoT.pdf"
-          html_path = Path("docs/Vision_v1_Investor_SoT.html")
+          a = Path("artifacts/vision_v1_SoT_run1.pdf")
+          b = Path("artifacts/vision_v1_SoT_run2.pdf")
+          ha, hb = sha256(a), sha256(b)
+          if ha != hb:
+              raise SystemExit(f"PDF nondeterminism: {ha} != {hb}")
 
-          run1_bytes = canonicalize_pdf(run1)
-          run2_bytes = canonicalize_pdf(run2)
-          run1_hash = sha256_bytes(run1_bytes)
-          run2_hash = sha256_bytes(run2_bytes)
-          if run1_hash != run2_hash:
-              raise SystemExit(f"PDF nondeterminism: {run1_hash} != {run2_hash}")
+          out = Path("artifacts/vision_v1_SoT.pdf")
+          out.write_bytes(a.read_bytes())
+          if out.stat().st_size < 10_000:
+              raise SystemExit(f"vision_v1_SoT.pdf too small: {out.stat().st_size}")
 
-          pdf_path.write_bytes(run1_bytes)
-
-          st = os.stat(pdf_path).st_size
-          assert st > 10_000, f"vision_v1_SoT.pdf too small: {st}"
-
-          pdf_hash = sha256_bytes(pdf_path.read_bytes())
-          html_hash = sha256_bytes(html_path.read_bytes())
-          (artifacts_dir / "vision_v1_SoT.pdf.sha256").write_text(pdf_hash + "\n", encoding="utf-8")
-          (artifacts_dir / "Vision_v1_Investor_SoT.html.sha256").write_text(
-              html_hash + "\n", encoding="utf-8"
-          )
-          print(f"vision_v1_SoT_run1.pdf.sha256={run1_hash}")
-          print(f"vision_v1_SoT_run2.pdf.sha256={run2_hash}")
+          html = Path("docs/Vision_v1_Investor_SoT.html")
+          Path("artifacts/vision_v1_SoT.pdf.sha256").write_text(sha256(out) + "\n", encoding="utf-8")
+          Path("artifacts/Vision_v1_Investor_SoT.html.sha256").write_text(sha256(html) + "\n", encoding="utf-8")
           print("sot_pdf_ok=1")
-          print(f"vision_v1_SoT.pdf.sha256={pdf_hash}")
-          print(f"Vision_v1_Investor_SoT.html.sha256={html_hash}")
           PY
       - name: sot-summary
         run: |
