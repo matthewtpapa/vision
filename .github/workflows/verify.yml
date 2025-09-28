@@ -111,6 +111,14 @@ jobs:
       - name: Roadmap check
         run: make roadmap-check
         if: steps.docs.outputs.changed == 'true'
+      - name: Ensure roadmap lock committed
+        if: steps.docs.outputs.changed == 'true'
+        run: |
+          git add -N roadmap.lock.json || true
+          git diff --exit-code -- roadmap.lock.json || {
+            echo "::error::Roadmap lock drift detected; run 'make roadmap-lock' and commit.";
+            exit 1;
+          }
       - name: Ensure docs drift committed
         run: |
           git add -N docs/ docs/specs/ || true

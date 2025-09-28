@@ -5,6 +5,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import math
 import subprocess
 import xml.etree.ElementTree as ET
 from collections.abc import Callable, Iterable
@@ -140,6 +141,34 @@ def _ensure_stage_artifacts(stage: dict[str, Any]) -> None:
 
 def _load_json(path: Path) -> Any:
     return json.loads(path.read_text(encoding="utf-8"))
+
+
+def _load_json_optional(path: Path) -> Any | None:
+    if not path.exists():
+        return None
+    try:
+        return _load_json(path)
+    except json.JSONDecodeError:
+        return None
+
+
+def _to_float(value: Any) -> float | None:
+    if value is None:
+        return None
+    if isinstance(value, int | float):
+        numeric = float(value)
+        if math.isnan(numeric):
+            return None
+        return numeric
+    if isinstance(value, str):
+        try:
+            parsed = float(value.strip())
+        except ValueError:
+            return None
+        if math.isnan(parsed):
+            return None
+        return parsed
+    return None
 
 
 def _check_signature_valid() -> bool:
@@ -312,6 +341,222 @@ def _check_evidence_present() -> bool:
     return False
 
 
+def _check_candidate_recall_ok() -> bool:
+    bench = _load_json_optional(REPO_ROOT / "artifacts" / "oracle_bench.json")
+    if not isinstance(bench, dict):
+        return False
+    candidates: list[float] = []
+    for key in ("candidate_recall", "candidate_recall_at_10", "candidate_recall_at_k", "recall"):
+        value = _to_float(bench.get(key))
+        if value is not None:
+            candidates.append(value)
+    if not candidates:
+        return False
+    return max(candidates) >= 0.45
+
+
+def _check_p95_ms_ok() -> bool:
+    thresholds = {
+        REPO_ROOT / "artifacts" / "oracle_bench.json": 12.0,
+        REPO_ROOT / "artifacts" / "labelbank_scale_bench.json": 33.0,
+    }
+    success = False
+    for path, limit in thresholds.items():
+        data = _load_json_optional(path)
+        if not isinstance(data, dict):
+            continue
+        candidate = _to_float(data.get("p95_ms"))
+        if candidate is None:
+            continue
+        if candidate <= limit:
+            success = True
+        else:
+            return False
+    return success
+
+
+def _check_promotion_thresholds_met() -> bool:
+    report = _load_json_optional(REPO_ROOT / "artifacts" / "promotion_report.json")
+    if not isinstance(report, dict):
+        return False
+    reasons = report.get("reasons")
+    if reasons not in (None, []):
+        return False
+    promotions = report.get("promotions")
+    if isinstance(promotions, list) and promotions:
+        return True
+    # Some runs may only log a high-level status.
+    status = str(report.get("status", "")).lower()
+    return status in {"pass", "passed", "ok", "green"}
+
+
+def _check_slo_thresholds_met() -> bool:
+    report = _load_json_optional(REPO_ROOT / "artifacts" / "slo_report.json")
+    if not isinstance(report, dict):
+        return False
+    status = str(report.get("status", "")).lower()
+    if status in {"pass", "passed", "ok", "green"}:
+        return True
+    violations = report.get("violations")
+    if isinstance(violations, list):
+        return not violations
+    return False
+
+
+def _check_metrics_schema_valid() -> bool:
+    schema_path = REPO_ROOT / "schemas" / "metrics.schema.json"
+    schema = _load_json_optional(schema_path)
+    if not isinstance(schema, dict):
+        return False
+    return "title" in schema or "$schema" in schema
+
+
+def _check_ci_matrix_ok() -> bool:
+    summary = _load_json_optional(REPO_ROOT / "artifacts" / "ci_matrix_summary.json")
+    if not isinstance(summary, dict):
+        return False
+    if summary.get("all_passed") is True:
+        return True
+    statuses = summary.get("statuses")
+    if isinstance(statuses, dict) and statuses:
+        return all(
+            (value is True)
+            or (isinstance(value, str) and value.lower() in {"pass", "passed", "ok", "green"})
+            for value in statuses.values()
+        )
+    matrix = summary.get("matrix")
+    if isinstance(matrix, list) and matrix:
+        ok = True
+        for entry in matrix:
+            if not isinstance(entry, dict):
+                return False
+            status = str(entry.get("status", "")).lower()
+            if status not in {"pass", "passed", "ok", "green", "success"}:
+                ok = False
+        return ok
+    return False
+
+
+def _check_sbom_ok() -> bool:
+    sbom = _load_json_optional(REPO_ROOT / "artifacts" / "sbom.json")
+    if isinstance(sbom, dict):
+        packages = sbom.get("packages")
+        if isinstance(packages, list):
+            return bool(packages)
+    elif isinstance(sbom, list):
+        return bool(sbom)
+    return False
+
+
+def _check_licenses_ok() -> bool:
+    licenses = _load_json_optional(REPO_ROOT / "artifacts" / "licenses.json")
+    if isinstance(licenses, dict):
+        problems = licenses.get("violations") or licenses.get("unapproved")
+        if problems:
+            return False
+        entries = licenses.get("licenses")
+        if isinstance(entries, list):
+            return all(entry for entry in entries)
+        return True
+    if isinstance(licenses, list):
+        return bool(licenses)
+    return False
+
+
+def _check_recall_ok() -> bool:
+    bench = _load_json_optional(REPO_ROOT / "artifacts" / "labelbank_scale_bench.json")
+    if not isinstance(bench, dict):
+        return False
+    candidates: list[float] = []
+    for key in ("recall", "candidate_recall", "recall_at_k"):
+        value = _to_float(bench.get(key))
+        if value is not None:
+            candidates.append(value)
+    if not candidates:
+        return False
+    return max(candidates) >= 0.95
+
+
+def _check_public_api_ok() -> bool:
+    report = _load_json_optional(REPO_ROOT / "artifacts" / "public_api_report.json")
+    if not isinstance(report, dict):
+        return False
+    breaking = report.get("breaking")
+    if isinstance(breaking, list) and breaking:
+        return False
+    status = str(report.get("status", "")).lower()
+    if status in {"pass", "passed", "ok", "green"}:
+        return True
+    return breaking == []
+
+
+def _check_config_precedence_ok() -> bool:
+    report = _load_json_optional(REPO_ROOT / "artifacts" / "config_precedence.json")
+    if not isinstance(report, dict):
+        return False
+    violations = report.get("violations")
+    if isinstance(violations, list):
+        return not violations
+    status = str(report.get("status", "")).lower()
+    return status in {"pass", "passed", "ok", "green"}
+
+
+def _check_gallery_audit_ok() -> bool:
+    audit = _load_json_optional(REPO_ROOT / "artifacts" / "gallery_dedupe_audit.json")
+    if not isinstance(audit, dict):
+        return False
+    pending = audit.get("pending_reviews")
+    if isinstance(pending, list) and pending:
+        return False
+    status = str(audit.get("status", "")).lower()
+    if status in {"pass", "passed", "ok", "green"}:
+        return True
+    duplicates_removed = audit.get("duplicates_removed")
+    if isinstance(duplicates_removed, int):
+        return duplicates_removed >= 0
+    return False
+
+
+def _check_release_hygiene_ok() -> bool:
+    checklist = _load_json_optional(REPO_ROOT / "artifacts" / "release_checklist.json")
+    if not isinstance(checklist, dict):
+        return False
+    status = str(checklist.get("status", "")).lower()
+    if status in {"pass", "passed", "ok", "green"}:
+        return True
+    items = checklist.get("items")
+    if isinstance(items, list) and items:
+        allowed = {"done", "pass", "passed", "ok", "complete"}
+        for item in items:
+            if not isinstance(item, dict):
+                return False
+            status = str(item.get("status", "")).lower()
+            if status not in allowed:
+                return False
+        return True
+    return False
+
+
+def _check_exit_gates_ok() -> bool:
+    summary = _load_json_optional(REPO_ROOT / "artifacts" / "exit_gate_summary.json")
+    if not isinstance(summary, dict):
+        return False
+    status = str(summary.get("status", "")).lower()
+    if status in {"pass", "passed", "ok", "green"}:
+        return True
+    gates = summary.get("gates")
+    if isinstance(gates, list) and gates:
+        allowed = {"pass", "passed", "ok", "green"}
+        for entry in gates:
+            if not isinstance(entry, dict):
+                return False
+            status = str(entry.get("status", "")).lower()
+            if status not in allowed:
+                return False
+        return True
+    return False
+
+
 SIGNAL_CHECKS: dict[str, Callable[[], bool]] = {
     "signature_valid_or_blocked": _check_signature_valid,
     "purity_clean": _check_purity_clean,
@@ -322,6 +567,20 @@ SIGNAL_CHECKS: dict[str, Callable[[], bool]] = {
     "thresholds_met": _check_thresholds_met,
     "tests_green": _check_tests_green,
     "evidence_present": _check_evidence_present,
+    "candidate_recall_ok": _check_candidate_recall_ok,
+    "p95_ms_ok": _check_p95_ms_ok,
+    "promotion_thresholds_met": _check_promotion_thresholds_met,
+    "slo_thresholds_met": _check_slo_thresholds_met,
+    "metrics_schema_valid": _check_metrics_schema_valid,
+    "ci_matrix_ok": _check_ci_matrix_ok,
+    "sbom_ok": _check_sbom_ok,
+    "licenses_ok": _check_licenses_ok,
+    "recall_ok": _check_recall_ok,
+    "public_api_ok": _check_public_api_ok,
+    "config_precedence_ok": _check_config_precedence_ok,
+    "gallery_audit_ok": _check_gallery_audit_ok,
+    "release_hygiene_ok": _check_release_hygiene_ok,
+    "exit_gates_ok": _check_exit_gates_ok,
 }
 
 
