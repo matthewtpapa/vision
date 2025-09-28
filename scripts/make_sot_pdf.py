@@ -5,14 +5,12 @@ import re
 from pathlib import Path
 
 from canonicalize_pdf import canonicalize_pdf
+from reportlab import rl_config
 from reportlab.lib.pagesizes import letter
 from reportlab.lib.units import inch
-from reportlab.pdfbase import pdfdoc
 from reportlab.pdfgen import canvas
 
-CREATOR = "Vision SoT pipeline"
-PRODUCER = "Vision-Deterministic-PDF"
-FIXED_DATE = "D:19700101000000Z"
+rl_config.invariant = 1
 
 
 def html_to_text(html: str) -> str:
@@ -27,16 +25,8 @@ def html_to_text(html: str) -> str:
 
 def write_pdf(txt: str, out_path: Path) -> None:
     width, height = letter
-    raw_path = out_path.with_suffix(".raw.pdf")
-    c = canvas.Canvas(str(raw_path), pagesize=letter, pageCompression=0)
-    c.setCreator(CREATOR)
-    c.setProducer(PRODUCER)
-    doc = c._doc
-    info = doc.info
-    info.producer = PRODUCER
-    info.creator = CREATOR
-    info.creationDate = FIXED_DATE
-    info.modDate = FIXED_DATE
+    tmp_path = out_path.with_suffix(".tmp.pdf")
+    c = canvas.Canvas(str(tmp_path), pagesize=letter, pageCompression=0)
 
     left = 0.75 * inch
     top = height - 0.75 * inch
@@ -65,19 +55,12 @@ def write_pdf(txt: str, out_path: Path) -> None:
     if line:
         c.drawString(left, y, " ".join(line))
     c.showPage()
-    cat = doc.Catalog
-    if isinstance(cat, pdfdoc.PDFDictionary):
-        cat.dict.pop("Metadata", None)
-    doc.ID = [
-        pdfdoc.PDFString(b"\x00" * 16),
-        pdfdoc.PDFString(b"\x00" * 16),
-    ]
     c.save()
 
-    canonical = canonicalize_pdf(raw_path if raw_path.exists() else out_path)
+    canonical = canonicalize_pdf(tmp_path if tmp_path.exists() else out_path)
     out_path.write_bytes(canonical)
     try:
-        raw_path.unlink()
+        tmp_path.unlink()
     except FileNotFoundError:
         pass
 
