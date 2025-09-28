@@ -9,7 +9,13 @@ import hashlib
 import hmac
 import json
 import os
+from datetime import timezone
 from pathlib import Path
+
+if hasattr(_dt, "UTC"):
+    UTC = _dt.UTC  # type: ignore[attr-defined]
+else:  # Python 3.10 fallback
+    UTC = timezone.utc  # noqa: UP017
 
 
 def main(argv: list[str] | None = None) -> None:
@@ -27,7 +33,7 @@ def main(argv: list[str] | None = None) -> None:
     payload = Path(path).read_bytes()
     payload_sha256 = hashlib.sha256(payload).hexdigest()
     signature = hmac.new(key.encode(), payload, hashlib.sha256).hexdigest()
-    created_at = _dt.datetime.now(_dt.UTC).isoformat().replace("+00:00", "Z")
+    created_at = _dt.datetime.now(UTC).isoformat().replace("+00:00", "Z")
     document = {
         "alg": "HMAC-SHA256",
         "kid": kid,
