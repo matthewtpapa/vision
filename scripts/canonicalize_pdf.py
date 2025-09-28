@@ -17,7 +17,13 @@ import io
 from pathlib import Path
 
 from pypdf import PdfReader, PdfWriter
-from pypdf.generic import ByteStringObject, DictionaryObject, NameObject, TextStringObject
+from pypdf.generic import (
+    ArrayObject,
+    ByteStringObject,
+    DictionaryObject,
+    NameObject,
+    TextStringObject,
+)
 
 _CANONICAL_PRODUCER = "Vision-Deterministic-PDF"
 _CANONICAL_CREATOR = "Vision SoT pipeline"
@@ -49,10 +55,12 @@ def canonicalize_pdf(source: Path) -> bytes:
     info[NameObject("/CreationDate")] = TextStringObject(_CANONICAL_DATE)
     info[NameObject("/ModDate")] = TextStringObject(_CANONICAL_DATE)
 
-    writer._ID = [  # type: ignore[attr-defined]
-        ByteStringObject(b"\x00" * 16),
-        ByteStringObject(b"\x00" * 16),
-    ]
+    writer._ID = ArrayObject(  # type: ignore[attr-defined]
+        [
+            ByteStringObject(b"\x00" * 16),
+            ByteStringObject(b"\x00" * 16),
+        ]
+    )
 
     buffer = io.BytesIO()
     writer.write(buffer)
