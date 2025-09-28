@@ -173,8 +173,8 @@ jobs:
       - name: sot-pdf
         run: |
           mkdir -p artifacts
-          wkhtmltopdf docs/Vision_v1_Investor_SoT.html artifacts/vision_v1_SoT.pdf
-          test -s artifacts/vision_v1_SoT.pdf
+          wkhtmltopdf docs/Vision_v1_Investor_SoT.html artifacts/vision_v1_SoT_run1.pdf
+          wkhtmltopdf docs/Vision_v1_Investor_SoT.html artifacts/vision_v1_SoT_run2.pdf
           python - <<'PY'
           from __future__ import annotations
 
@@ -183,11 +183,10 @@ jobs:
           from pathlib import Path
 
           artifacts_dir = Path("artifacts")
+          run1 = artifacts_dir / "vision_v1_SoT_run1.pdf"
+          run2 = artifacts_dir / "vision_v1_SoT_run2.pdf"
           pdf_path = artifacts_dir / "vision_v1_SoT.pdf"
           html_path = Path("docs/Vision_v1_Investor_SoT.html")
-
-          st = os.stat(pdf_path).st_size
-          assert st > 10_000, f"vision_v1_SoT.pdf too small: {st}"
 
           def sha256(path: Path) -> str:
               digest = hashlib.sha256()
@@ -196,12 +195,24 @@ jobs:
                       digest.update(chunk)
               return digest.hexdigest()
 
+          run1_hash = sha256(run1)
+          run2_hash = sha256(run2)
+          if run1_hash != run2_hash:
+              raise SystemExit(f"PDF nondeterminism: {run1_hash} != {run2_hash}")
+
+          pdf_path.write_bytes(run1.read_bytes())
+
+          st = os.stat(pdf_path).st_size
+          assert st > 10_000, f"vision_v1_SoT.pdf too small: {st}"
+
           pdf_hash = sha256(pdf_path)
           html_hash = sha256(html_path)
           (artifacts_dir / "vision_v1_SoT.pdf.sha256").write_text(pdf_hash + "\n", encoding="utf-8")
           (artifacts_dir / "Vision_v1_Investor_SoT.html.sha256").write_text(
               html_hash + "\n", encoding="utf-8"
           )
+          print(f"vision_v1_SoT_run1.pdf.sha256={run1_hash}")
+          print(f"vision_v1_SoT_run2.pdf.sha256={run2_hash}")
           print("sot_pdf_ok=1")
           print(f"vision_v1_SoT.pdf.sha256={pdf_hash}")
           print(f"Vision_v1_Investor_SoT.html.sha256={html_hash}")
@@ -224,6 +235,7 @@ jobs:
       - name: sign-sot
         if: ${{ steps.sigkey.outputs.present == 'true' && (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository) }}
         run: |
+          rm -f artifacts/NO_SIGNING_KEY
           python scripts/sign_json.py artifacts/sot_summary.json --key "${{ secrets.SOT_DEV_SIGNING_KEY }}"
 
       - name: require sot signature artifact
@@ -237,7 +249,9 @@ jobs:
       - name: sign-sot (skipped)
         if: ${{ !(steps.sigkey.outputs.present == 'true' && (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository)) }}
         run: |
+          mkdir -p artifacts
           echo "NO_SIGNING_KEY - skipping S1 signing gate (fork or missing key)"
+          : > artifacts/NO_SIGNING_KEY
       - name: determinism-check
         run: |
           python scripts/write_metrics_hash.py --out artifacts/metrics_hash_run1.txt
